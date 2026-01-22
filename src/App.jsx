@@ -3,11 +3,11 @@ import Navbar from "./components/Navbar";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 scroll-smooth">
+    <div className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
-      {/* HERO (dark only) */}
-      <section id="home" className="relative min-h-screen flex items-center text-white">
+      {/* HERO */}
+      <section id="home" className="relative min-h-screen flex items-center">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -15,10 +15,10 @@ export default function App() {
               "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=2000&q=80')",
           }}
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-slate-950/70" />
 
         <div className="relative z-10 w-full">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-20">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-10">
             <p className="text-sky-300 font-semibold tracking-wide">
               SunTouch IT Company
             </p>
@@ -28,7 +28,7 @@ export default function App() {
               <span className="text-sky-400">that grow your business</span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-white/85 text-lg leading-relaxed">
+            <p className="mt-5 max-w-2xl text-white/80 text-lg leading-relaxed">
               We create fast, responsive and professional web solutions for startups,
               shops, and enterprises.
             </p>
@@ -42,7 +42,7 @@ export default function App() {
               </a>
               <a
                 href="#contact"
-                className="px-6 py-3 rounded-2xl border border-white/30 hover:bg-white/10 transition font-semibold"
+                className="px-6 py-3 rounded-2xl border border-white/20 hover:bg-white/10 transition font-semibold"
               >
                 Contact Us
               </a>
@@ -51,13 +51,17 @@ export default function App() {
         </div>
       </section>
 
-      {/* ABOUT (white) */}
-      <section id="about" className="py-24 bg-white scroll-mt-16">
+      {/* ABOUT */}
+      <section id="about" className="py-24 bg-slate-950 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl font-bold text-slate-900">About Us</h2>
-          <p className="mt-4 text-slate-600 max-w-3xl leading-relaxed">
+          <h2 className="text-3xl font-bold">About Us</h2>
+          <p className="mt-4 text-white/70 max-w-3xl leading-relaxed">
             SunTouch IT helps businesses go digital with clean design, strong performance and reliable support.
             Our goal is simple: deliver quality work that looks premium and works perfectly on every device.
+            We focus on modern UI, fast loading speed, and mobile-first responsive layouts.
+      From landing pages to full business websites, we build solutions that match your brand.
+      We also provide maintenance and support after delivery, so your website stays updated,
+      secure, and smooth for your customers.
           </p>
 
           <div className="mt-10 grid md:grid-cols-3 gap-6">
@@ -68,22 +72,23 @@ export default function App() {
             ].map((x) => (
               <div
                 key={x.t}
-                className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm hover:shadow-md transition"
+                className="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-sm hover:bg-white/10 transition"
               >
-                <h3 className="font-semibold text-lg text-slate-900">{x.t}</h3>
-                <p className="mt-2 text-slate-600 text-sm leading-relaxed">{x.d}</p>
+                <h3 className="font-semibold text-lg">{x.t}</h3>
+                <p className="mt-2 text-white/70 text-sm leading-relaxed">{x.d}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SERVICES (light gray) */}
-      <section id="services" className="py-24 bg-slate-50 scroll-mt-16">
+      {/* SERVICES */}
+      <section id="services" className="py-24 bg-slate-900/40 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl font-bold text-slate-900">Services</h2>
-          <p className="mt-3 text-slate-600 max-w-3xl leading-relaxed">
+          <h2 className="text-3xl font-bold">Services</h2>
+          <p className="mt-3 text-white/70 max-w-3xl leading-relaxed">
             Everything you need to build your online presence.
+            We deliver modern, fast and responsive websites with clean UI—built to help your business grow online.
           </p>
 
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -97,22 +102,22 @@ export default function App() {
             ].map((s) => (
               <div
                 key={s.t}
-                className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm hover:shadow-md transition"
+                className="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-sm hover:bg-white/10 transition"
               >
-                <h3 className="font-semibold text-slate-900">{s.t}</h3>
-                <p className="mt-2 text-slate-600 text-sm leading-relaxed">{s.d}</p>
+                <h3 className="font-semibold">{s.t}</h3>
+                <p className="mt-2 text-white/70 text-sm leading-relaxed">{s.d}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* GALLERY (white) */}
-      <section id="gallery" className="py-24 bg-white scroll-mt-16">
+      {/* GALLERY */}
+      <section id="gallery" className="py-24 bg-slate-950 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl font-bold text-slate-900">Gallery</h2>
-          <p className="mt-3 text-slate-600 leading-relaxed">
-            Some example work / office / team images.
+          <h2 className="text-3xl font-bold">Gallery</h2>
+          <p className="mt-3 text-white/70 leading-relaxed">
+            Explore our latest projects, creative designs, and development work.
           </p>
 
           <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -122,7 +127,7 @@ export default function App() {
               "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1200&q=80",
               "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
             ].map((img) => (
-              <div key={img} className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+              <div key={img} className="rounded-2xl overflow-hidden border border-white/10 shadow-sm">
                 <img
                   src={img}
                   alt="Gallery"
@@ -134,35 +139,35 @@ export default function App() {
         </div>
       </section>
 
-      {/* CONTACT (light gray) */}
-      <section id="contact" className="py-24 bg-slate-50 scroll-mt-16">
+      {/* CONTACT */}
+      <section id="contact" className="py-24 bg-slate-900/40 scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl font-bold text-slate-900">Contact Us</h2>
-          <p className="mt-3 text-slate-600 max-w-2xl leading-relaxed">
+          <h2 className="text-3xl font-bold">Contact Us</h2>
+          <p className="mt-3 text-white/70 max-w-2xl leading-relaxed">
             Tell us your requirement and we’ll get back soon.
           </p>
 
           <div className="mt-10 grid md:grid-cols-2 gap-8">
-            <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-              <p className="text-slate-700">📧 suntouchit@example.com</p>
-              <p className="mt-2 text-slate-700">📞 +91 98765 43210</p>
-              <p className="mt-2 text-slate-700">📍 Chembur, Mumbai, India</p>
-              <p className="mt-6 text-slate-500 text-sm">We’ll respond within 24 hours.</p>
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-sm">
+              <p className="text-white/80">📧 suntouchit@example.com</p>
+              <p className="mt-2 text-white/80">📞 +91 9876543210</p>
+              <p className="mt-2 text-white/80">📍 Chembur, Mumbai, India</p>
+              <p className="mt-6 text-white/60 text-sm">We’ll respond within 24 hours.</p>
             </div>
 
-            <form className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+            <form className="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-sm">
               <div className="grid gap-4">
                 <input
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 outline-none focus:border-sky-600"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-white/10 outline-none focus:border-sky-500 text-white placeholder:text-white/40"
                   placeholder="Your Name"
                 />
                 <input
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 outline-none focus:border-sky-600"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-white/10 outline-none focus:border-sky-500 text-white placeholder:text-white/40"
                   placeholder="Email"
                 />
                 <textarea
                   rows="4"
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 outline-none focus:border-sky-600"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-white/10 outline-none focus:border-sky-500 text-white placeholder:text-white/40"
                   placeholder="Message"
                 />
                 <button
@@ -177,9 +182,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* FOOTER (like screenshot) */}
-      <footer className="bg-slate-900 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 grid gap-10 md:grid-cols-4">
+      {/* FOOTER */}
+      <footer className="bg-slate-950 text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 grid gap-10 md:grid-cols-4 border-t border-white/10">
           <div>
             <h3 className="text-xl font-semibold">SunTouch Technology</h3>
             <p className="mt-4 text-white/70 text-sm leading-relaxed">
