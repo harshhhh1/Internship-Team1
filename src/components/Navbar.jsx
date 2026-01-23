@@ -1,121 +1,264 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
-const NAV_HEIGHT = 64;
-
-const Navbar = () => {
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 14);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close dropdown when clicking outside
   useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth >= 768) setOpen(false);
+    const onDocClick = (e) => {
+      if (!dropdownRef.current) return;
+      if (!dropdownRef.current.contains(e.target)) setProfileOpen(false);
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // optional: prevent background scroll when mobile menu open
+  // Close dropdown on ESC
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
+    const onKey = (e) => {
+      if (e.key === "Escape") setProfileOpen(false);
     };
-  }, [open]);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
-  const scrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    const y = el.getBoundingClientRect().top + window.pageYOffset - NAV_HEIGHT;
-    window.scrollTo({ top: y, behavior: "smooth" });
-    setOpen(false);
-  };
-
-  const headerClass = scrolled
-    ? "bg-slate-950/85 backdrop-blur border-b border-white/10 shadow-sm"
-    : "bg-transparent";
-
-  const linkClass = scrolled
-    ? "text-sm font-medium text-white/80 hover:text-white transition"
-    : "text-sm font-medium text-white/90 hover:text-white transition";
-
-  const brandClass = scrolled ? "text-white" : "text-white";
+  const linkClass = ({ isActive }) =>
+    `nav-link ${isActive ? "nav-link-active" : ""}`;
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${headerClass}`}>
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className={`nav-header ${scrolled ? "nav-header-scrolled" : ""}`}>
+      <div className="container nav-inner">
         {/* Brand */}
-        <button onClick={() => scrollToSection("home")} className={`font-semibold tracking-wide ${brandClass}`}>
-          SunTouch<span className="text-sky-400">IT</span>
-        </button>
-
-        {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => scrollToSection("about")} className={linkClass}>About</button>
-          <button onClick={() => scrollToSection("services")} className={linkClass}>Services</button>
-          <button onClick={() => scrollToSection("gallery")} className={linkClass}>Gallery</button>
-          <button onClick={() => scrollToSection("contact")} className={linkClass}>Contact</button>
-        </div>
-
-        {/* Right */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => scrollToSection("contact")}
-            className="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-500 transition"
-          >
-            Get Quote
-          </button>
-
-          {/* Mobile Toggle */}
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className={`md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border transition ${
-              scrolled
-                ? "border-white/15 text-white hover:bg-white/10"
-                : "border-white/30 text-white hover:bg-white/10"
-            }`}
-            aria-label="Open menu"
-          >
-            {open ? <span className="text-xl">✕</span> : <span className="text-xl">☰</span>}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ${open ? "max-h-80" : "max-h-0"}`}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-4">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/95 backdrop-blur shadow-sm p-3 flex flex-col gap-2">
-            <button onClick={() => scrollToSection("about")} className="text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white/85">
-              About
-            </button>
-            <button onClick={() => scrollToSection("services")} className="text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white/85">
-              Services
-            </button>
-            <button onClick={() => scrollToSection("gallery")} className="text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white/85">
-              Gallery
-            </button>
-            <button onClick={() => scrollToSection("contact")} className="text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white/85">
-              Contact
-            </button>
-
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="mt-2 text-sm font-semibold px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-500 transition"
-            >
-              Get Quote
-            </button>
+        <div className="brand" onClick={() => navigate("/")}>
+          <div className="brand-mark">S</div>
+          <div className="brand-text">
+            <div className="brand-name">SunTouch</div>
+            <div className="brand-tag">IT Solutions</div>
           </div>
         </div>
+
+        {/* Links */}
+        <nav className="nav-links">
+          <NavLink to="/" className={linkClass} end>
+            Home
+          </NavLink>
+          <NavLink to="/about" className={linkClass}>
+            About
+          </NavLink>
+          <NavLink to="/services" className={linkClass}>
+            Services
+          </NavLink>
+          <NavLink to="/projects" className={linkClass}>
+            Projects
+          </NavLink>
+          
+          <NavLink to="/contact" className={linkClass}>
+            Contact
+          </NavLink>
+        </nav>
+
+        {/* Actions */}
+        <div className="nav-actions">
+          <button className="btn" onClick={() => navigate("/login")}>
+            Login
+          </button>
+
+          <div className="dropdown" ref={dropdownRef}>
+            <button
+              className="btn"
+              onClick={() => setProfileOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+            >
+              Profile ▾
+            </button>
+
+            {profileOpen && (
+              <div className="dropdown-menu" role="menu">
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/my-activity");
+                  }}
+                  role="menuitem"
+                >
+                  My Activity
+                </button>
+
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/history");
+                  }}
+                  role="menuitem"
+                >
+                  History
+                </button>
+
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/view-profile");
+                  }}
+                  role="menuitem"
+                >
+                  View Profile
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button className="btn" onClick={() => navigate("/logout")}>
+            Logout
+          </button>
+        </div>
       </div>
+
+      {/* Navbar CSS inside component (simple, no extra file needed) */}
+      <style>{`
+        .nav-header{
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          z-index: 50;
+          transition: background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+          background: rgba(255,255,255,0); /* transparent at top */
+          border-bottom: 1px solid rgba(226,232,240,0);
+        }
+
+        .nav-header-scrolled{
+          background: rgba(255,255,255,0.98); /* solid white on scroll */
+          box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+          border-bottom: 1px solid rgba(226,232,240,1);
+          backdrop-filter: blur(10px);
+        }
+
+        .nav-inner{
+          height: 78px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+        }
+
+        .brand{
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .brand-mark{
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          font-weight: 800;
+          color: #fff;
+          background: var(--primary);
+          box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+        }
+
+        .brand-name{
+          font-size: 16px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          line-height: 1.1;
+        }
+
+        .brand-tag{
+          font-size: 12px;
+          color: var(--muted);
+          margin-top: 2px;
+        }
+
+        .nav-links{
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .nav-link{
+          padding: 10px 12px;
+          border-radius: 999px;
+          font-weight: 600;
+          color: var(--text);
+          border: 1px solid transparent;
+          transition: background 150ms ease, border-color 150ms ease;
+        }
+
+        .nav-link:hover{
+          background: var(--soft);
+          border-color: var(--border);
+        }
+
+        .nav-link-active{
+          background: rgba(37, 99, 235, 0.10);
+          border-color: rgba(37, 99, 235, 0.25);
+          color: var(--primary-dark);
+        }
+
+        .nav-actions{
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .dropdown{
+          position: relative;
+        }
+
+        .dropdown-menu{
+          position: absolute;
+          right: 0;
+          top: calc(100% + 10px);
+          min-width: 200px;
+          background: #fff;
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          box-shadow: var(--shadow);
+          padding: 8px;
+        }
+
+        .dropdown-item{
+          width: 100%;
+          text-align: left;
+          background: transparent;
+          border: 1px solid transparent;
+          padding: 10px 10px;
+          border-radius: 12px;
+          cursor: pointer;
+          font-weight: 600;
+          color: var(--text);
+        }
+
+        .dropdown-item:hover{
+          background: var(--soft);
+          border-color: var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px){
+          .nav-links{ display: none; }
+        }
+      `}</style>
     </header>
   );
-};
-
-export default Navbar;
+}
