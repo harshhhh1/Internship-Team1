@@ -68,6 +68,7 @@ body {
 
 .navbar__login {
   text-decoration: none;
+  list-style: none;
   padding: 0.45rem 0.9rem;
   border-radius: 6px;
   border: 1px solid #ddd;
