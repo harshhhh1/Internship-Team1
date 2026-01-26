@@ -1,0 +1,53 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #222;
+  color: white;
+}
+
+.logo {
+  font-size: 22px;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.nav-links li {
+  position: relative;
+}
+
+.nav-links a,
+.nav-links span {
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 35px;
+  left: 0;
+  background: #333;
+  list-style: none;
+  padding: 10px;
+  border-radius: 5px;
+  min-width: 150px;
+}
+
+.dropdown-menu li {
+  padding: 8px 10px;
+}
+
+.dropdown-menu li a {
+  color: white;
+}
+
+.dropdown-menu li:hover {
+  background: #444;
+}

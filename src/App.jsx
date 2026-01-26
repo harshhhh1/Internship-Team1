@@ -1,14 +1,25 @@
-import React from 'react'
-import  Home from './pages/home.jsx'
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Logout from "./pages/Logout";
+import MyActivity from "./pages/MyActivity";
+import History from "./pages/History";
+import ViewProfile from "./pages/ViewProfile";
+import Navbar from "./components/navbar";
 
 function App() {
-
   return (
     <>
-      <Home/>
+      <Navbar/>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/logout" element={<Logout />} />
+        <Route path="/my-activity" element={<MyActivity />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/view-profile" element={<ViewProfile />} />
+      </Routes>
     </>
-  )
+  );
 }
 
-export default App
+
+export default App;
