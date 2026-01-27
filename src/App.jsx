@@ -12,6 +12,10 @@ import Activity from './pages/activity.jsx'
 import Login from './pages/login.jsx'
 import Signup from './pages/signup.jsx'
 import AboutPage from './pages/about.jsx'
+import AdminLayout from './components/AdminLayout';
+import Dashboard from './pages/admin/Dashboard';
+import DashboardProfile from './pages/admin/Profile';
+import Appointments from './pages/admin/Appointments';
 
 
 function App() {
@@ -29,6 +33,12 @@ function App() {
         <Route path='/profile/activity' element={<Activity/>}/>
         <Route path='/login' element={<Login/>}/>
         <Route path='/signup' element={<Signup/>}/>
+        <Route path="/admin" element={<AdminLayout />}/>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/profile" element={<DashboardProfile />} />
+        <Route path="/dashboard/appointments" element={<Appointments />}/>
+        {/* Redirect /admin to /admin/dashboard if desired */}
+        <Route index element={<Dashboard />} />
       </Routes>
     </>
   )

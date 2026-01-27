@@ -32,6 +32,7 @@ function Navbar() {
           <ul className="navbar__links navbar__right">
             <Link to="/login"><li className="navbar__login">Login</li></Link>
             <Link to="/signup"><li className="navbar__login">Sign Up</li></Link>
+            <Link to="/dashboard"><li className="navbar__login">Dashboard</li></Link>
             <div className="navbar__profile">
               <img
                 src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
