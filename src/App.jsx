@@ -1,27 +1,48 @@
-import Navbar from "./Components/Navbar";
-import { Routes, Route } from "react-router-dom";
-
-import Home from "./Components/Home";
-import Login from "./Components/Login";
-import Signup from "./Components/Signup";
-import Profile from "./Components/Profile";
-import Activity from "./Components/Activity";
-import History from "./Components/History";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Header from "./Components/Header";
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
+import Appointments from "./pages/Appointments";
+import StatCard from "./Components/StatCard";
 
 export default function App() {
   return (
-    <>
-      <Navbar />
+    <Router>
+      <Header />
+
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/activity" element={<Activity />} />
-        <Route path="/history" element={<History />} />
+
+        {/* Dashboard Layout */}
+        <Route path="/dashboard" element={<Dashboard />}>
+          {/* Main Dashboard Stats */}
+          <Route
+            index
+            element={
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                <StatCard title="Appointments" value="124" />
+                <StatCard title="Clients" value="56" />
+                <StatCard title="Revenue" value="₹48,000" />
+              </div>
+            }
+          />
+          <Route path="profile" element={<Profile />} />
+          <Route path="appointments" element={<Appointments />} />
+        </Route>
       </Routes>
-    </>
+    </Router>
   );
 }
+
+
+
+
+
+
+
 
 
