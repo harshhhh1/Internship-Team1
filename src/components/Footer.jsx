@@ -1,68 +1,46 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React from 'react';
 
-export default function Footer() {
+const Footer = () => {
   return (
-    <footer style={{ borderTop: "1px solid var(--border)", background: "var(--soft)" }}>
-      <div className="container" style={{ padding: "34px 0" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.2fr 1fr 1fr",
-            gap: 18,
-            alignItems: "start",
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.02em" }}>
-              SunTouch Technology
-            </div>
-            <p style={{ margin: "10px 0 0", color: "var(--muted)", maxWidth: 420 }}>
-              We build modern websites, web apps, and IT solutions for businesses.
-              Clean UI, fast performance, and scalable architecture.
-            </p>
-          </div>
-
-          <div>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Company</div>
-            <div style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-              <NavLink to="/about">About</NavLink>
-              <NavLink to="/services">Services</NavLink>
-              <NavLink to="/projects">Projects</NavLink>
-            </div>
-          </div>
-
-          <div>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Contact</div>
-            <div style={{ display: "grid", gap: 8, color: "var(--muted)" }}>
-              <div>Email: contact@suntouch.in</div>
-              <div>Phone: +91 90000 00000</div>
-              <div>Location: India</div>
-            </div>
-          </div>
+    <footer className="bg-gray-900 text-gray-200 py-16 px-6">
+      <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Suntouch IT Company</h2>
+          <p>Innovative IT solutions for businesses worldwide.</p>
         </div>
 
-        <div
-          style={{
-            marginTop: 22,
-            paddingTop: 16,
-            borderTop: "1px solid var(--border)",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-            color: "var(--muted)",
-            fontSize: 14,
-          }}
-        >
-          <div>© {new Date().getFullYear()} SunTouch Technology. All rights reserved.</div>
-          <div style={{ display: "flex", gap: 14 }}>
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Support</span>
-          </div>
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
+          <ul>
+            <li className="mb-2 hover:text-white cursor-pointer">Home</li>
+            <li className="mb-2 hover:text-white cursor-pointer">About Us</li>
+            <li className="mb-2 hover:text-white cursor-pointer">Services</li>
+            <li className="mb-2 hover:text-white cursor-pointer">Contact</li>
+          </ul>
         </div>
+
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Services</h3>
+          <ul>
+            <li className="mb-2 hover:text-white cursor-pointer">Web Development</li>
+            <li className="mb-2 hover:text-white cursor-pointer">Mobile Apps</li>
+            <li className="mb-2 hover:text-white cursor-pointer">IT Consulting</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
+          <p>Email: info@suntouch.com</p>
+          <p>Phone: +91 9876543210</p>
+          <p>Address: Mumbai, India</p>
+        </div>
+      </div>
+
+      <div className="mt-12 text-center border-t border-gray-700 pt-6">
+        © 2026 Suntouch IT Company. All rights reserved.
       </div>
     </footer>
   );
-}
+};
+
+export default Footer;
