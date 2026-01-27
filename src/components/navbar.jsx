@@ -12,6 +12,8 @@ const Navbar = () => {
       <ul className="nav-links">
         <li><Link to="/login">Login</Link></li>
 
+        <li><Link to="/dashboard">Dashboard</Link></li>
+
         <li
           className="dropdown"
           onMouseEnter={() => setOpen(true)}

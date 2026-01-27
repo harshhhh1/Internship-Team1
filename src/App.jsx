@@ -4,6 +4,7 @@ import Logout from "./pages/Logout";
 import MyActivity from "./pages/MyActivity";
 import History from "./pages/History";
 import ViewProfile from "./pages/ViewProfile";
+import AdminDashboard from "./pages/AdminDashboard";
 import Navbar from "./components/navbar";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/my-activity" element={<MyActivity />} />
         <Route path="/history" element={<History />} />
         <Route path="/view-profile" element={<ViewProfile />} />
+        <Route path="/dashboard/*" element={<AdminDashboard />} />
       </Routes>
     </>
   );
