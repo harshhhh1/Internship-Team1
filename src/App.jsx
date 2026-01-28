@@ -38,7 +38,7 @@ function App() {
         <Route path="/dashboard/profile" element={<DashboardProfile />} />
         <Route path="/dashboard/appointments" element={<Appointments />}/>
         {/* Redirect /admin to /admin/dashboard if desired */}
-        <Route index element={<Dashboard />} />
+        {/* <Route index element={<Dashboard />} /> */}
       </Routes>
     </>
   )
