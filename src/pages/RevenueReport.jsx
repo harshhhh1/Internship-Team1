@@ -1,82 +1,67 @@
-import React from "react";
+import "./RevenueReportPro.css";
 
-const RevenueReport = () => {
+const doctors = [
+  { id: 1, name: "Dr. Rahul Sharma", status: "Active", cases: 320, salary: "₹12,00,000" },
+  { id: 2, name: "Dr. Anjali Mehta", status: "On Leave", cases: 210, salary: "₹9,50,000" },
+  { id: 3, name: "Dr. Aman Verma", status: "Inactive", cases: 180, salary: "₹8,20,000" },
+  { id: 4, name: "Dr. Sneha Patil", status: "Active", cases: 402, salary: "₹14,00,000" },
+  { id: 5, name: "Dr. Rakesh Nair", status: "Active", cases: 298, salary: "₹11,80,000" },
+  { id: 6, name: "Dr. Pooja Singh", status: "On Leave", cases: 165, salary: "₹7,90,000" },
+  { id: 7, name: "Dr. Arjun Kapoor", status: "Active", cases: 510, salary: "₹18,00,000" },
+  { id: 8, name: "Dr. Kavita Joshi", status: "Inactive", cases: 120, salary: "₹6,40,000" },
+  { id: 9, name: "Dr. Mohit Jain", status: "Active", cases: 356, salary: "₹13,50,000" },
+  { id: 10, name: "Dr. Neha Kulkarni", status: "Active", cases: 289, salary: "₹10,20,000" },
+  { id: 11, name: "Dr. Sameer Khan", status: "On Leave", cases: 198, salary: "₹8,90,000" },
+];
+
+export default function RevenueReport() {
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Page Title */}
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Revenue & Report
-      </h1>
+    <div className="rev-container">
+      <h1 className="rev-title">Revenue & Report</h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatCard
-          title="Revenue This Month"
-          value="₹5,00,000"
-          subtitle="↑ 12% from last month"
-        />
-        <StatCard
-          title="Total Income"
-          value="₹12,50,000"
-          subtitle="↑ 8% from last year"
-        />
-        <StatCard
-          title="Patients"
-          value="11,000"
-          subtitle="↑ 4% this month"
-        />
+      {/* STATS */}
+      <div className="rev-stats">
+        <StatCard title="Revenue This Month" value="₹5,00,000" trend="↑ 12%" />
+        <StatCard title="Total Income" value="₹12,50,000" trend="↑ 8%" />
+        <StatCard title="Patients" value="11,000" trend="↑ 4%" />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search doctor..."
-          className="w-full md:flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <input
-          type="date"
-          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* FILTER BAR */}
+      <div className="filter-bar">
+        <input placeholder="Search doctor..." />
+        <input type="date" />
+        <input type="time" />
+        <select>
+          <option>All Status</option>
+          <option>Active</option>
+          <option>On Leave</option>
+          <option>Inactive</option>
+        </select>
       </div>
 
-      {/* Doctor List */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Doctor List
-          </h2>
-        </div>
-
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+      {/* TABLE */}
+      <div className="table-card">
+        <h2>Doctor List</h2>
+        <table>
+          <thead>
             <tr>
-              <th className="px-6 py-3">Sr No</th>
-              <th className="px-6 py-3">Name</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Total Cases</th>
-              <th className="px-6 py-3">Annual Salary</th>
+              <th>Sr No</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Total Cases</th>
+              <th>Annual Salary</th>
             </tr>
           </thead>
-
           <tbody>
-            {doctorData.map((doctor, index) => (
-              <tr
-                key={index}
-                className="border-b last:border-none hover:bg-gray-50 transition"
-              >
-                <td className="px-6 py-4">{index + 1}</td>
-                <td className="px-6 py-4 font-medium text-gray-800">
-                  {doctor.name}
+            {doctors.map((d) => (
+              <tr key={d.id}>
+                <td>{d.id}</td>
+                <td>{d.name}</td>
+                <td className={`status ${d.status.replace(" ", "").toLowerCase()}`}>
+                  {d.status}
                 </td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={doctor.status} />
-                </td>
-                <td className="px-6 py-4">{doctor.cases}</td>
-                <td className="px-6 py-4 font-semibold">
-                  ₹{doctor.salary}
-                </td>
+                <td>{d.cases}</td>
+                <td>{d.salary}</td>
               </tr>
             ))}
           </tbody>
@@ -84,54 +69,26 @@ const RevenueReport = () => {
       </div>
     </div>
   );
-};
+}
 
-/* ---------------- Sub Components ---------------- */
-
-const StatCard = ({ title, value, subtitle }) => {
+function StatCard({ title, value, trend }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <p className="text-sm text-gray-500 mb-1">{title}</p>
-      <h2 className="text-2xl font-bold text-gray-800">{value}</h2>
-      <p className="text-xs text-green-600 mt-2">{subtitle}</p>
+    <div className="stat-card">
+      <p>{title}</p>
+      <h2>{value}</h2>
+      <span>{trend}</span>
+      <div className="mini-graph">
+        <div style={{ height: "40%" }}></div>
+        <div style={{ height: "70%" }}></div>
+        <div style={{ height: "55%" }}></div>
+        <div style={{ height: "85%" }}></div>
+        <div style={{ height: "60%" }}></div>
+      </div>
     </div>
   );
-};
+}
 
-const StatusBadge = ({ status }) => {
-  const base =
-    "px-3 py-1 rounded-full text-xs font-medium inline-block";
 
-  const styles = {
-    Active: "bg-green-100 text-green-700",
-    Inactive: "bg-red-100 text-red-700",
-    OnLeave: "bg-yellow-100 text-yellow-700",
-  };
 
-  return <span className={`${base} ${styles[status]}`}>{status}</span>;
-};
 
-/* ---------------- Mock Data ---------------- */
 
-const doctorData = [
-  {
-    name: "Dr. Rahul Sharma",
-    status: "Active",
-    cases: 320,
-    salary: "12,00,000",
-  },
-  {
-    name: "Dr. Anjali Mehta",
-    status: "OnLeave",
-    cases: 210,
-    salary: "9,50,000",
-  },
-  {
-    name: "Dr. Aman Verma",
-    status: "Inactive",
-    cases: 180,
-    salary: "8,20,000",
-  },
-];
-
-export default RevenueReport;
