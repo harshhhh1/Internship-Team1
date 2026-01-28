@@ -16,6 +16,9 @@ import AdminLayout from './components/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import DashboardProfile from './pages/admin/Profile';
 import Appointments from './pages/admin/Appointments';
+import RevenueReport from './pages/admin/revenueandreport.jsx'
+import Staff from './pages/admin/staff.js'
+import Receptionist from './pages/admin/receptionist.js'
 
 
 function App() {
@@ -37,6 +40,10 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/profile" element={<DashboardProfile />} />
         <Route path="/dashboard/appointments" element={<Appointments />}/>
+        <Route path="/dashboard/staff" element={<Staff />}/>
+        <Route path="/dashboard/revenue-and-report" element={<RevenueReport />}/>
+        <Route path="/dashboard/receptionist" element={<Receptionist />}/>
+
         {/* Redirect /admin to /admin/dashboard if desired */}
         {/* <Route index element={<Dashboard />} /> */}
       </Routes>
