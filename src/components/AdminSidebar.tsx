@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-const AdminSidebar: React.FC = () => {
+
+function AdminSidebar() {
   const getLinkStyle = ({ isActive }: { isActive: boolean }) => ({
     display: 'block',
     padding: '10px 15px',
@@ -29,9 +30,12 @@ const AdminSidebar: React.FC = () => {
         <NavLink to="/dashboard" end style={getLinkStyle}>Dashboard</NavLink>
         <NavLink to="/dashboard/profile" style={getLinkStyle}>Profile</NavLink>
         <NavLink to="/dashboard/appointments" style={getLinkStyle}>Appointments</NavLink>
+        <NavLink to="/dashboard/staff" style={getLinkStyle}>Staff</NavLink>
+        <NavLink to="/dashboard/receptionist" style={getLinkStyle}>Receptionist</NavLink>
+        <NavLink to="/dashboard/revenue-and-report" style={getLinkStyle}>Revenue & Report</NavLink>
       </nav>
     </div>
   );
-};
+}
 
-export default AdminSidebar;
+export default AdminSidebar
