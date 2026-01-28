@@ -11,7 +11,7 @@ function Dashboard() {
     <div className="flex gap-8 overflow-y-auto">
 
       {/* Left Column - Main Content */}
-      <div className="flex-[2] flex flex-col gap-6">
+      <div className="flex-2 flex flex-col gap-6">
 
         {/* Header */}
         <div>

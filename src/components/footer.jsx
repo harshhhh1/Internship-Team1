@@ -6,7 +6,7 @@ function Footer() {
       <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4 md:mb-0">Dr.Hospital</span>
+            <span className="text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent mb-4 md:mb-0">Dr.Hospital</span>
 
             <ul className="flex space-x-8">
               <li><a href="/about" className="text-gray-500 hover:text-primary transition-colors">About</a></li>

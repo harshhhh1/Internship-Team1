@@ -14,9 +14,9 @@ function Navbar() {
     <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 border-b border-gray-100 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.location.href = '/'}>
+          <div className="shrink-0 flex items-center cursor-pointer" onClick={() => window.location.href = '/'}>
             <img src={logo} alt="Company Logo" className="h-10 w-auto" />
-            <span className="ml-3 text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Dr.Hospital</span>
+            <span className="ml-3 text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Dr.Hospital</span>
           </div>
 
           <ul className="hidden md:flex space-x-8 items-center">
