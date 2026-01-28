@@ -8,10 +8,13 @@ import Profile from './pages/Profile';
 import Appointments from './pages/Appointments';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import Receptionist from './pages/Receptionist';
+
 
 function App() {
   return (
     <Router>
+      <Receptionist/>
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -23,6 +26,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="appointments" element={<Appointments />} />
+          
         </Route>
 
         <Route path="*" element={<div className="p-10 text-center">Page Not Found</div>} />
