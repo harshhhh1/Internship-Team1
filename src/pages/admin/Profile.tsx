@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AdminSidebar from '../../components/AdminSidebar';
 import InfoField from '../../components/InfoField';
 
 interface ProfileData {
@@ -32,7 +31,7 @@ function DashboardProfile() {
         // Replace this with actual API call
         // const response = await fetch('/api/patient/profile');
         // const data = await response.json();
-        
+
         // Mock data
         const mockData: ProfileData = {
           id: '1',
@@ -66,8 +65,8 @@ function DashboardProfile() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8f7ff', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#6b7280' }}>Loading profile...</p>
+      <div className="flex min-h-screen items-center justify-center bg-bg-light">
+        <p className="text-gray-500">Loading profile...</p>
       </div>
     );
   }
@@ -75,44 +74,43 @@ function DashboardProfile() {
   if (!profile) return null;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8f7ff', fontFamily: 'sans-serif' }}>
-      <AdminSidebar />
-      <div style={{ flex: 1, padding: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '24px' }}>Patient Profile</h1>
-        
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          
+    <div className="min-h-screen">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Patient Profile</h1>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+
           {/* Left Column - Profile Card (40%) */}
-          <div style={{ flex: '2', minWidth: '300px', backgroundColor: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            
+          <div className="w-full lg:w-1/3 bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col items-center">
+
             {/* Avatar */}
-            <div style={{ width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#b8b8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', fontSize: '48px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-              <span ><img role="img"  aria-label="avatar" src={profile.avatar} alt={`${profile.firstName}'s avatar`} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /></span>
+            <div className="w-32 h-32 rounded-full bg-secondary flex items-center justify-center mb-6 shadow-sm overflow-hidden ring-4 ring-accent-cream">
+              <img src={profile.avatar} alt={`${profile.firstName}'s avatar`} className="w-full h-full object-cover" />
             </div>
 
             {/* Name & Age */}
-            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '4px', textAlign: 'center' }}>{profile.firstName} {profile.lastName}</h2>
-            <p style={{ color: '#6b7280', fontSize: '16px', marginBottom: '20px', fontWeight: '500' }}>{profile.age} Years Old</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">{profile.firstName} {profile.lastName}</h2>
+            <p className="text-gray-500 font-medium mb-6">{profile.age} Years Old</p>
 
             {/* Mobile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '30px', color: '#374151', backgroundColor: '#ffeedd', padding: '8px 16px', borderRadius: '9999px' }}>
+            <div className="flex items-center gap-3 mb-8 text-gray-700 bg-accent-cream/50 px-5 py-2 rounded-full">
               <span role="img" aria-label="phone">📞</span>
-              <span style={{ fontWeight: '600', fontSize: '14px' }}>{profile.phone}</span>
+              <span className="font-semibold text-sm">{profile.phone}</span>
             </div>
 
             {/* Diagnosis */}
-            <div style={{ width: '100%', marginBottom: '24px' }}>
-              <p style={{ fontSize: '12px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px' }}>Diagnosed with</p>
-              <div style={{ backgroundColor: '#ffeedd', color: '#9381ff', padding: '12px', borderRadius: '12px', fontWeight: '600', textAlign: 'center', border: '1px solid #ffd8be' }}>
+            <div className="w-full mb-6">
+              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Diagnosed with</p>
+              <div className="bg-accent-cream text-primary p-3 rounded-xl font-semibold text-center border border-accent-peach">
                 {profile.diagnosis}
               </div>
             </div>
 
             {/* Notes */}
-            <div style={{ width: '100%' }}>
-              <p style={{ fontSize: '12px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px' }}>Notes</p>
-              <textarea 
-                style={{ width: '100%', height: '120px', padding: '12px', borderRadius: '12px', border: '1px solid #ffd8be', resize: 'none', fontSize: '14px', color: '#4b5563', backgroundColor: '#f8f7ff', outline: 'none', fontFamily: 'inherit' }}
+            <div className="w-full">
+              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Notes</p>
+              <textarea
+                className="w-full h-32 p-3 rounded-xl border border-accent-peach/50 resize-none text-sm text-gray-600 bg-bg-light focus:outline-none focus:ring-2 focus:ring-primary/20"
                 defaultValue={profile.notes}
               />
             </div>
@@ -120,10 +118,10 @@ function DashboardProfile() {
           </div>
 
           {/* Right Column - Personal Information (60%) */}
-          <div style={{ flex: '3', minWidth: '300px', backgroundColor: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '24px', borderBottom: '1px solid #ffeedd', paddingBottom: '16px' }}>Personal Information</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+          <div className="w-full lg:w-2/3 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-100">Personal Information</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InfoField label="First Name" value={profile.firstName} />
               <InfoField label="Last Name" value={profile.lastName} />
               <InfoField label="Email Address" value={profile.email} />

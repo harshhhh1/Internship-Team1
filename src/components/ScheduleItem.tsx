@@ -1,10 +1,10 @@
 import React from 'react';
 
 const ScheduleItem = ({ time, title, color }: any) => (
-  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-    <div style={{ fontSize: '12px', color: '#6b7280', minWidth: '60px', paddingTop: '2px' }}>{time}</div>
-    <div style={{ padding: '8px 12px', backgroundColor: `${color}15`, borderLeft: `3px solid ${color}`, borderRadius: '4px', flex: 1 }}>
-      <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>{title}</p>
+  <div className="flex gap-3 items-start">
+    <div className="text-xs text-gray-500 min-w-[60px] pt-1">{time}</div>
+    <div className="flex-1 py-2 px-3 rounded-md border-l-4" style={{ backgroundColor: `${color}`, borderColor: color }}>
+      <p className="text-sm font-semibold text-gray-700 m-0">{title}</p>
     </div>
   </div>
 );

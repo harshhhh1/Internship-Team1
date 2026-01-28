@@ -1,9 +1,11 @@
 import React from 'react';
 
 const InfoField = ({ label, value, fullWidth }: { label: string, value: string, fullWidth?: boolean }) => (
-  <div style={{ gridColumn: fullWidth ? '1 / -1' : 'auto' }}>
-    <label style={{ display: 'block', fontSize: '13px', color: '#6b7280', marginBottom: '6px', fontWeight: '500' }}>{label}</label>
-    <div style={{ fontSize: '15px', color: '#111827', fontWeight: '500', padding: '10px 12px', backgroundColor: '#f8f7ff', borderRadius: '8px', border: '1px solid #ffeedd' }}>{value}</div>
+  <div className={fullWidth ? 'col-span-full' : ''}>
+    <label className="block text-xs text-gray-500 mb-1 font-medium ml-1">{label}</label>
+    <div className="text-sm font-medium text-gray-900 px-4 py-3 bg-bg-light rounded-lg border border-accent-peach/30">
+      {value}
+    </div>
   </div>
 );
 

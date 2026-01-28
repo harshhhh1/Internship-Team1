@@ -1,16 +1,18 @@
 import React from 'react';
 
 const KpiCard = ({ title, value, trend, isPositive, icon }: any) => (
-  <div style={{ flex: 1, minWidth: '240px', backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+  <div className="flex-1 min-w-[240px] bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex justify-between items-start hover:shadow-md transition-all">
     <div>
-      <p style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>{title}</p>
-      <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>{value}</h2>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ backgroundColor: isPositive ? '#ecfdf5' : '#fef2f2', color: isPositive ? '#059669' : '#dc2626', padding: '2px 8px', borderRadius: '9999px', fontSize: '12px', fontWeight: '600' }}>{trend}</span>
-        <span style={{ color: '#9ca3af', fontSize: '12px' }}>vs last month</span>
+      <p className="text-gray-500 text-sm font-medium mb-2">{title}</p>
+      <h2 className="text-3xl font-bold text-gray-900 mb-2">{value}</h2>
+      <div className="flex items-center gap-2">
+        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          {trend}
+        </span>
+        <span className="text-gray-400 text-xs">vs last month</span>
       </div>
     </div>
-    <div style={{ backgroundColor: '#ffeedd', padding: '12px', borderRadius: '12px' }}>{icon}</div>
+    <div className="bg-accent-cream p-3 rounded-xl">{icon}</div>
   </div>
 );
 

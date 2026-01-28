@@ -1,40 +1,31 @@
 export default function SignupForm() {
   return (
-       <div style={styles.card}>
-      <h2>Signup</h2>
-      <input style={styles.input} placeholder="Username" />
-      <input style={styles.input} placeholder="Email" />
-      <input style={styles.input} type="password" placeholder="Password" />
-      <input style={styles.input} type="password" placeholder=" Confirm Password" />
-      <button style={styles.btn}>Sign up</button>
+    <div className="max-w-md mx-auto mt-24 p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+      <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Create Account</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Choose a username" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Enter your email" type="email" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="password" placeholder="Create a password" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+          <input className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="password" placeholder="Confirm your password" />
+        </div>
+        <button className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 mt-4">
+          Sign Up
+        </button>
+        <p className="text-center text-sm text-gray-600 mt-4">
+          Already have an account? <a href="/login" className="text-primary hover:text-secondary font-medium">Login</a>
+        </p>
+      </div>
     </div>
   );
-}
-
-const styles = {
-  card: {
-    maxWidth: 400,
-    margin: "100px auto",
-    padding: 30,
-    borderRadius: 12,
-    background: "white",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-    textAlign: "center"
-  },
-  input: {
-    width: "100%",
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 8,
-    border: "1px solid #ccc"
-  },
-  btn: {
-    width: "100%",
-    padding: 12,
-    background: "#0f172a",
-    color: "white",
-    border: "none",
-    borderRadius: 8,
-    cursor: "pointer"
-  }
 }
