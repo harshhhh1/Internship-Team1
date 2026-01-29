@@ -1,17 +1,6 @@
 import React, { useState } from 'react'
 
-interface StaffMember {
-  srNo: number;
-  id: string;
-  name: string;
-  type: 'doctor' | 'staff' | 'admin';
-  onLeave: boolean;
-  contact: string;
-  email: string;
-  appointedAt: string;
-}
-
-const initialStaffData: StaffMember[] = [
+const staffData = [
   {
     srNo: 1,
     id: 'STF001',
@@ -75,9 +64,9 @@ const initialStaffData: StaffMember[] = [
 ];
 
 function Staff() {
-  const [staffList, setStaffList] = useState<StaffMember[]>(initialStaffData);
+  const [staffList, setStaffList] = useState(staffData);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<Omit<StaffMember, 'srNo' | 'id'>>({
+  const [formData, setFormData] = useState({
     name: '',
     type: 'staff',
     onLeave: false,
@@ -91,19 +80,17 @@ function Staff() {
     return `STF${String(lastId + 1).padStart(3, '0')}`;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const newStaff: StaffMember = {
+    const newStaff = {
       srNo: staffList.length + 1,
       id: generateId(),
       ...formData
@@ -205,7 +192,7 @@ function Staff() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Staff</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -215,7 +202,7 @@ function Staff() {
                   type="text"
                   value={generateId()}
                   disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
                 />
               </div>
               <div>

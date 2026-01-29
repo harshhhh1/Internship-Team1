@@ -16,7 +16,7 @@ function DashboardSidebar() {
         <NavLink to="/dashboard" end className={linkClasses}><img src='/dashboard.svg' alt="Dashboard"/>Dashboard</NavLink>
         <NavLink to="/dashboard/profile" className={linkClasses}><img src='/account_circle.svg' alt="Profile"/>Profile</NavLink>
         <NavLink to="/dashboard/appointments" className={linkClasses}><img src='/appointment.svg' alt="Appointments"/>Appointments</NavLink>
-        <NavLink to="/dashboard/appointments" className={linkClasses}><img src='/services.svg' alt="Appointments"/>Services</NavLink>
+        <NavLink to="/dashboard/services" className={linkClasses}><img src='/services.svg' alt="Appointments"/>Services</NavLink>
         <NavLink to="/dashboard/staff" className={linkClasses}><img src='/staff.svg' alt="Staff"/>Staff</NavLink>
         <NavLink to="/dashboard/receptionist" className={linkClasses}><img src='/receptionist.svg' alt="Receptionist"/>Receptionist</NavLink>
         <NavLink to="/dashboard/revenue-and-report" className={linkClasses}><img src='/rar.svg' alt="Revenue & Report"/>Revenue & Report</NavLink>

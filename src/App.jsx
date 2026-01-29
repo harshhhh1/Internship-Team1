@@ -16,7 +16,8 @@ import Dashboard from './pages/admin/Dashboard';
 import DashboardProfile from './pages/admin/Profile';
 import Appointments from './pages/admin/Appointments';
 import RevenueReport from './pages/admin/revenueandreport.jsx'
-import Staff from './pages/admin/staff'
+import Staff from './pages/admin/staff.jsx'
+import Services from './pages/admin/services.jsx'
 import Receptionist from './pages/admin/receptionist'
 
 
@@ -41,6 +42,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="profile" element={<DashboardProfile />} />
           <Route path="appointments" element={<Appointments />} />
+          <Route path="services" element={<Services />} />
           <Route path="staff" element={<Staff />} />
           <Route path="revenue-and-report" element={<RevenueReport />} />
           <Route path="receptionist" element={<Receptionist />} />
