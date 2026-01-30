@@ -2,9 +2,9 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const data = [
-  { name: '13–17 Years', value: 25, color: '#81fdffff' },
-  { name: '18–29 Years', value: 45, color: '#6cea4dff' },
-  { name: '30–45 Years', value: 30, color: '#848588ff' },
+  { name: '13-17 Years', value: 25, color: '#81fdffff' },
+  { name: '18-29 Years', value: 45, color: '#6cea4dff' },
+  { name: '30-45 Years', value: 30, color: '#848588ff' },
 ];
 
 const Chart = () => (

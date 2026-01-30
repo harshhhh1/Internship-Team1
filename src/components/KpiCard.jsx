@@ -1,7 +1,7 @@
 import React from 'react';
 
-const KpiCard = ({ title, value, trend, isPositive, icon }: any) => (
-  <div className="flex-1 min-w-[240px] bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex justify-between items-start hover:shadow-md transition-all">
+const KpiCard = ({ title, value, trend, isPositive, icon }) => (
+  <div className="flex-1 min-w-60 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex justify-between items-start hover:shadow-md transition-all">
     <div>
       <p className="text-gray-500 text-sm font-medium mb-2">{title}</p>
       <h2 className="text-3xl font-bold text-gray-900 mb-2">{value}</h2>

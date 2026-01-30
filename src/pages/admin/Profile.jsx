@@ -1,27 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import InfoField from '../../components/InfoField';
 
-interface ProfileData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  age: number;
-  phone: string;
-  email: string;
-  avatar: string;
-  diagnosis: string;
-  notes: string;
-  dob: string;
-  gender: string;
-  address: string;
-  city: string;
-  zipCode: string;
-  memberStatus: string;
-  registeredDate: string;
-}
-
 function DashboardProfile() {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +14,7 @@ function DashboardProfile() {
         // const data = await response.json();
 
         // Mock data
-        const mockData: ProfileData = {
+        const mockData = {
           id: '1',
           firstName: 'Marcus',
           lastName: 'Horizon',

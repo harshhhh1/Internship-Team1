@@ -61,7 +61,7 @@ const RevenueReport = () => {
         {/* FILTER BAR */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center">
           <input
-            className="flex-1 min-w-[300px] px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            className="flex-1 min-w-75 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
             placeholder="Search doctor..."
           />
           <div className="flex items-center gap-2">
@@ -127,15 +127,15 @@ const RevenueReport = () => {
 
 function StatCard({ title, value, trend, data, color }) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border flex flex-col justify-between h-[250px] transform hover:scale-[1.02] transition-transform duration-300 ">
+    <div className="bg-white rounded-xl p-6 shadow-sm border flex flex-col justify-between h-62.5 transform hover:scale-[1.02] transition-transform duration-300 ">
       <div>
         <p className="text-gray-500 text-sm font-medium uppercase tracking-wide ">{title}</p>
         <div className="flex items-baseline gap-2 mt-2">
-          <h2 className="text-3xl font-bold text-gray-900 text-green-400">{value}</h2>
+          <h2 className="text-3xl font-bold text-green-400">{value}</h2>
           <span className="text-sm font-semibold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">{trend}</span>
         </div>
       </div>
-      <div className="w-full h-[120px] mt-4">
+      <div className="w-full h-30 mt-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />

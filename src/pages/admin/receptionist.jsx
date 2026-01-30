@@ -16,7 +16,7 @@ function Receptionist() {
     { id: 7, time: "11:00", name: "Rahul Patil", gender: "Male", age: 45, reason: "Follow-up", doctor: "Dr. Joshi", status: "completed" },
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'checked': return 'bg-blue-100 text-blue-700';
       case 'waiting': return 'bg-yellow-100 text-yellow-700';
@@ -25,7 +25,7 @@ function Receptionist() {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status) => {
     switch (status) {
       case 'checked': return 'Checked In';
       case 'waiting': return 'Waiting';
