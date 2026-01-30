@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Appointments from "./pages/Appointments";
 import StatCard from "./Components/StatCard";
 import RevenueReport from "./pages/RevenueReport";
+import Reviews from "./pages/Reviews";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="RevenueReport" element={<RevenueReport />} />
+          <Route path="Reviews" element={<Reviews />} />
         </Route>
       </Routes>
     </Router>
