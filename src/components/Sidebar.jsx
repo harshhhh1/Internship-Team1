@@ -14,6 +14,7 @@ const Sidebar = () => {
           { name: "Profile", path: "/admin/profile" },
           { name: "Appointments", path: "/admin/appointments" },
           { name: "Receptionist", path: "/admin/receptionist" },
+          
         ].map((item) => (
           <NavLink
             key={item.name}

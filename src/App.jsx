@@ -9,11 +9,13 @@ import Appointments from './pages/Appointments';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import Receptionist from './pages/Receptionist';
+import Security from './pages/Security';
 
 
 function App() {
   return (
     <Router>
+      <Security/>
       <Receptionist/>
       <Header />
       <Routes>
