@@ -1,41 +1,57 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import '../styles/navbastyle.css';
+import React, { useState } from 'react';
+import logo from '../assets/learnyticslogopng.png';
+import { Link } from 'react-router-dom';
 
-const Navbar = () => {
-  const [open, setOpen] = useState(false);
+
+function Navbar() {
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!isDropdownOpen);
+  };
 
   return (
-    <nav className="navbar">
-      <h2 className="logo">MyApp</h2>
+    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 border-b border-gray-100 shadow-sm transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="shrink-0 flex items-center cursor-pointer" onClick={() => window.location.href = '/'}>
+            <img src={logo} alt="Company Logo" className="h-10 w-auto" />
+            <span className="ml-3 text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Dr.Hospital</span>
+          </div>
 
-      <ul className="nav-links">
-        <li><Link to="/login">Login</Link></li>
+          <ul className="hidden md:flex space-x-8 items-center">
+            <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Home</li></Link>
+            <Link to="/status" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Status</li></Link>
+            <Link to="/about" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>About</li></Link>
+            <Link to="/contact" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Contact</li></Link>
+          </ul>
 
-        <li><Link to="/dashboard">Dashboard</Link></li>
-
-        <li
-          className="dropdown"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-        >
-          <span>Profile ▾</span>
-
-          {open && (
-            <ul className="dropdown-menu">
-              <li><Link to="/activity">My Activity</Link></li>
-              <li><Link to="/history">History</Link></li>
-              <li><Link to="/view-profile">View Profile</Link></li>
+          <div className="flex items-center space-x-4">
+            <ul className="flex items-center space-x-4">
+              <Link to="/login"><li className="text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Login</li></Link>
+              <Link to="/signup"><li className="bg-primary text-white px-5 py-2 rounded-full hover:bg-secondary transition-colors shadow-md hover:shadow-lg cursor-pointer font-medium">Sign Up</li></Link>
+              <Link to="/dashboard"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>
+              <div className="relative ml-4">
+                <img
+                  src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
+                  alt="Profile"
+                  className="h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all object-cover"
+                  onClick={toggleDropdown}
+                />
+                {isDropdownOpen && (
+                  <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-down z-50">
+                    <Link to="/profile/activity" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>My Activity</li></Link>
+                    <Link to="/profile/history" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>History</li></Link>
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>View Profile</li></Link>
+                  </ul>
+                )}
+              </div>
             </ul>
-          )}
-        </li>
-
-        <li><Link to="/">Logout</Link></li>
-      </ul>
+          </div>
+        </div>
+      </div>
     </nav>
-
   );
-};
+}
 
 export default Navbar;
-
