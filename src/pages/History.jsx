@@ -1,4 +1,13 @@
+import React from 'react'
+import HistoryComponent from '../components/historytable'
+
 function History() {
-  return <h1>History Page</h1>;
+  return (
+    <div>
+      <HistoryComponent/>
+      
+    </div>
+  )
 }
-export default History;
+
+export default History
