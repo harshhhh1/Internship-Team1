@@ -1,9 +1,11 @@
 import React from 'react'
 import About from '../components/about'
+import Footer from '../components/footer';
 export default function AboutPage() {
   return (
-    <div className='w-full text-left mask-none bg-none'>
+    <div >
       <About/>
+      <Footer/>
     </div>
   )
 }

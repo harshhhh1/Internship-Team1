@@ -5,6 +5,7 @@ function History() {
   return (
     <div>
       <HistoryComponent/>
+      
     </div>
   )
 }

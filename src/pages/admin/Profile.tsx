@@ -1,68 +1,138 @@
-import React from 'react';
-import AdminSidebar from '../../components/AdminSidebar';
+import React, { useState, useEffect } from 'react';
+import InfoField from '../../components/InfoField';
+
+interface ProfileData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  phone: string;
+  email: string;
+  avatar: string;
+  diagnosis: string;
+  notes: string;
+  dob: string;
+  gender: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  memberStatus: string;
+  registeredDate: string;
+}
 
 function DashboardProfile() {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate fetching data from backend
+    const fetchProfileData = async () => {
+      try {
+        // Replace this with actual API call
+        // const response = await fetch('/api/patient/profile');
+        // const data = await response.json();
+
+        // Mock data
+        const mockData: ProfileData = {
+          id: '1',
+          firstName: 'Marcus',
+          lastName: 'Horizon',
+          age: 24,
+          phone: '+1 (555) 000-1234',
+          email: 'marcus.h@example.com',
+          avatar: 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
+          diagnosis: 'Seasonal Allergies',
+          notes: 'Patient reports mild symptoms during spring. Recommended daily antihistamine.',
+          dob: 'June 12, 1999',
+          gender: 'Male',
+          address: '123 Health St, Wellness City',
+          city: 'San Francisco',
+          zipCode: '94103',
+          memberStatus: 'Active Member',
+          registeredDate: 'Jan 15, 2023'
+        };
+
+        setProfile(mockData);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg-light">
+        <p className="text-gray-500">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'sans-serif' }}>
-      <AdminSidebar />
-      <div style={{ flex: 1, padding: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '24px' }}>Patient Profile</h1>
-        
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          
+    <div className="min-h-screen">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Patient Profile</h1>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+
           {/* Left Column - Profile Card (40%) */}
-          <div style={{ flex: '2', minWidth: '300px', backgroundColor: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            
+          <div className="w-full lg:w-1/3 bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col items-center">
+
             {/* Avatar */}
-            <div style={{ width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', fontSize: '48px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-              <span ><img role="img"  aria-label="avatar" src="https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp" alt="" /></span>
+            <div className="w-32 h-32 rounded-full bg-secondary flex items-center justify-center mb-6 shadow-sm overflow-hidden ring-4 ring-accent-cream">
+              <img src={profile.avatar} alt={`${profile.firstName}'s avatar`} className="w-full h-full object-cover" />
             </div>
 
             {/* Name & Age */}
-            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '4px', textAlign: 'center' }}>Marcus Horizon</h2>
-            <p style={{ color: '#6b7280', fontSize: '16px', marginBottom: '20px', fontWeight: '500' }}>24 Years Old</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">{profile.firstName} {profile.lastName}</h2>
+            <p className="text-gray-500 font-medium mb-6">{profile.age} Years Old</p>
 
             {/* Mobile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '30px', color: '#374151', backgroundColor: '#f9fafb', padding: '8px 16px', borderRadius: '9999px' }}>
+            <div className="flex items-center gap-3 mb-8 text-gray-700 bg-accent-cream/50 px-5 py-2 rounded-full">
               <span role="img" aria-label="phone">📞</span>
-              <span style={{ fontWeight: '600', fontSize: '14px' }}>+1 (555) 000-1234</span>
+              <span className="font-semibold text-sm">{profile.phone}</span>
             </div>
 
             {/* Diagnosis */}
-            <div style={{ width: '100%', marginBottom: '24px' }}>
-              <p style={{ fontSize: '12px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px' }}>Diagnosed with</p>
-              <div style={{ backgroundColor: '#fff7ed', color: '#b45309', padding: '12px', borderRadius: '12px', fontWeight: '600', textAlign: 'center', border: '1px solid #ffedd5' }}>
-                Seasonal Allergies
+            <div className="w-full mb-6">
+              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Diagnosed with</p>
+              <div className="bg-accent-cream text-primary p-3 rounded-xl font-semibold text-center border border-accent-peach">
+                {profile.diagnosis}
               </div>
             </div>
 
             {/* Notes */}
-            <div style={{ width: '100%' }}>
-              <p style={{ fontSize: '12px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '8px' }}>Notes</p>
-              <textarea 
-                style={{ width: '100%', height: '120px', padding: '12px', borderRadius: '12px', border: '1px solid #e5e7eb', resize: 'none', fontSize: '14px', color: '#4b5563', backgroundColor: '#f9fafb', outline: 'none', fontFamily: 'inherit' }}
-                defaultValue="Patient reports mild symptoms during spring. Recommended daily antihistamine."
+            <div className="w-full">
+              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Notes</p>
+              <textarea
+                className="w-full h-32 p-3 rounded-xl border border-accent-peach/50 resize-none text-sm text-gray-600 bg-bg-light focus:outline-none focus:ring-2 focus:ring-primary/20"
+                defaultValue={profile.notes}
               />
             </div>
 
           </div>
 
           {/* Right Column - Personal Information (60%) */}
-          <div style={{ flex: '3', minWidth: '300px', backgroundColor: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '24px', borderBottom: '1px solid #f3f4f6', paddingBottom: '16px' }}>Personal Information</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-              <InfoField label="First Name" value="Marcus" />
-              <InfoField label="Last Name" value="Horizon" />
-              <InfoField label="Email Address" value="marcus.h@example.com" />
-              <InfoField label="Phone" value="+1 (555) 000-1234" />
-              <InfoField label="Date of Birth" value="June 12, 1999" />
-              <InfoField label="Gender" value="Male" />
-              <InfoField label="Address" value="123 Health St, Wellness City" fullWidth />
-              <InfoField label="City" value="San Francisco" />
-              <InfoField label="Zip Code" value="94103" />
-              <InfoField label="Member Status" value="Active Member" />
-              <InfoField label="Registered Date" value="Jan 15, 2023" />
+          <div className="w-full lg:w-2/3 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-100">Personal Information</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InfoField label="First Name" value={profile.firstName} />
+              <InfoField label="Last Name" value={profile.lastName} />
+              <InfoField label="Email Address" value={profile.email} />
+              <InfoField label="Phone" value={profile.phone} />
+              <InfoField label="Date of Birth" value={profile.dob} />
+              <InfoField label="Gender" value={profile.gender} />
+              <InfoField label="Address" value={profile.address} fullWidth />
+              <InfoField label="City" value={profile.city} />
+              <InfoField label="Zip Code" value={profile.zipCode} />
+              <InfoField label="Member Status" value={profile.memberStatus} />
+              <InfoField label="Registered Date" value={profile.registeredDate} />
             </div>
           </div>
 
@@ -71,12 +141,5 @@ function DashboardProfile() {
     </div>
   )
 }
-
-const InfoField = ({ label, value, fullWidth }: { label: string, value: string, fullWidth?: boolean }) => (
-  <div style={{ gridColumn: fullWidth ? '1 / -1' : 'auto' }}>
-    <label style={{ display: 'block', fontSize: '13px', color: '#6b7280', marginBottom: '6px', fontWeight: '500' }}>{label}</label>
-    <div style={{ fontSize: '15px', color: '#111827', fontWeight: '500', padding: '10px 12px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #f3f4f6' }}>{value}</div>
-  </div>
-);
 
 export default DashboardProfile;
