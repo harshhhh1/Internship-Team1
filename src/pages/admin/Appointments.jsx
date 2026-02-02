@@ -5,54 +5,58 @@ function Appointments() {
   const [showModal, setShowModal] = useState(false);
 
   const appointments = [
-    { id: 1, name: 'John Doe', date: '2023-10-27', note: 'Routine Checkup' },
-    { id: 2, name: 'Jane Smith', date: '2023-10-28', note: 'Dental Cleaning' },
+    { id: 1, name: 'John Doe', date: '2023-10-27', note: 'Haircut' },
+    { id: 2, name: 'Jane Smith', date: '2023-10-28', note: 'Facial' },
     { id: 3, name: 'Michael Johnson', date: '2023-10-29', note: 'Consultation' },
-    { id: 4, name: 'Emily Davis', date: '2023-10-30', note: 'Follow-up' },
-    { id: 5, name: 'David Wilson', date: '2023-10-31', note: 'Vaccination' },
+    { id: 4, name: 'Emily Davis', date: '2023-10-30', note: 'Manicure' },
+    { id: 5, name: 'David Wilson', date: '2023-10-31', note: 'Massage' },
   ];
 
   return (
     <div className="min-h-screen">
       <div>
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Appointments</h1>
-            <p className="text-gray-500">View and manage scheduled appointments.</p>
+        <div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 md:gap-0">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Appointments</h1>
+              <p className="text-gray-500">View and manage scheduled appointments.</p>
+            </div>
+            <button
+              className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 w-full md:w-auto"
+              onClick={() => setShowModal(true)}
+            >
+              + Create New Appointment
+            </button>
           </div>
-          <button
-            className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-            onClick={() => setShowModal(true)}
-          >
-            + Create New Appointment
-          </button>
-        </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                <th className="p-4">ID</th>
-                <th className="p-4">Name</th>
-                <th className="p-4">Appointment Date</th>
-                <th className="p-4">Note</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {appointments.map((appointment) => (
-                <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 text-gray-700">#{appointment.id}</td>
-                  <td className="p-4 font-medium text-gray-900">{appointment.name}</td>
-                  <td className="p-4 text-gray-600">{appointment.date}</td>
-                  <td className="p-4 text-gray-600">
-                    <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full">
-                      {appointment.note}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="p-4">ID</th>
+                    <th className="p-4">Name</th>
+                    <th className="p-4">Appointment Date</th>
+                    <th className="p-4">Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {appointments.map((appointment) => (
+                    <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 text-gray-700">#{appointment.id}</td>
+                      <td className="p-4 font-medium text-gray-900">{appointment.name}</td>
+                      <td className="p-4 text-gray-600">{appointment.date}</td>
+                      <td className="p-4 text-gray-600">
+                        <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full">
+                          {appointment.note}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -75,10 +79,10 @@ function Appointments() {
             <div className="p-6">
               <form className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
                   <input
                     type="text"
-                    placeholder="Enter patient name"
+                    placeholder="Enter client name"
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                   />
                 </div>
@@ -103,11 +107,12 @@ function Appointments() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Appointment Type</label>
                   <select className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white">
                     <option value="">Select type</option>
-                    <option value="checkup">Routine Checkup</option>
+                    <option value="haircut">Haircut</option>
+                    <option value="color">Coloring</option>
+                    <option value="facial">Facial</option>
+                    <option value="manicure">Manicure/Pedicure</option>
+                    <option value="massage">Massage</option>
                     <option value="consultation">Consultation</option>
-                    <option value="followup">Follow-up</option>
-                    <option value="vaccination">Vaccination</option>
-                    <option value="dental">Dental Cleaning</option>
                     <option value="other">Other</option>
                   </select>
                 </div>

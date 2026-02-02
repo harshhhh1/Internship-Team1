@@ -7,11 +7,10 @@ const About = () => {
       <section className="bg-primary text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-extrabold sm:text-5xl mb-6">
-            About Our Hospital
+            About Our Salon
           </h1>
           <p className="text-xl max-w-3xl mx-auto text-blue-100">
-            Building reliable, secure, and efficient digital systems that support
-            modern healthcare delivery.
+            Delivering exceptional beauty and wellness services that bring out your confidence.
           </p>
         </div>
       </section>
@@ -25,22 +24,22 @@ const About = () => {
               Who We Are
             </h2>
             <p className="text-lg text-gray-600 mb-4 font-semibold">
-              A technology-driven hospital management platform.
+              A premium salon and wellness center.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Our Hospital Management System helps healthcare institutions manage
-              patients, staff, appointments, and data through a single, secure
-              platform. We focus on clarity, reliability, and operational efficiency
-              so medical professionals can focus on patient care.
+              Our Salon Management System helps beauty professionals manage
+              clients, staff, appointments, and services through a single, elegant
+              platform. We focus on creativity, relaxation, and operational efficiency
+              so our stylists can focus on their art.
             </p>
           </div>
 
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
             <ul className="space-y-4 text-gray-700">
-              <li className="flex items-start"><span className="text-primary mr-2">•</span> Secure and centralized patient records</li>
-              <li className="flex items-start"><span className="text-primary mr-2">•</span> Efficient appointment and staff workflows</li>
-              <li className="flex items-start"><span className="text-primary mr-2">•</span> Real-time operational and clinical insights</li>
-              <li className="flex items-start"><span className="text-primary mr-2">•</span> Scalable architecture for growing hospitals</li>
+              <li className="flex items-start"><span className="text-primary mr-2">•</span> Personalized styling and care records</li>
+              <li className="flex items-start"><span className="text-primary mr-2">•</span> Efficient appointment and staff scheduling</li>
+              <li className="flex items-start"><span className="text-primary mr-2">•</span> Real-time service and product insights</li>
+              <li className="flex items-start"><span className="text-primary mr-2">•</span> Luxurious experience for every client</li>
             </ul>
           </div>
         </div>
@@ -52,8 +51,8 @@ const About = () => {
               Our Mission
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              To empower healthcare providers with intuitive, secure, and scalable
-              digital solutions that improve efficiency and elevate patient outcomes.
+              To empower beauty professionals with intuitive digital solutions
+              that enhance creativity and elevate the client experience.
             </p>
           </div>
 
@@ -62,8 +61,8 @@ const About = () => {
               Our Vision
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              To become a trusted digital partner for hospitals by continuously
-              improving how healthcare systems operate and scale.
+              To become the most trusted destination for beauty and wellness,
+              setting new standards in style and comfort.
             </p>
           </div>
         </div>
@@ -77,23 +76,23 @@ const About = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                title: "Patient First",
-                desc: "Every decision is made with patient care as the priority.",
+                title: "Client First",
+                desc: "Every service is tailored to the client's unique style.",
                 color: "bg-blue-50 text-blue-700"
               },
               {
-                title: "Integrity",
-                desc: "We operate with transparency, security, and trust.",
+                title: "Creativity",
+                desc: "We encourage artistic expression and innovation.",
                 color: "bg-green-50 text-green-700"
               },
               {
-                title: "Innovation",
-                desc: "We continuously improve through modern technology.",
+                title: "Quality",
+                desc: "We use only the best products and techniques.",
                 color: "bg-purple-50 text-purple-700"
               },
               {
-                title: "Excellence",
-                desc: "We aim for high standards in performance and reliability.",
+                title: "Comfort",
+                desc: "We ensure a relaxing and welcoming environment.",
                 color: "bg-orange-50 text-orange-700"
               },
             ].map((item) => (
