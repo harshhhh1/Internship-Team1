@@ -46,7 +46,7 @@ function Receptionist() {
         {/* Appointments Table */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left whitespace-nowrap">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>

@@ -1,78 +1,78 @@
 import DashboardSidebar from "../../components/DashboardSidebar";
 import {
-  FaUserMd,
-  FaAmbulance,
-  FaBed,
-  FaXRay,
-  FaSyringe,
-  FaPills,
-  FaWalking,
-  FaHeartbeat,
+  FaCut,
+  FaMagic,
+  FaSpa,
+  FaGem,
+  FaPaintBrush,
+  FaPumpSoap,
+  FaHandSparkles,
+  FaSearch,
 } from "react-icons/fa";
 
 const services = [
   {
-    icon: <FaUserMd />,
-    title: "Outpatient Care",
+    icon: <FaCut />,
+    title: "Hair Styling & Cutting",
     description:
-      "Consultations, diagnosis, and follow-up care without hospital admission.",
+      "Expert cuts, styling, and texturing tailored to your face shape and lifestyle.",
   },
   {
-    icon: <FaAmbulance />,
-    title: "Emergency Services",
+    icon: <FaMagic />,
+    title: "Express Facial",
     description:
-      "24/7 emergency care with rapid response teams and modern equipment.",
+      "Quick, rejuvenating facials to give your skin a healthy, radiant glow.",
   },
   {
-    icon: <FaBed />,
-    title: "Inpatient Services",
+    icon: <FaSpa />,
+    title: "Spa & Massage",
     description:
-      "Comfortable rooms with round-the-clock nursing and medical support.",
+      "Relaxing massages and body treatments to relieve stress and tension.",
   },
   {
-    icon: <FaXRay />,
-    title: "Diagnostics & Imaging",
+    icon: <FaSearch />,
+    title: "Skin Consultation",
     description:
-      "Advanced lab tests, X-rays, CT scans, MRI, and ultrasound services.",
+      "In-depth skin analysis to recommend the best treatments and products.",
   },
   {
-    icon: <FaSyringe />,
-    title: "Surgical Services",
+    icon: <FaPaintBrush />,
+    title: "Coloring & Highlights",
     description:
-      "State-of-the-art operation theatres with experienced surgeons.",
+      "Professional hair coloring, balayage, and highlights using premium products.",
   },
   {
-    icon: <FaPills />,
-    title: "Pharmacy",
+    icon: <FaPumpSoap />,
+    title: "Beauty Products",
     description:
-      "In-house pharmacy providing genuine medicines and expert guidance.",
+      "Curated selection of high-end beauty and haircare products for home use.",
   },
   {
-    icon: <FaWalking />,
-    title: "Physiotherapy & Rehabilitation",
+    icon: <FaHandSparkles />,
+    title: "Manicure & Pedicure",
     description:
-      "Personalized rehabilitation programs to help patients regain mobility and strength.",
+      "Luxurious nail care services including gel polish, nail art, and spa treatments.",
   },
   {
-    icon: <FaHeartbeat />,
-    title: "Preventive Health Checkups",
+    icon: <FaGem />,
+    title: "Bridal Packages",
     description:
-      "Comprehensive health packages for early detection and disease prevention.",
+      "Comprehensive bridal beauty packages for your special day.",
   },
 ];
 
 export default function Services() {
   return (
     <section className="py-16 px-5 bg-[#f4f8fb] text-center min-h-screen">
-      <h2 className="text-3xl md:text-4xl font-bold text-[#0b3c5d] mb-3">Our Medical Services</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-[#0b3c5d] mb-3">Our Premium Services</h2>
       <p className="text-gray-600 max-w-2xl mx-auto mb-10 text-lg">
-        We provide quality healthcare services with compassion and care.
+        We provide top-tier beauty and wellness services with artistry and care.
       </p>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5 max-w-275 mx-auto">
         {services.map((service, index) => (
-          <div 
-            className="bg-white p-6 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] flex flex-col items-center text-center group" 
+          <div
+            className="bg-white p-6 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] flex flex-col items-center text-center group"
             key={index}
           >
             <div className="text-5xl text-primary mb-4 transition-transform duration-300 group-hover:scale-110">

@@ -59,25 +59,25 @@ const RevenueReport = () => {
         </div>
 
         {/* FILTER BAR */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row flex-wrap gap-4 items-center">
           <input
-            className="flex-1 min-w-75 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-            placeholder="Search doctor..."
+            className="w-full md:flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            placeholder="Search staff..."
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
             <input
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-44"
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-full md:w-44"
               type="date"
               placeholder="From date"
             />
-            <span className="text-gray-400">—</span>
+            <span className="text-gray-400 hidden md:inline">—</span>
             <input
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-44"
+              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-full md:w-44"
               type="date"
               placeholder="To date"
             />
           </div>
-          <select className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm bg-white w-40">
+          <select className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm bg-white w-full md:w-40">
             <option>All Status</option>
             <option>Active</option>
             <option>On Leave</option>
@@ -89,7 +89,7 @@ const RevenueReport = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <h2 className="p-6 text-xl font-bold text-gray-900 border-b border-gray-100">Doctor List</h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left whitespace-nowrap">
               <thead>
                 <tr className="bg-gray-50 text-sm font-semibold text-gray-500 uppercase">
                   <th className="p-4 border-b border-gray-100">Sr No</th>

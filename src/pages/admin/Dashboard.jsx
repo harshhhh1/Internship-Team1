@@ -41,7 +41,7 @@ function Dashboard() {
 
         {/* Statistics Card */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Age Group Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Client Age Group</h3>
           <div className="flex items-center justify-around flex-wrap gap-5">
             <Chart />
             <div className="flex flex-col gap-3">
@@ -60,9 +60,9 @@ function Dashboard() {
             <button className="text-primary font-medium text-sm hover:text-secondary transition-colors">View All</button>
           </div>
           <div className="flex flex-col gap-4 min-w-75">
-            <AppointmentRow name="Alice Freeman" time="10:00 AM" date="Today" type="Consultation" />
-            <AppointmentRow name="Bob Smith" time="11:30 AM" date="Today" type="Check-up" />
-            <AppointmentRow name="Charlie Brown" time="02:00 PM" date="Tomorrow" type="Follow-up" />
+            <AppointmentRow name="Alice Freeman" time="10:00 AM" date="Today" type="Haircut" />
+            <AppointmentRow name="Bob Smith" time="11:30 AM" date="Today" type="Facial" />
+            <AppointmentRow name="Charlie Brown" time="02:00 PM" date="Tomorrow" type="Manicure" />
           </div>
         </div>
 

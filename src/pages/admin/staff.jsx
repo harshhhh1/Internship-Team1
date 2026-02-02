@@ -5,21 +5,21 @@ const staffData = [
   {
     srNo: 1,
     id: 'STF001',
-    name: 'Dr. John Doe',
-    type: 'doctor',
+    name: 'John Doe',
+    type: 'stylist',
     onLeave: false,
     contact: '+1-234-567-8901',
-    email: 'john.doe@hospital.com',
+    email: 'john.doe@salon.com',
     appointedAt: '2023-01-15'
   },
   {
     srNo: 2,
     id: 'STF002',
     name: 'Jane Smith',
-    type: 'staff',
+    type: 'assistant',
     onLeave: true,
     contact: '+1-234-567-8902',
-    email: 'jane.smith@hospital.com',
+    email: 'jane.smith@salon.com',
     appointedAt: '2023-03-20'
   },
   {
@@ -29,27 +29,27 @@ const staffData = [
     type: 'admin',
     onLeave: false,
     contact: '+1-234-567-8903',
-    email: 'admin@hospital.com',
+    email: 'admin@salon.com',
     appointedAt: '2022-11-10'
   },
   {
     srNo: 4,
     id: 'STF004',
-    name: 'Dr. Emily Johnson',
-    type: 'doctor',
+    name: 'Emily Johnson',
+    type: 'stylist',
     onLeave: false,
     contact: '+1-234-567-8904',
-    email: 'emily.johnson@hospital.com',
+    email: 'emily.johnson@salon.com',
     appointedAt: '2023-05-08'
   },
   {
     srNo: 5,
     id: 'STF005',
     name: 'Mike Wilson',
-    type: 'staff',
+    type: 'assistant',
     onLeave: true,
     contact: '+1-234-567-8905',
-    email: 'mike.wilson@hospital.com',
+    email: 'mike.wilson@salon.com',
     appointedAt: '2023-07-12'
   },
   {
@@ -59,7 +59,7 @@ const staffData = [
     type: 'admin',
     onLeave: false,
     contact: '+1-234-567-8906',
-    email: 'sarah.admin@hospital.com',
+    email: 'sarah.admin@salon.com',
     appointedAt: '2022-09-05'
   }
 ];
@@ -69,7 +69,7 @@ function Staff() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'staff',
+    type: 'stylist',
     onLeave: false,
     contact: '',
     email: '',
@@ -99,7 +99,7 @@ function Staff() {
     setStaffList(prev => [...prev, newStaff]);
     setFormData({
       name: '',
-      type: 'staff',
+      type: 'stylist',
       onLeave: false,
       contact: '',
       email: '',
@@ -115,7 +115,7 @@ function Staff() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
-              <p className="text-gray-500 mt-2">View and manage hospital staff information.</p>
+              <p className="text-gray-500 mt-2">View and manage salon staff information.</p>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -160,8 +160,8 @@ function Staff() {
                     <td className="p-4">
                       <span
                         className={`inline-block px-3 py-1 text-xs font-semibold rounded-full capitalize
-                          ${staff.type === 'doctor' ? 'bg-blue-100 text-blue-700' :
-                            staff.type === 'staff' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}
+                          ${staff.type === 'stylist' ? 'bg-blue-100 text-blue-700' :
+                            staff.type === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}
                       >
                         {staff.type}
                       </span>
@@ -195,12 +195,12 @@ function Staff() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 relative shadow-xl">
-            <button 
-                          onClick={() => setIsModalOpen(false)}
-                          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <FaTimes size={20} />
-                        </button>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <FaTimes size={20} />
+            </button>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Staff</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -231,8 +231,8 @@ function Staff() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="doctor">Doctor</option>
-                  <option value="staff">Staff</option>
+                  <option value="stylist">Stylist</option>
+                  <option value="assistant">Assistant</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
