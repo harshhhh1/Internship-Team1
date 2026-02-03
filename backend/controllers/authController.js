@@ -1,136 +1,91 @@
-// controllers/authController.js
 import User from "../models/User.js";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
+import generateToken from "../utils/generateToken.js";
 
-/* =========================
-   Generate JWT Token
-========================= */
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-};
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/* =========================
-   SIGNUP CONTROLLER
-========================= */
+/* ======================
+   SIGNUP
+====================== */
 export const signup = async (req, res) => {
   try {
-    const { username, name, email, password, confirmPassword } = req.body;
-    const userName = username?.trim() || name?.trim();
-    const userEmail = email?.trim().toLowerCase();
+    const { username, email, password, role } = req.body;
 
-    // 1️⃣ Required fields
-    if (!userName || !userEmail || !password || !confirmPassword) {
+    if (!username || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // 2️⃣ Email validation
-    if (!emailRegex.test(userEmail)) {
-      return res.status(400).json({ message: "Please provide a valid email address" });
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // 3️⃣ Password validation
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    // 4️⃣ Check existing user
-    const existingUser = await User.findOne({
-      $or: [{ email: userEmail }, { username: userName }]
-    });
-
-    if (existingUser) {
-      if (existingUser.email === userEmail) return res.status(400).json({ message: "Email already registered" });
-      if (existingUser.username === userName) return res.status(400).json({ message: "Username already taken" });
-    }
-
-    // 5️⃣ Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 6️⃣ Create user
     const user = await User.create({
-      username: userName,
-      name: name?.trim() || "",
-      email: userEmail,
-      password: hashedPassword
+      username,
+      email,
+      password,
+      role: role || "staff", // Default to staff if no role provided
     });
 
-    // 7️⃣ Return response with token
-    return res.status(201).json({
+    res.status(201).json({
       message: "Signup successful",
-      token: generateToken(user._id),
-      user: { id: user._id, username: user.username, name: user.name, email: user.email }
+      token: generateToken(user),
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
-
   } catch (error) {
-    console.error("Signup Error:", error);
-    return res.status(500).json({ message: "Server error during registration" });
+    console.error("Signup error:", error);
+    res.status(500).json({ message: "Signup failed", error: error.message });
   }
 };
 
-/* =========================
-   LOGIN CONTROLLER
-========================= */
+/* ======================
+   LOGIN
+====================== */
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const userEmail = email?.trim().toLowerCase();
+    const { email, password, role } = req.body;
 
-    // 1️⃣ Required fields
-    if (!userEmail || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    // Find user by email
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 2️⃣ Email format check
-    if (!emailRegex.test(userEmail)) {
-      return res.status(400).json({ message: "Please provide a valid email address" });
+    // Check password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 3️⃣ Find user
-    const user = await User.findOne({ email: userEmail });
-    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+    // If role is specified, verify it matches
+    if (role && user.role !== role) {
+      return res.status(403).json({ 
+        message: `Access denied. You are not registered as ${role}` 
+      });
+    }
 
-    // 4️⃣ Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
-
-    // 5️⃣ Return token + user
-    return res.status(200).json({
+    res.status(200).json({
       message: "Login successful",
-      token: generateToken(user._id),
-      user: { id: user._id, username: user.username, name: user.name, email: user.email }
+      token: generateToken(user),
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
-
   } catch (error) {
-    console.error("Login Error:", error);
-    return res.status(500).json({ message: "Server error during login" });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
 
-/* =========================
-   GET PROFILE CONTROLLER
-========================= */
+/* ======================
+   GET PROFILE
+====================== */
 export const getProfile = async (req, res) => {
-  try {
-    // 1️⃣ User should already be attached by protect middleware
-    const user = req.user;
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // 2️⃣ Return user profile
-    return res.status(200).json({ user });
-
-  } catch (error) {
-    console.error("GetProfile Error:", error);
-    return res.status(500).json({ message: "Server error fetching profile" });
-  }
+  res.status(200).json({ user: req.user });
 };
-
-
-
-
-

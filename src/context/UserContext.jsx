@@ -5,12 +5,17 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Fetch user if token exists on app load
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        setUser(null);
+        return;
+      }
 
       try {
         const res = await axios.get("http://localhost:5000/api/auth/profile", {
@@ -19,7 +24,11 @@ export const UserProvider = ({ children }) => {
         setUser(res.data.user);
       } catch (err) {
         console.error("Fetch user error:", err.response?.data || err.message);
+        // Clear invalid token
+        localStorage.removeItem("token");
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -27,7 +36,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );

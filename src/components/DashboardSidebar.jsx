@@ -1,13 +1,37 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
 
 function DashboardSidebar() {
+  const { user, loading } = useContext(UserContext);
+  const navigate = useNavigate();
 
   const linkClasses = ({ isActive }) =>
     `flex items-center px-4 py-3 my-1 rounded-lg font-medium transition-all duration-300 ${isActive
       ? 'bg-primary text-white shadow-md'
       : 'text-gray-700 hover:bg-white hover:shadow-sm'
     }`;
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="hidden md:flex w-64 min-h-screen bg-bg-light border-r border-gray-200 p-5 flex-col fixed left-0 top-0 z-30">
+        <div className="flex justify-between items-center mb-6 pl-2">
+          <h3 className="text-xl font-bold text-gray-800">Loading...</h3>
+        </div>
+      </div>
+    );
+  }
+
+  // Show default sidebar if no user (will be redirected by ProtectedRoute anyway)
+  if (!user) {
+    return null;
+  }
 
   return (
     <>
@@ -16,20 +40,83 @@ function DashboardSidebar() {
         className="hidden md:flex w-64 min-h-screen bg-bg-light border-r border-gray-200 p-5 flex-col fixed left-0 top-0 z-30"
       >
         <div className="flex justify-between items-center mb-6 pl-2">
-          <h3 className="text-xl font-bold text-gray-800">Admin Panel</h3>
+          <h3 className="text-xl font-bold text-gray-800">
+            {user?.role === 'admin' ? 'Admin Panel' : 
+             user?.role === 'staff' ? 'Staff Panel' : 
+             'Receptionist Panel'}
+          </h3>
         </div>
 
         <nav className="flex flex-col gap-1 flex-1 overflow-y-auto">
-          <NavLink to="/dashboard" end className={linkClasses}><img src='/dashboard.svg' alt="Dashboard" className="w-5 h-5 mr-3" />Dashboard</NavLink>
-          <NavLink to="/dashboard/profile" className={linkClasses}><img src='/account_circle.svg' alt="Profile" className="w-5 h-5 mr-3" />Profile</NavLink>
-          <NavLink to="/dashboard/appointments" className={linkClasses}><img src='/appointment.svg' alt="Appointments" className="w-5 h-5 mr-3" />Appointments</NavLink>
-          <NavLink to="/dashboard/services" className={linkClasses}><img src='/services.svg' alt="Services" className="w-5 h-5 mr-3" />Services</NavLink>
-          <NavLink to="/dashboard/staff" className={linkClasses}><img src='/staff.svg' alt="Staff" className="w-5 h-5 mr-3" />Staff</NavLink>
-          <NavLink to="/dashboard/receptionist" className={linkClasses}><img src='/receptionist.svg' alt="Receptionist" className="w-5 h-5 mr-3" />Receptionist</NavLink>
-          <NavLink to="/dashboard/revenue-and-report" className={linkClasses}><img src='/rar.svg' alt="Reports" className="w-5 h-5 mr-3" />Revenue & Report</NavLink>
-          <NavLink to="/dashboard/reviews" className={linkClasses}><img src='/reviews.svg' alt="Reviews" className="w-5 h-5 mr-3" />Reviews</NavLink>
+          {/* All roles can see Dashboard */}
+          <NavLink to="/dashboard" end className={linkClasses}>
+            <span className="w-5 h-5 mr-3">📊</span>
+            Dashboard
+          </NavLink>
+          
+          {/* All roles can see Profile */}
+          <NavLink to="/dashboard/profile" className={linkClasses}>
+            <span className="w-5 h-5 mr-3">👤</span>
+            Profile
+          </NavLink>
+          
+          {/* All roles can see Appointments */}
+          <NavLink to="/dashboard/appointments" className={linkClasses}>
+            <span className="w-5 h-5 mr-3">📅</span>
+            Appointments
+          </NavLink>
+          
+          {/* All roles can see Services */}
+          <NavLink to="/dashboard/services" className={linkClasses}>
+            <span className="w-5 h-5 mr-3">✂️</span>
+            Services
+          </NavLink>
+          
+          {/* Admin & Staff only - Staff */}
+          {(user?.role === 'admin' || user?.role === 'staff') && (
+            <NavLink to="/dashboard/staff" className={linkClasses}>
+              <span className="w-5 h-5 mr-3">👨‍💼</span>
+              Staff
+            </NavLink>
+          )}
+          
+          {/* Admin & Receptionist only - Receptionist */}
+          {(user?.role === 'admin' || user?.role === 'receptionist') && (
+            <NavLink to="/dashboard/receptionist" className={linkClasses}>
+              <span className="w-5 h-5 mr-3">💁</span>
+              Receptionist
+            </NavLink>
+          )}
+          
+          {/* Admin only - Revenue & Report */}
+          {user?.role === 'admin' && (
+            <NavLink to="/dashboard/revenue-and-report" className={linkClasses}>
+              <span className="w-5 h-5 mr-3">📈</span>
+              Revenue & Report
+            </NavLink>
+          )}
+          
+          {/* All roles can see Reviews */}
+          <NavLink to="/dashboard/reviews" className={linkClasses}>
+            <span className="w-5 h-5 mr-3">⭐</span>
+            Reviews
+          </NavLink>
+          
+          {/* All roles can see Settings */}
+          <NavLink to="/dashboard/settings" className={linkClasses}>
+            <span className="w-5 h-5 mr-3">⚙️</span>
+            Settings
+          </NavLink>
         </nav>
-        <NavLink to="/dashboard/settings" className={linkClasses}><img src='/settings.svg' alt="Settings" className="w-5 h-5 mr-3" />Settings</NavLink>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center px-4 py-3 my-1 rounded-lg font-medium text-red-600 hover:bg-red-50 transition-all duration-300"
+        >
+          <span className="w-5 h-5 mr-3">🚪</span>
+          Logout
+        </button>
       </div>
     </>
   );

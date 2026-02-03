@@ -8,6 +8,7 @@ export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("staff");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,14 +35,13 @@ export default function SignupForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            username,          // ✅ match backend
+            username,
             email,
             password,
-            confirmPassword,   // ✅ send this also
+            role,
           }),
         }
       );
-
 
       const data = await response.json();
 
@@ -49,7 +49,7 @@ export default function SignupForm() {
         throw new Error(data.message || "Signup failed");
       }
 
-      // Save token (if your backend returns token)
+      // Save token and user (if backend returns them)
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
@@ -87,6 +87,7 @@ export default function SignupForm() {
             onChange={(e) => setUsername(e.target.value)}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none"
             placeholder="Choose a username"
+            required
           />
         </div>
 
@@ -100,6 +101,7 @@ export default function SignupForm() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none"
             placeholder="Enter your email"
+            required
           />
         </div>
 
@@ -113,6 +115,7 @@ export default function SignupForm() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none"
             placeholder="Create a password"
+            required
           />
         </div>
 
@@ -126,7 +129,24 @@ export default function SignupForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none"
             placeholder="Confirm your password"
+            required
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Role
+          </label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none"
+          >
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="receptionist">Receptionist</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">Select your role</p>
         </div>
 
         <button
@@ -151,4 +171,3 @@ export default function SignupForm() {
     </div>
   );
 }
-

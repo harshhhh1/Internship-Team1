@@ -9,6 +9,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("staff");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,16 +22,26 @@ function LoginForm() {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
         email,
         password,
+        role,
       });
 
       // Save token
       localStorage.setItem("token", res.data.token);
 
-      // Update global user context
+      // Update global user context immediately
       setUser(res.data.user);
 
-      // Navigate to profile page
-      navigate("/profile");
+      // Navigate based on role
+      const userRole = res.data.user.role;
+      if (userRole === "admin") {
+        navigate("/dashboard");
+      } else if (userRole === "staff") {
+        navigate("/dashboard");
+      } else if (userRole === "receptionist") {
+        navigate("/dashboard");
+      } else {
+        navigate("/profile");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -68,6 +79,19 @@ function LoginForm() {
             placeholder="Enter your password"
             required
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Login As</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          >
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="receptionist">Receptionist</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">Select your role to login</p>
         </div>
         <button
           type="submit"
