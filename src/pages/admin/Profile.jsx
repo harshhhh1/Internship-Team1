@@ -9,18 +9,24 @@ function DashboardProfile() {
     // Simulate fetching data from backend
     const fetchProfileData = async () => {
       try {
-        // Replace this with actual API call
-        // const response = await fetch('/api/patient/profile');
-        // const data = await response.json();
+        const userId = localStorage.getItem('userId');
+        let userData = {};
 
-        // Mock data
+        if (userId) {
+          const response = await fetch(`http://localhost:5050/profile/${userId}`);
+          if (response.ok) {
+            userData = await response.json();
+          }
+        }
+
+        // Mock data for fields not yet in backend
         const mockData = {
-          id: '1',
-          firstName: 'Marcus',
-          lastName: 'Horizon',
+          id: userData._id || '1',
+          firstName: userData.username || 'Marcus', // Fallback to Marcus if no username or just map username
+          lastName: '', // Backend doesn't have last name yet
           age: 24,
           phone: '+1 (555) 000-1234',
-          email: 'marcus.h@example.com',
+          email: userData.email || 'marcus.h@example.com',
           avatar: 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
           diagnosis: 'Seasonal Allergies',
           notes: 'Patient reports mild symptoms during spring. Recommended daily antihistamine.',
@@ -30,7 +36,7 @@ function DashboardProfile() {
           city: 'San Francisco',
           zipCode: '94103',
           memberStatus: 'Active Member',
-          registeredDate: 'Jan 15, 2023'
+          registeredDate: userData.registeredAt ? new Date(userData.registeredAt).toLocaleDateString() : 'Jan 15, 2023'
         };
 
         setProfile(mockData);

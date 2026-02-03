@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import logo from '../assets/learnyticslogopng.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi'; // Ensure you have react-icons installed
 
 function Navbar() {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false); // New state for mobile menu
+  const navigate = useNavigate();
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
@@ -13,6 +14,12 @@ function Navbar() {
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    setDropdownOpen(false);
+    navigate('/');
   };
 
   return (
@@ -62,6 +69,7 @@ function Navbar() {
                     <Link to="/profile/activity" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>My Activity</li></Link>
                     <Link to="/profile/history" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>History</li></Link>
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>View Profile</li></Link>
+                    <li className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer" onClick={handleLogout}>Logout</li>
                     {/* Mobile Only Links in Dropdown */}
                     <Link to="/login" className="sm:hidden block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>Login</li></Link>
                     <Link to="/signup" className="sm:hidden block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>Sign Up</li></Link>
