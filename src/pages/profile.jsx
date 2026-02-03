@@ -1,15 +1,18 @@
-import Profilecard from '../components/Profilecard'
-import React from 'react'
-import Footer from '../components/footer';
+import React from "react";
+import Profilecard from "../components/Profilecard";
+
 function Profile() {
   return (
-    <div className='flex flex-col min-h-screen'>
-      <div className='flex-grow'>
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+
+      <div className="flex justify-center">
         <Profilecard />
       </div>
-      <Footer />
     </div>
-  )
+  );
 }
 
-export default Profile
+export default Profile;
+
+

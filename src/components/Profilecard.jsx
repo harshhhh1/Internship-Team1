@@ -20,3 +20,7 @@ function Profilecard() {
 }
 
 export default Profilecard
+
+
+
+

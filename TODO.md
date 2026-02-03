@@ -1,10 +1,11 @@
-# TODO: Add Staff Table and Modal to src/pages/admin/staff.jsx
+# Fix ERR_MODULE_NOT_FOUND Error
 
-- [x] Create dummy data array with columns: Sr.No, ID, Name, Type, OnLeave, Contact, Email, Appointed At
-- [x] Implement table JSX with Tailwind styling matching theme (white bg, gray headers, hover effects)
-- [x] Add badges for OnLeave status (green for false, red for true)
-- [x] Add proper layout and headings for the admin page
-- [x] Add "Add Staff" button above the table
-- [x] Implement modal with form fields: ID (disabled, autogenerate), Name, Type (select), OnLeave (checkbox), Contact, Email, Appointed At
-- [x] Handle form submission to add new staff to the table
-- [x] Add close button and click outside to close modal
+## Steps Completed:
+- [x] 1. Analyze the import error in authRoutes.js and authController.js
+- [x] 2. Identify mixed module styles (CommonJS require + ES modules)
+
+## Steps to Complete:
+- [x] 3. Fix authRoutes.js - add .js extension to import path
+- [x] 4. Fix authController.js - replace require with ES module imports
+- [x] 5. Test the server to verify the fix - Server running successfully on port 5000
+
