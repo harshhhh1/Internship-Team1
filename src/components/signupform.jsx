@@ -33,7 +33,8 @@ export default function SignupForm() {
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          role: formData.role // Pass the role
         }),
       });
 
@@ -84,6 +85,21 @@ export default function SignupForm() {
             required
           />
         </div>
+
+        {/* Role Selection (Optional for testing) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <select
+            name="role"
+            value={formData.role || 'staff'}
+            onChange={handleInputChange}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          >
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input

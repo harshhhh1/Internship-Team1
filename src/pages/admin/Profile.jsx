@@ -24,6 +24,7 @@ function DashboardProfile() {
           id: userData._id || '1',
           firstName: userData.username || 'Marcus', // Fallback to Marcus if no username or just map username
           lastName: '', // Backend doesn't have last name yet
+          role: (userData.role || 'Staff').charAt(0).toUpperCase() + (userData.role || 'Staff').slice(1), // Capitalize role
           age: 24,
           phone: '+1 (555) 000-1234',
           email: userData.email || 'marcus.h@example.com',
@@ -111,6 +112,7 @@ function DashboardProfile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InfoField label="First Name" value={profile.firstName} />
               <InfoField label="Last Name" value={profile.lastName} />
+              <InfoField label="Role" value={profile.role} /> {/* Added Role Field */}
               <InfoField label="Email Address" value={profile.email} />
               <InfoField label="Phone" value={profile.phone} />
               <InfoField label="Date of Birth" value={profile.dob} />

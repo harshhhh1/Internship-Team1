@@ -2,7 +2,7 @@ import { createUser, findUserByEmail } from "../models/user.js";
 
 export const signup = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
 
         if (!username || !email || !password) {
             return res.status(400).json({ message: "All fields are required" });
@@ -13,10 +13,13 @@ export const signup = async (req, res) => {
             return res.status(409).json({ message: "User already exists" });
         }
 
+        const userRole = role || 'staff'; // Default to staff if not provided
+
         const newUser = {
             username,
             email,
             password, // Storing plain text as requested
+            role: userRole,
             registeredAt: new Date()
         };
 
@@ -31,10 +34,10 @@ export const signup = async (req, res) => {
 
 export const signin = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, role } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
+        if (!email || !password || !role) {
+            return res.status(400).json({ message: "All fields are required including role" });
         }
 
         const user = await findUserByEmail(email);
@@ -42,10 +45,19 @@ export const signin = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        // Returning user info (excluding password ideally, but for basic flow sending id is enough)
+        if (user.role && user.role !== role) {
+            return res.status(403).json({ message: `Access denied. You are not a ${role}.` });
+        } else if (!user.role && role !== 'staff') {
+            if (role !== 'staff') {
+                return res.status(403).json({ message: "Access denied. Role mismatch." });
+            }
+        }
+
+        // Returning user info
         return res.status(200).json({
             message: "Signin successful",
             userId: user._id,
+            role: user.role || 'staff',
             redirect: "/dashboard"
         });
     } catch (error) {

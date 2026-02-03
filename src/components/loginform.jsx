@@ -4,13 +4,19 @@ import { useNavigate } from 'react-router-dom';
 function LoginForm() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    role: 'staff' // Default role
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
+  };
+
+  const handleRoleChange = (role) => {
+    setFormData({ ...formData, role });
     setError(null);
   };
 
@@ -29,6 +35,7 @@ function LoginForm() {
 
       if (response.ok) {
         localStorage.setItem('userId', data.userId);
+        localStorage.setItem('role', data.role); // Store the role
         // alert(data.message); // removed alert as requested
         navigate('/dashboard');
       } else {
@@ -49,6 +56,31 @@ function LoginForm() {
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Role Selection */}
+        <div className="flex justify-center gap-4 mb-4">
+          <button
+            type="button"
+            onClick={() => handleRoleChange('admin')}
+            className={`px-6 py-2 rounded-full font-medium transition-all ${formData.role === 'admin'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+          >
+            Admin
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRoleChange('staff')}
+            className={`px-6 py-2 rounded-full font-medium transition-all ${formData.role === 'staff'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+          >
+            Staff
+          </button>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
@@ -74,7 +106,7 @@ function LoginForm() {
           />
         </div>
         <button type="submit" className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 mt-2">
-          Login
+          Login as {formData.role === 'admin' ? 'Admin' : 'Staff'}
         </button>
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account? <a href="/signup" className="text-primary hover:text-secondary font-medium">Sign up</a>
