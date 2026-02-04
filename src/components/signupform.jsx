@@ -28,7 +28,7 @@ export default function SignupForm() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/signup",
+        "http://localhost:5001/api/auth/signup",
         {
           method: "POST",
           headers: {
@@ -46,7 +46,7 @@ export default function SignupForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+        throw new Error(data.message || `Signup failed (Status: ${response.status})`);
       }
 
       // Save token and user (if backend returns them)
@@ -58,7 +58,12 @@ export default function SignupForm() {
       navigate("/login");
 
     } catch (err) {
-      setError(err.message);
+      // More descriptive error messages
+      if (err.name === "TypeError" && err.message.includes("fetch")) {
+        setError("Cannot connect to server. Please ensure the backend is running on http://localhost:5001");
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

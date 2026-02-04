@@ -8,12 +8,15 @@ export const signup = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
+    console.log("Signup request received:", { username, email, role });
+
     if (!username || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
+      console.log("User already exists:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -23,6 +26,8 @@ export const signup = async (req, res) => {
       password,
       role: role || "staff", // Default to staff if no role provided
     });
+
+    console.log("User created successfully:", user._id);
 
     res.status(201).json({
       message: "Signup successful",
