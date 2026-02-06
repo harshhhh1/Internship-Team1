@@ -6,6 +6,12 @@ export const createStaff = async (req, res) => {
         // Extract fields. req.body contains name, email, etc.
         const { name, email, role } = req.body;
 
+        // Check if staff with this email already exists
+        const existingStaff = await Staff.findOne({ email });
+        if (existingStaff) {
+            return res.status(400).json({ message: "Staff with this email already exists" });
+        }
+
         // --- Credentials Generation Logic ---
         // remove spaces, lowercase
         const cleanName = name ? name.replace(/\s+/g, '').toLowerCase() : email.split('@')[0];
@@ -54,6 +60,15 @@ export const getStaffById = async (req, res) => {
 
 export const updateStaff = async (req, res) => {
     try {
+        // If password is being updated, hash it first
+        if (req.body.password) {
+            // Check if it's already hashed
+            const isHashed = req.body.password.startsWith('$2a$') || req.body.password.startsWith('$2b$');
+            if (!isHashed) {
+                req.body.password = await bcrypt.hash(req.body.password, 10);
+            }
+        }
+
         const staff = await Staff.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!staff) return res.status(404).json({ message: "Staff not found" });
         res.status(200).json(staff);

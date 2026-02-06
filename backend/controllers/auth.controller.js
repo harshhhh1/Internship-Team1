@@ -42,6 +42,11 @@ export const signin = async (req, res) => {
     try {
         const { email, password, role } = req.body; // Role: 'owner' or 'staff' (or other staff roles)
 
+        console.log("=== SIGNIN DEBUG ===");
+        console.log("Email:", email);
+        console.log("Role:", role);
+        console.log("Password provided:", !!password);
+
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
         }
@@ -51,21 +56,62 @@ export const signin = async (req, res) => {
 
         // Check Owner first if no role specified or role is owner
         if (!role || role === 'owner') {
+            console.log("Checking Owner collection...");
             user = await Owner.findOne({ email });
-            if (user) isOwner = true;
+            if (user) {
+                console.log("User found in Owner collection");
+                isOwner = true;
+            } else {
+                console.log("User NOT found in Owner collection");
+            }
         }
 
         // If not found in Owner, check Staff
         if (!user && (!role || role !== 'owner')) {
+            console.log("Checking Staff collection...");
             user = await Staff.findOne({ email });
+            if (user) {
+                console.log("User found in Staff collection");
+                console.log("Staff user details:", {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    hasPassword: !!user.password
+                });
+            } else {
+                console.log("User NOT found in Staff collection");
+            }
         }
 
         if (!user) {
+            console.log("No user found - returning 401");
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        if (!user.password) {
+            console.log("User has no password set - returning 401");
+            return res.status(401).json({ message: "Account not set up for login. Please contact administrator." });
+        }
+
+        // Check if password is hashed (bcrypt hashes start with $2a$ or $2b$)
+        const isPasswordHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+        let isMatch = false;
+
+        if (isPasswordHashed) {
+            // Password is hashed, use bcrypt.compare
+            console.log("Password is hashed, using bcrypt.compare");
+            isMatch = await bcrypt.compare(password, user.password);
+        } else {
+            // Password is plain text (legacy data), compare directly
+            console.log("⚠️  WARNING: Password is stored in PLAIN TEXT! This is a security risk.");
+            console.log("   Please update this account's password to hash it properly.");
+            isMatch = (password === user.password);
+        }
+
+        console.log("Password match:", isMatch);
+
         if (!isMatch) {
+            console.log("Password mismatch - returning 401");
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
@@ -75,6 +121,7 @@ export const signin = async (req, res) => {
             { expiresIn: "1d" }
         );
 
+        console.log("Login successful!");
         return res.status(200).json({
             message: "Signin successful",
             token,

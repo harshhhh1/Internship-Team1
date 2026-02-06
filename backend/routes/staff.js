@@ -6,15 +6,15 @@ import {
     updateStaff,
     deleteStaff,
 } from "../controllers/staff.controller.js";
-import { authenticateToken, requireOwner, requireStaff } from "../middleware/auth.js";
+import { authenticateToken, requireAdmin, requireStaff } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Apply authentication to all staff routes
 router.use(authenticateToken);
 
-// Create staff - only owners can create staff
-router.post("/", requireOwner, createStaff);
+// Create staff - owners and admins can create staff
+router.post("/", requireAdmin, createStaff);
 
 // Get staff - both owners and staff can view
 router.get("/", requireStaff, getStaff);
@@ -22,10 +22,10 @@ router.get("/", requireStaff, getStaff);
 // Get staff by ID - both owners and staff can view
 router.get("/:id", requireStaff, getStaffById);
 
-// Update staff - only owners can update staff
-router.put("/:id", requireOwner, updateStaff);
+// Update staff - owners and admins can update staff
+router.put("/:id", requireAdmin, updateStaff);
 
-// Delete staff - only owners can delete staff
-router.delete("/:id", requireOwner, deleteStaff);
+// Delete staff - owners and admins can delete staff
+router.delete("/:id", requireAdmin, deleteStaff);
 
 export default router;

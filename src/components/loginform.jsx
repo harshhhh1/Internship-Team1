@@ -23,6 +23,9 @@ function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log("=== FRONTEND LOGIN DEBUG ===");
+      console.log("Form Data being sent:", formData);
+
       const response = await fetch('http://localhost:5050/auth/signin', {
         method: 'POST',
         headers: {
@@ -31,7 +34,11 @@ function LoginForm() {
         body: JSON.stringify(formData),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (response.ok) {
         localStorage.setItem('token', data.token); // Store the JWT token

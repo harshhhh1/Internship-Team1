@@ -101,6 +101,10 @@ function Staff() {
       const payload = { ...formData };
       if (!payload.password) delete payload.password; // Don't send empty password on edit
 
+      console.log("=== STAFF SAVE DEBUG ===");
+      console.log("Payload being sent:", payload);
+      console.log("Method:", formData._id ? 'PUT' : 'POST');
+
       const method = formData._id ? 'PUT' : 'POST';
       const url = formData._id
         ? `http://localhost:5050/staff/${formData._id}`
@@ -116,7 +120,12 @@ function Staff() {
         body: JSON.stringify(payload),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log("Success response:", data);
         fetchStaff(selectedSalon?._id); // Refresh list for current selection
         setIsModalOpen(false);
         // Reset form
@@ -131,10 +140,14 @@ function Staff() {
           salonId: ''
         });
       } else {
-        console.error('Failed to save staff');
+        const errorData = await response.json();
+        console.error('Failed to save staff. Status:', response.status);
+        console.error('Error response:', errorData);
+        alert(`Failed to save staff: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error saving staff:', error);
+      alert(`Error saving staff: ${error.message}`);
     }
   };
 
@@ -254,8 +267,14 @@ function Staff() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!formData._id && staffList.some(s => s.email === formData.email)
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300'
+                    }`}
                 />
+                {!formData._id && staffList.some(s => s.email === formData.email) && (
+                  <p className="text-red-500 text-xs mt-1 font-medium">This email is already assigned to another staff member.</p>
+                )}
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button

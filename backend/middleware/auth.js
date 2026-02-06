@@ -38,3 +38,12 @@ export const requireStaff = (req, res, next) => {
     return res.status(403).json({ error: 'Access denied. Staff or owner role required.' });
   }
 };
+// Middleware to require admin or owner role
+export const requireAdmin = (req, res, next) => {
+  const allowedRoles = ['owner', 'admin'];
+  if (allowedRoles.includes(req.user.role)) {
+    next();
+  } else {
+    return res.status(403).json({ error: 'Access denied. Admin or owner role required.' });
+  }
+};
