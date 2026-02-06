@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 
 export default function SignupForm() {
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    phone: ''
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -17,8 +18,17 @@ export default function SignupForm() {
     setError(null); // Clear error on typing
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validatePhone(formData.phone)) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -31,10 +41,10 @@ export default function SignupForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.username,
+          name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role // Pass the role
+          phone: formData.phone
         }),
       });
 
@@ -63,13 +73,13 @@ export default function SignupForm() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
           <input
-            name="username"
-            value={formData.username}
+            name="name"
+            value={formData.name}
             onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-            placeholder="Choose a username"
+            placeholder="Enter your name"
             required
           />
         </div>
@@ -85,21 +95,18 @@ export default function SignupForm() {
             required
           />
         </div>
-
-        {/* Role Selection (Optional for testing) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-          <select
-            name="role"
-            value={formData.role || 'staff'}
+          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <input
+            name="phone"
+            type="tel"
+            value={formData.phone}
             onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-          >
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
-          </select>
+            placeholder="Enter your phone number"
+            required
+          />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input

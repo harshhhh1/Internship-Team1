@@ -1,20 +1,41 @@
 import express from "express";
 import cors from "cors";
-
 import dotenv from "dotenv";
-dotenv.config();
-
-const PORT =5050;
-const app = express();
+import connectDB from "./db/connection.js";
 
 import authRoutes from "./routes/auth.js";
-import profileRoutes from "./routes/profile.js";
+import salonRoutes from "./routes/salon.js";
+import staffRoutes from "./routes/staff.js";
+import serviceRoutes from "./routes/service.js";
+import appointmentRoutes from "./routes/appointment.js";
+import paymentRoutes from "./routes/payment.js";
+import clientRoutes from "./routes/client.js";
+import offerRoutes from "./routes/offer.js";
+
+dotenv.config();
+
+const PORT = 5050;
+const app = express();
+
+// Connect to Database
+connectDB();
 
 app.use(cors());
 app.use(express.json());
 
+// Routes
 app.use("/auth", authRoutes);
-app.use("/profile", profileRoutes);
+app.use("/salons", salonRoutes);
+app.use("/staff", staffRoutes);
+app.use("/services", serviceRoutes);
+app.use("/appointments", appointmentRoutes);
+app.use("/payments", paymentRoutes);
+app.use("/clients", clientRoutes);
+app.use("/offers", offerRoutes);
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is running" });
+});
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

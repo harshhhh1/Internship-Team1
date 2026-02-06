@@ -24,10 +24,12 @@ import Reviews from './pages/admin/rating.jsx'
 
 
 
+import { SalonProvider } from './context/SalonContext';
+
 function App() {
 
   return (
-    <>
+    <SalonProvider>
       <Navbar />
       <Routes>
         <Route path='/' element={<Home />} />
@@ -53,7 +55,7 @@ function App() {
           <Route path="receptionist" element={<Receptionist />} />
         </Route>
       </Routes>
-    </>
+    </SalonProvider>
   )
 }
 

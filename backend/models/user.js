@@ -1,16 +1,26 @@
-import db from "../db/connection.js";
-import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
 
-const collection = db.collection("users");
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'staff' },
+  registeredAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const User = mongoose.model("User", userSchema);
 
 export const createUser = async (user) => {
-  return await collection.insertOne(user);
+  const newUser = new User(user);
+  return await newUser.save();
 };
 
 export const findUserByEmail = async (email) => {
-  return await collection.findOne({ email });
+  return await User.findOne({ email });
 };
 
 export const findUserById = async (id) => {
-  return await collection.findOne({ _id: new ObjectId(id) });
+  return await User.findById(id);
 };
+
+export default User;

@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from '../assets/learnyticslogopng.png';
-import { Link, useNavigate } from 'react-router-dom';
-import { HiMenu, HiX } from 'react-icons/hi'; // Ensure you have react-icons installed
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { HiMenu, HiX } from 'react-icons/hi';
+import { useSalon } from '../context/SalonContext'; // Import Context
 
 function Navbar() {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false); // New state for mobile menu
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isBranchDropdownOpen, setBranchDropdownOpen] = useState(false);
+
+  // Use Context instead of local fetch
+  const { salons, selectedSalon, setSelectedSalon } = useSalon();
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('userId'));
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
@@ -16,11 +24,30 @@ function Navbar() {
     setMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const toggleBranchDropdown = () => {
+    setBranchDropdownOpen(!isBranchDropdownOpen);
+  };
+
+  const selectBranch = (salon) => {
+    setSelectedSalon(salon);
+    setBranchDropdownOpen(false);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('userId');
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    setIsLoggedIn(false);
     setDropdownOpen(false);
     navigate('/');
   };
+
+  // Update auth state on location change
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('userId'));
+    setMobileMenuOpen(false);
+    setDropdownOpen(false);
+  }, [location]);
 
   return (
     <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 border-b border-gray-100 shadow-sm transition-all duration-300">
@@ -52,30 +79,70 @@ function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
             <ul className="flex items-center space-x-4">
-              <Link to="/login"><li className="hidden sm:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Login</li></Link>
-              <Link to="/signup"><li className="hidden sm:block bg-primary text-white px-5 py-2 rounded-full hover:bg-secondary transition-colors shadow-md hover:shadow-lg cursor-pointer font-medium">Sign Up</li></Link>
-              <Link to="/dashboard"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>
+              {!isLoggedIn && (
+                <>
+                  <Link to="/login"><li className="hidden sm:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Login</li></Link>
+                  <Link to="/signup"><li className="hidden sm:block bg-primary text-white px-5 py-2 rounded-full hover:bg-secondary transition-colors shadow-md hover:shadow-lg cursor-pointer font-medium">Sign Up</li></Link>
+                </>
+              )}
+              {/* Conditional Dashboard Link: Show if NOT logged in (maybe as a prompt?), Logic kept per original but seems redundant if Login exists. 
+                  Actually user asked to remove login/signup when logged in. 
+                  If logged in, we might want to show a 'Dashboard' link leading to /dashboard/appointments or similar?
+                  For now, hiding it if logged in as per original logic line 100 which was !isLoggedIn.
+               */}
+              {!isLoggedIn && <Link to="/login"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
+              {isLoggedIn && <Link to="/dashboard"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
 
-              {/* Profile Dropdown */}
-              <div className="relative ml-4">
-                <img
-                  src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
-                  alt="Profile"
-                  className="h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all object-cover"
-                  onClick={toggleDropdown}
-                />
-                {isDropdownOpen && (
-                  <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-down z-50">
-                    <Link to="/profile/activity" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>My Activity</li></Link>
-                    <Link to="/profile/history" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>History</li></Link>
-                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>View Profile</li></Link>
-                    <li className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer" onClick={handleLogout}>Logout</li>
-                    {/* Mobile Only Links in Dropdown */}
-                    <Link to="/login" className="sm:hidden block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>Login</li></Link>
-                    <Link to="/signup" className="sm:hidden block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>Sign Up</li></Link>
-                  </ul>
-                )}
-              </div>
+              {/* Branch Switcher */}
+              {isLoggedIn && salons.length > 0 && (
+                <div className="relative mr-4">
+                  <button
+                    onClick={() => toggleBranchDropdown()}
+                    className="flex items-center space-x-2 bg-primary text-white px-3 py-2 rounded-lg hover:bg-secondary transition-colors font-medium text-sm"
+                  >
+                    <span>🏢 {selectedSalon ? selectedSalon.name : 'Select Branch'}</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isBranchDropdownOpen && (
+                    <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 z-50">
+                      {salons.map((salon) => (
+                        <li
+                          key={salon._id}
+                          className={`block px-4 py-2 text-sm cursor-pointer transition-colors ${selectedSalon?._id === salon._id
+                            ? 'bg-primary text-white'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                            }`}
+                          onClick={() => selectBranch(salon)}
+                        >
+                          🏢 {salon.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {/* Profile Dropdown - Only show when logged in */}
+              {isLoggedIn && (
+                <div className="relative ml-4">
+                  <img
+                    src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
+                    alt="Profile"
+                    className="h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all object-cover"
+                    onClick={toggleDropdown}
+                  />
+                  {isDropdownOpen && (
+                    <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-down z-50">
+                      <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>My Activity</li></Link>
+                      <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>History</li></Link>
+                      <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>View Profile</li></Link>
+                      <li className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer" onClick={handleLogout}>Logout</li>
+                    </ul>
+                  )}
+                </div>
+              )}
             </ul>
           </div>
         </div>
@@ -89,7 +156,13 @@ function Navbar() {
             <Link to="/status" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Status</li></Link>
             <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>About</li></Link>
             <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Contact</li></Link>
-            <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Dashboard</li></Link>
+            {!isLoggedIn && (
+              <>
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Login</li></Link>
+                <Link to="/signup" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Sign Up</li></Link>
+              </>
+            )}
+            {isLoggedIn && <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Dashboard</li></Link>}
           </ul>
         </div>
       )}

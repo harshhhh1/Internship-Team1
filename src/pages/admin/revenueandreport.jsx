@@ -1,20 +1,142 @@
 import React from "react";
 import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip, CartesianGrid } from 'recharts';
+import RevenueTable from '../../components/tables/RevenueTable';
+
+import { useSalon } from '../../context/SalonContext';
 
 const RevenueReport = () => {
-  const doctors = [
-    { id: 1, name: "Dr. Rahul Sharma", status: "Active", cases: 320, salary: "₹12,00,000" },
-    { id: 2, name: "Dr. Anjali Mehta", status: "On Leave", cases: 210, salary: "₹9,50,000" },
-    { id: 3, name: "Dr. Aman Verma", status: "Inactive", cases: 180, salary: "₹8,20,000" },
-    { id: 4, name: "Dr. Sneha Patil", status: "Active", cases: 402, salary: "₹14,00,000" },
-    { id: 5, name: "Dr. Rakesh Nair", status: "Active", cases: 298, salary: "₹11,80,000" },
-    { id: 6, name: "Dr. Pooja Singh", status: "On Leave", cases: 165, salary: "₹7,90,000" },
-    { id: 7, name: "Dr. Arjun Kapoor", status: "Active", cases: 510, salary: "₹18,00,000" },
-    { id: 8, name: "Dr. Kavita Joshi", status: "Inactive", cases: 120, salary: "₹6,40,000" },
-    { id: 9, name: "Dr. Mohit Jain", status: "Active", cases: 356, salary: "₹13,50,000" },
-    { id: 10, name: "Dr. Neha Kulkarni", status: "Active", cases: 289, salary: "₹10,20,000" },
-    { id: 11, name: "Dr. Sameer Khan", status: "On Leave", cases: 198, salary: "₹8,90,000" },
-  ];
+  const { selectedSalon } = useSalon();
+  const [stylists, setStylists] = React.useState([]);
+  const [appointments, setAppointments] = React.useState([]);
+  const [showSalaryModal, setShowSalaryModal] = React.useState(false);
+  const [selectedStaff, setSelectedStaff] = React.useState(null);
+  const [salaryInput, setSalaryInput] = React.useState('');
+
+  // Fetch appointments
+  React.useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/appointments?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/appointments';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAppointments(data);
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
+    };
+    fetchAppointments();
+  }, [selectedSalon]);
+
+  // Fetch staff and calculate appointment counts
+  React.useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/staff?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/staff';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Filter for stylists if needed, or just show all staff
+          const mappedData = data.map((staff, index) => {
+            // Count completed appointments for this stylist
+            const completedCount = appointments.filter(
+              apt => apt.staffId?._id === staff._id && apt.status === 'completed'
+            ).length;
+
+            return {
+              id: index + 1,
+              realId: staff._id,
+              name: staff.name,
+              status: staff.isActive ? 'Active' : 'Inactive',
+              cases: completedCount,
+              salary: staff.salary ? `₹${staff.salary.toLocaleString()}` : '₹0'
+            };
+          });
+          setStylists(mappedData);
+        }
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+    fetchStaff();
+  }, [selectedSalon, appointments]);
+
+  const handleEditSalary = (staff) => {
+    setSelectedStaff(staff);
+    setSalaryInput('');
+    setShowSalaryModal(true);
+  };
+
+  const handleSaveSalary = async () => {
+    if (!salaryInput || isNaN(salaryInput)) {
+      alert('Please enter a valid salary amount');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5050/staff/${selectedStaff.realId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ salary: parseFloat(salaryInput) })
+      });
+
+      if (response.ok) {
+        // Refresh staff list
+        const url = selectedSalon
+          ? `http://localhost:5050/staff?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/staff';
+        const staffResponse = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (staffResponse.ok) {
+          const data = await staffResponse.json();
+          const mappedData = data.map((staff, index) => {
+            const completedCount = appointments.filter(
+              apt => apt.staffId?._id === staff._id && apt.status === 'completed'
+            ).length;
+
+            return {
+              id: index + 1,
+              realId: staff._id,
+              name: staff.name,
+              status: staff.isActive ? 'Active' : 'Inactive',
+              cases: completedCount,
+              salary: staff.salary ? `₹${staff.salary.toLocaleString()}` : '₹0'
+            };
+          });
+          setStylists(mappedData);
+        }
+        setShowSalaryModal(false);
+        alert('Salary updated successfully!');
+      } else {
+        alert('Failed to update salary');
+      }
+    } catch (error) {
+      console.error('Error updating salary:', error);
+      alert('Error updating salary');
+    }
+  };
 
   const data1 = [
     { name: 'Aug 23', value: 30 },
@@ -55,7 +177,7 @@ const RevenueReport = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard title="Revenue This Month" value="₹5,00,000" trend="↑ 12%" data={data1} color="#9381ff" />
           <StatCard title="Total Income" value="₹12,50,000" trend="↑ 8%" data={data2} color="#b8b8ff" />
-          <StatCard title="Patients" value="11,000" trend="↑ 4%" data={data3} color="#ffd8be" />
+          <StatCard title="Clients" value="11,000" trend="↑ 4%" data={data3} color="#ffd8be" />
         </div>
 
         {/* FILTER BAR */}
@@ -86,40 +208,50 @@ const RevenueReport = () => {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <h2 className="p-6 text-xl font-bold text-gray-900 border-b border-gray-100">Doctor List</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left whitespace-nowrap">
-              <thead>
-                <tr className="bg-gray-50 text-sm font-semibold text-gray-500 uppercase">
-                  <th className="p-4 border-b border-gray-100">Sr No</th>
-                  <th className="p-4 border-b border-gray-100">Name</th>
-                  <th className="p-4 border-b border-gray-100">Status</th>
-                  <th className="p-4 border-b border-gray-100">Total Cases</th>
-                  <th className="p-4 border-b border-gray-100">Annual Salary</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {doctors.map((d) => (
-                  <tr key={d.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-gray-700">{d.id}</td>
-                    <td className="p-4 font-medium text-gray-900">{d.name}</td>
-                    <td className="p-4">
-                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
-                        ${d.status === 'Active' ? 'bg-green-100 text-green-700' :
-                          d.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                        {d.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-700">{d.cases}</td>
-                    <td className="p-4 text-gray-700 font-mono">{d.salary}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <RevenueTable stylists={stylists} onEditSalary={handleEditSalary} />
+      </div>
+
+      {/* Salary Edit Modal */}
+      {showSalaryModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 relative shadow-xl">
+            <button
+              onClick={() => setShowSalaryModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors text-2xl"
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Salary</h2>
+            <p className="text-gray-600 mb-4">Update salary for <span className="font-semibold">{selectedStaff?.name}</span></p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Annual Salary (₹)</label>
+              <input
+                type="number"
+                value={salaryInput}
+                onChange={(e) => setSalaryInput(e.target.value)}
+                placeholder="Enter salary amount"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleSaveSalary}
+                className="flex-1 bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setShowSalaryModal(false)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 

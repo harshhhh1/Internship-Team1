@@ -34,6 +34,7 @@ function LoginForm() {
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.setItem('token', data.token); // Store the JWT token
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('role', data.role); // Store the role
         // alert(data.message); // removed alert as requested
@@ -61,20 +62,20 @@ function LoginForm() {
         <div className="flex justify-center gap-4 mb-4">
           <button
             type="button"
-            onClick={() => handleRoleChange('admin')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${formData.role === 'admin'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            onClick={() => handleRoleChange('owner')}
+            className={`px-6 py-2 rounded-full font-medium transition-all ${formData.role === 'owner'
+              ? 'bg-primary text-white shadow-md'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
           >
-            Admin
+            Owner
           </button>
           <button
             type="button"
             onClick={() => handleRoleChange('staff')}
             className={`px-6 py-2 rounded-full font-medium transition-all ${formData.role === 'staff'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary text-white shadow-md'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
           >
             Staff
@@ -106,7 +107,7 @@ function LoginForm() {
           />
         </div>
         <button type="submit" className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 mt-2">
-          Login as {formData.role === 'admin' ? 'Admin' : 'Staff'}
+          Login as {formData.role === 'owner' ? 'Owner' : 'Staff'}
         </button>
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account? <a href="/signup" className="text-primary hover:text-secondary font-medium">Sign up</a>

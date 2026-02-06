@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 import BottomNav from './BottomNav';
+import { useSalon } from '../context/SalonContext';
 
 const DashboardLayout = () => {
+  const { fetchSalons } = useSalon();
+
+  useEffect(() => {
+    fetchSalons();
+  }, []);
+
   return (
     <div className="min-h-screen bg-bg-light pb-16 md:pb-0">
       {/* Sidebar for Desktop */}
