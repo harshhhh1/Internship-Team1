@@ -1,20 +1,45 @@
 import Salon from "../models/Salon.js";
+import Owner from "../models/Owner.js";
 
 // Create Salon
 export const createSalon = async (req, res) => {
   try {
-    const salon = new Salon(req.body);
+    const ownerId = req.user.id;
+
+    // Check branch limit
+    const owner = await Owner.findById(ownerId);
+    if (!owner) return res.status(404).json({ message: "Owner not found" });
+
+    const currentBranchCount = owner.salons.length;
+    const branchLimit = owner.subscription?.branchLimit || 1;
+
+    if (currentBranchCount >= branchLimit) {
+      return res.status(403).json({
+        message: `Branch limit reached (${branchLimit}). Please upgrade your plan to add more branches.`
+      });
+    }
+
+    const salon = new Salon({ ...req.body, ownerId });
     await salon.save();
+
+    // Update Owner's salons array
+    await Owner.findByIdAndUpdate(ownerId, {
+      $push: { salons: salon._id }
+    });
+
     res.status(201).json(salon);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// Get All Salons
+// Get Salons (Optional: Filter by ownerId)
 export const getSalons = async (req, res) => {
   try {
-    const salons = await Salon.find().populate('ownerId', 'name email');
+    const ownerId = req.query.ownerId || req.user.id;
+    const filter = { ownerId };
+
+    const salons = await Salon.find(filter).populate('ownerId', 'name email');
     res.status(200).json(salons);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -48,6 +73,14 @@ export const deleteSalon = async (req, res) => {
   try {
     const salon = await Salon.findByIdAndDelete(req.params.id);
     if (!salon) return res.status(404).json({ message: "Salon not found" });
+
+    // Remove from Owner's salons array
+    if (salon.ownerId) {
+      await Owner.findByIdAndUpdate(salon.ownerId, {
+        $pull: { salons: salon._id }
+      });
+    }
+
     res.status(200).json({ message: "Salon deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

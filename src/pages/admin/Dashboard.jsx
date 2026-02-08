@@ -53,14 +53,14 @@ function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <KpiCard
             title="Total Earnings"
-            value="$24,500"
+            value="₹24,500"
             trend="+12.5%"
             isPositive={true}
             icon={<span className="text-2xl">💰</span>}
           />
           <KpiCard
             title="Earnings Last Week"
-            value="$1,250"
+            value="₹1,250"
             trend="-2.4%"
             isPositive={false}
             icon={<span className="text-2xl">📉</span>}

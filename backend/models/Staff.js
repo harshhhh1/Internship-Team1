@@ -6,6 +6,11 @@ const staffSchema = new mongoose.Schema({
         ref: "Salon",
         required: true,
     },
+    ownerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Owner",
+        required: true,
+    },
     name: {
         type: String,
         required: true,
@@ -25,7 +30,15 @@ const staffSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        required: true, // e.g., 'stylist', 'admin', 'receptionist'
+        required: true,
+        enum: ['staff', 'receptionist', 'admin'],
+        default: 'staff'
+    },
+    profession: {
+        type: String,
+        required: true,
+        enum: ['Stylist', 'Barber', 'Masseuse', 'Beautician', 'Nail Technician'],
+        default: 'Stylist'
     },
     onLeave: {
         type: Boolean,

@@ -11,7 +11,8 @@ const StaffTable = ({ staffList, onEdit, onDelete }) => {
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Sr.No</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">ID</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Name</ResizableTh>
-                            <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</ResizableTh>
+                            <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Role</ResizableTh>
+                            <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Profession</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Contact</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Email</ResizableTh>
@@ -37,10 +38,15 @@ const StaffTable = ({ staffList, onEdit, onDelete }) => {
                                 <td className="p-4">
                                     <span
                                         className={`inline-block px-3 py-1 text-xs font-semibold rounded-full capitalize
-                      ${(staff.role || staff.type) === 'stylist' ? 'bg-blue-100 text-blue-700' :
-                                                (staff.role || staff.type) === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}
+                      ${staff.role === 'admin' ? 'bg-red-100 text-red-700' :
+                                                staff.role === 'receptionist' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}
                                     >
-                                        {staff.role || staff.type}
+                                        {staff.role}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    <span className="text-sm font-medium text-gray-700">
+                                        {staff.profession}
                                     </span>
                                 </td>
                                 <td className="p-4">

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const SalonContext = createContext();
 
@@ -26,7 +27,12 @@ export const SalonProvider = ({ children }) => {
             // For now assuming /salons returns all, we might need to filter or backend handles it.
             // If backend returns all salons, we should filter by ownerId on frontend if specific endpoint missing.
             // But let's assume /salons returns relevant salons.
-            const response = await fetch('http://localhost:5050/salons', {
+            let url = 'http://localhost:5050/salons';
+            if (role === 'owner' && userId) {
+                url += `?ownerId=${userId}`;
+            }
+
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -34,16 +40,11 @@ export const SalonProvider = ({ children }) => {
 
             if (response.ok) {
                 const data = await response.json();
-
-                // Filter by owner if needed (though backend should ideally do this)
-                // Assuming data is array of salons
-                const ownerSalons = role === 'owner' ? data.filter(s => s.ownerId?._id === userId || s.ownerId === userId) : data;
-
-                setSalons(ownerSalons);
+                setSalons(data);
 
                 // Auto-select first salon if none selected
-                if (!selectedSalon && ownerSalons.length > 0) {
-                    setSelectedSalon(ownerSalons[0]);
+                if (!selectedSalon && data.length > 0) {
+                    setSelectedSalon(data[0]);
                 }
             }
         } catch (error) {
@@ -53,9 +54,12 @@ export const SalonProvider = ({ children }) => {
         }
     };
 
+    const location = useLocation();
+
+    // Re-fetch when location changes (ensures data is fresh after login/redirects)
     useEffect(() => {
         fetchSalons();
-    }, []);
+    }, [location.pathname]);
 
     // Also update selectedSalon if salons change and current selection is invalid
     useEffect(() => {

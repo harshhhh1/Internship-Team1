@@ -10,11 +10,13 @@ function Staff() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    role: 'stylist', // defaulting to role as per schema
+    role: 'staff',
+    profession: 'Stylist',
     mobile: '',
     email: '',
-    password: 'password123', // Default password for now, or add field
+    password: 'password123',
     isActive: true,
+    onLeave: false,
     salonId: ''
   });
 
@@ -131,13 +133,14 @@ function Staff() {
         // Reset form
         setFormData({
           name: '',
-          role: 'stylist',
+          role: 'staff',
+          profession: 'Stylist',
           mobile: '',
           email: '',
           password: 'password123',
           isActive: true,
           onLeave: false,
-          salonId: ''
+          salonId: selectedSalon?._id || ''
         });
       } else {
         const errorData = await response.json();
@@ -167,7 +170,8 @@ function Staff() {
               onClick={() => {
                 setFormData({
                   name: '',
-                  role: 'stylist',
+                  role: 'staff',
+                  profession: 'Stylist',
                   mobile: '',
                   email: '',
                   password: 'password123',
@@ -226,16 +230,31 @@ function Staff() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="stylist">Stylist</option>
-                  <option value="assistant">Assistant</option>
+                  <option value="staff">Staff</option>
+                  <option value="receptionist">Receptionist</option>
                   <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                <select
+                  name="profession"
+                  value={formData.profession}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="Stylist">Stylist</option>
+                  <option value="Barber">Barber</option>
+                  <option value="Masseuse">Masseuse</option>
+                  <option value="Beautician">Beautician</option>
+                  <option value="Nail Technician">Nail Technician</option>
                 </select>
               </div>
               <div className="flex items-center">
@@ -268,8 +287,8 @@ function Staff() {
                   onChange={handleInputChange}
                   required
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!formData._id && staffList.some(s => s.email === formData.email)
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-300'
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-300'
                     }`}
                 />
                 {!formData._id && staffList.some(s => s.email === formData.email) && (

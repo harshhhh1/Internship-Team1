@@ -10,7 +10,8 @@ function Settings() {
   const [user, setUser] = useState({
     name: '',
     contact: '',
-    email: ''
+    email: '',
+    subscription: null
   });
 
   useEffect(() => {
@@ -25,7 +26,8 @@ function Settings() {
             setUser({
               name: data.name || '',
               contact: data.phone || data.mobile || '',
-              email: data.email || ''
+              email: data.email || '',
+              subscription: data.subscription || null
             });
           }
         } catch (error) {
@@ -90,7 +92,8 @@ function Settings() {
               setUser({
                 name: data.name || '',
                 contact: data.phone || data.mobile || '',
-                email: data.email || ''
+                email: data.email || '',
+                subscription: data.subscription || null
               });
             }
           } catch (error) {
@@ -235,7 +238,8 @@ function Settings() {
   const fetchSalons = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5050/salons', {
+      const userId = localStorage.getItem('userId');
+      const response = await fetch(`http://localhost:5050/salons?ownerId=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -267,6 +271,49 @@ function Settings() {
           </div>
 
           <div className="space-y-6">
+
+            {/* Plan Details Card */}
+            {user.subscription && (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-primary">Current Plan</h2>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${user.subscription.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {user.subscription.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Plan Name</p>
+                    <p className="text-lg font-bold text-gray-800">{user.subscription.planName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Branch Limit</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {salons.length} / {user.subscription.branchLimit} Branches Used
+                    </p>
+                    <div className="w-full bg-gray-200 h-2 rounded-full mt-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${(salons.length / user.subscription.branchLimit) >= 1 ? 'bg-red-500' : 'bg-primary'}`}
+                        style={{ width: `${Math.min((salons.length / user.subscription.branchLimit) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Billing</p>
+                    <p className="text-lg font-bold text-gray-800">₹{user.subscription.price} / {user.subscription.billingCycle}</p>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => window.location.href = '/plans-and-pricing'}
+                      className="px-6 py-3 bg-secondary text-gray-900 font-bold rounded-xl hover:bg-[#ffcca8] transition-colors shadow-sm w-full md:w-auto"
+                    >
+                      Upgrade / Change Plan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Account Details Card */}
             <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">

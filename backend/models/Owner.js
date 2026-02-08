@@ -23,6 +23,20 @@ const ownerSchema = new mongoose.Schema({
     address: { type: String, default: null },
     city: { type: String, default: null },
     zipCode: { type: String, default: null },
+    salons: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Salon",
+        },
+    ],
+    subscription: {
+        planName: { type: String, default: 'Basic Care' },
+        price: { type: Number, default: 0 },
+        branchLimit: { type: Number, default: 1 },
+        billingCycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
+        startDate: { type: Date, default: Date.now },
+        isActive: { type: Boolean, default: true }
+    }
 }, { timestamps: true });
 
 const Owner = mongoose.model("Owner", ownerSchema);

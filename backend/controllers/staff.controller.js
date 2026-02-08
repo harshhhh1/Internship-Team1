@@ -1,10 +1,22 @@
 import Staff from "../models/Staff.js";
 import bcrypt from "bcryptjs";
 
+import Salon from "../models/Salon.js";
+
 export const createStaff = async (req, res) => {
     try {
         // Extract fields. req.body contains name, email, etc.
-        const { name, email, role } = req.body;
+        const { name, email, role, salonId } = req.body;
+
+        if (!salonId) {
+            return res.status(400).json({ message: "Salon ID is required" });
+        }
+
+        // Find the salon to get the ownerId
+        const salon = await Salon.findById(salonId);
+        if (!salon) {
+            return res.status(404).json({ message: "Salon not found" });
+        }
 
         // Check if staff with this email already exists
         const existingStaff = await Staff.findOne({ email });
@@ -22,10 +34,11 @@ export const createStaff = async (req, res) => {
         // Hash the password
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-        // Create Staff document with hashed password
+        // Create Staff document with hashed password AND ownerId
         const staffData = {
             ...req.body,
-            password: hashedPassword
+            password: hashedPassword,
+            ownerId: salon.ownerId
         };
 
         const staff = new Staff(staffData);
@@ -40,10 +53,35 @@ export const createStaff = async (req, res) => {
 export const getStaff = async (req, res) => {
     try {
         const { salonId } = req.query;
-        const filter = salonId ? { salonId } : {};
+        let filter = {};
+
+        if (req.user.role === 'owner') {
+            // Force filter by ownerId for owners
+            filter.ownerId = req.user.id;
+            // If they also want a specific salon, add that too
+            if (salonId) {
+                filter.salonId = salonId;
+            }
+        } else {
+            // For staff/admin, continue with existing logic
+            if (salonId) {
+                filter.salonId = salonId;
+            } else {
+                // If staff member, see their own salon
+                const userStaff = await Staff.findById(req.user.id);
+                if (userStaff && userStaff.salonId) {
+                    filter.salonId = userStaff.salonId;
+                } else {
+                    return res.status(200).json([]);
+                }
+            }
+        }
+
         const staff = await Staff.find(filter).populate('salonId', 'name');
+
         res.status(200).json(staff);
     } catch (error) {
+        console.error("Get Staff Error:", error);
         res.status(500).json({ message: error.message });
     }
 };

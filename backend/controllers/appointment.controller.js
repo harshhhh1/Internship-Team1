@@ -1,9 +1,25 @@
 import Appointment from "../models/Appointment.js";
 import mongoose from "mongoose";
+import Salon from "../models/Salon.js";
+import Staff from "../models/Staff.js";
 
 export const createAppointment = async (req, res) => {
     try {
-        const appointment = new Appointment(req.body);
+        const { salonId } = req.body;
+
+        if (!salonId) {
+            return res.status(400).json({ message: "Salon ID is required" });
+        }
+
+        const salon = await Salon.findById(salonId);
+        if (!salon) {
+            return res.status(404).json({ message: "Salon not found" });
+        }
+
+        const appointment = new Appointment({
+            ...req.body,
+            ownerId: salon.ownerId
+        });
         await appointment.save();
         res.status(201).json(appointment);
     } catch (error) {
@@ -14,8 +30,27 @@ export const createAppointment = async (req, res) => {
 export const getAppointments = async (req, res) => {
     try {
         const { salonId, staffId, date } = req.query;
-        const filter = {};
-        if (salonId) filter.salonId = salonId;
+        let filter = {};
+
+        if (req.user && req.user.role === 'owner') {
+            // Force owner isolation
+            filter.ownerId = req.user.id;
+            if (salonId) filter.salonId = salonId;
+        } else if (req.user) {
+            // Check if specific salon requested, otherwise default to staff's salon
+            if (salonId) {
+                filter.salonId = salonId;
+            } else {
+                // Handle staff roles (receptionist, stylist, etc.)
+                const userStaff = await Staff.findById(req.user.id);
+                if (userStaff && userStaff.salonId) {
+                    filter.salonId = userStaff.salonId;
+                } else {
+                    return res.status(200).json([]);
+                }
+            }
+        }
+
         if (staffId) filter.staffId = staffId;
         if (date) {
             // Simple date matching (start of day to end of day)
@@ -30,6 +65,7 @@ export const getAppointments = async (req, res) => {
             .populate('salonId', 'name')
             .populate('staffId', 'name')
             .populate('serviceId', 'name price duration');
+
         res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({ message: error.message });
