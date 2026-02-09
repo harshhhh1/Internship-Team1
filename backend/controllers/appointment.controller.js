@@ -129,3 +129,55 @@ export const completeAppointment = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getTodayStats = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        let filter = {};
+
+        // Set up date filter for today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        filter.date = { $gte: today, $lt: tomorrow };
+
+        // Apply role-based filtering
+        if (req.user && req.user.role === 'owner') {
+            filter.ownerId = req.user.id;
+            if (salonId) filter.salonId = salonId;
+        } else if (req.user) {
+            // For staff (including receptionist), filter by their salon
+            if (salonId) {
+                filter.salonId = salonId;
+            } else {
+                const userStaff = await Staff.findById(req.user.id);
+                if (userStaff && userStaff.salonId) {
+                    filter.salonId = userStaff.salonId;
+                } else {
+                    return res.status(200).json({ customerCount: 0, revenue: 0 });
+                }
+            }
+        }
+
+        // Get all appointments for today
+        const appointments = await Appointment.find(filter)
+            .populate('serviceId', 'price');
+
+        // Calculate customer count (total appointments today)
+        const customerCount = appointments.length;
+
+        // Calculate revenue (only from completed appointments)
+        const revenue = appointments
+            .filter(app => app.status === 'completed')
+            .reduce((sum, app) => {
+                const price = app.serviceId?.price || 0;
+                return sum + price;
+            }, 0);
+
+        res.status(200).json({ customerCount, revenue });
+    } catch (error) {
+        console.error("Get Today Stats Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

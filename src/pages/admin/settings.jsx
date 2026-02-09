@@ -239,12 +239,46 @@ function Settings() {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-      const response = await fetch(`http://localhost:5050/salons?ownerId=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const role = localStorage.getItem('role');
+
+      let response;
+      if (role === 'owner') {
+        // Owners fetch all their salons
+        response = await fetch(`http://localhost:5050/salons?ownerId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } else {
+        // Staff/Receptionist fetch their own details to get assigned salon
+        response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
+        if (response.ok) {
+          const staffData = await response.json();
+          if (staffData.salonId) {
+            // Extract salon ID (could be string or populated object)
+            const salonIdString = typeof staffData.salonId === 'object'
+              ? staffData.salonId._id
+              : staffData.salonId;
+
+            // Fetch the salon details
+            const salonResponse = await fetch(`http://localhost:5050/salons/${salonIdString}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (salonResponse.ok) {
+              const salonData = await salonResponse.json();
+              setSalons([salonData]); // Wrap in array for consistent rendering
+              return;
+            }
+          } else {
+            setSalons([]); // No salon assigned
+            return;
+          }
         }
-      });
-      if (response.ok) {
+      }
+
+      if (response && response.ok) {
         const data = await response.json();
         setSalons(data);
       }
@@ -412,44 +446,53 @@ function Settings() {
               </div>
             </div>
 
-            {/* Add Salon Section */}
-            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
-              <h2 className="text-xl font-semibold text-primary mb-6">🏢 Salon Management</h2>
-              <button
-                onClick={() => { setEditingSalon(null); setIsSalonModalOpen(true); }}
-                className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-[#7a67e0] transition-colors font-medium"
-              >
-                Add Salon
-              </button>
-            </div>
+            {/* Add Salon Section - Only for Owners */}
+            {userRole === 'owner' && (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
+                <h2 className="text-xl font-semibold text-primary mb-6">🏢 Salon Management</h2>
+                <button
+                  onClick={() => { setEditingSalon(null); setIsSalonModalOpen(true); }}
+                  className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-[#7a67e0] transition-colors font-medium"
+                >
+                  Add Salon
+                </button>
+              </div>
+            )}
 
             {/* My Branch Section */}
             <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
-              <h2 className="text-xl font-semibold text-primary mb-6">🏢 My Branches</h2>
+              <h2 className="text-xl font-semibold text-primary mb-6">
+                🏢 {userRole === 'owner' ? 'My Branches' : 'My Branch'}
+              </h2>
 
               {salons.length === 0 ? (
-                <p className="text-gray-600">No salons added yet.</p>
+                <p className="text-gray-600">
+                  {userRole === 'owner' ? 'No salons added yet.' : 'No branch assigned yet.'}
+                </p>
               ) : (
                 <div className="space-y-4">
                   {salons.map((salon) => (
                     <div key={salon._id} className="bg-bg-light p-4 rounded-xl relative group">
-                      <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEditSalon(salon)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                          title="Edit Branch"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSalon(salon._id)}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                          title="Delete Branch"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                      <div className="flex justify-between items-start mb-2 pr-20">
+                      {/* Edit/Delete buttons - Only for Owners */}
+                      {userRole === 'owner' && (
+                        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleEditSalon(salon)}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                            title="Edit Branch"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSalon(salon._id)}
+                            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                            title="Delete Branch"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-start mb-2 {userRole === 'owner' ? 'pr-20' : ''}">
                         <h3 className="font-semibold text-primary">{salon.name}</h3>
                         <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">{salon.type}</span>
                       </div>
@@ -461,7 +504,9 @@ function Settings() {
                       {salon.description && (
                         <p className="text-gray-700 mb-1"><strong>Description:</strong> {salon.description}</p>
                       )}
-                      <p className="text-sm text-gray-500">Added on: {new Date(salon.createdAt).toLocaleDateString()}</p>
+                      {salon.createdAt && (
+                        <p className="text-sm text-gray-500">Added on: {new Date(salon.createdAt).toLocaleDateString()}</p>
+                      )}
                     </div>
                   ))
                   }

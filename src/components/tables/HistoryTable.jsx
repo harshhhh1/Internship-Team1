@@ -42,31 +42,39 @@ export default function HistoryTable() {
                     </thead>
 
                     <tbody className="divide-y divide-gray-100">
-                        {payments.map((payment) => (
-                            <tr
-                                key={payment.id}
-                                className="hover:bg-gray-50 transition-colors"
-                            >
-                                <td className="p-4 text-gray-700 font-mono text-sm">
-                                    {payment.id}
-                                </td>
-                                <td className="p-4 font-medium text-gray-900">
-                                    {payment.name}
-                                </td>
-                                <td className="p-4">
-                                    <span
-                                        className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
-                      ${payment.action === 'Payment Successful' ? 'bg-green-100 text-green-700' :
-                                                payment.action === 'Payment Failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
-                                    >
-                                        {payment.action}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-gray-500 text-sm">
-                                    {payment.date}
+                        {payments.length === 0 ? (
+                            <tr>
+                                <td colSpan="4" className="p-8 text-center text-gray-500">
+                                    Nothing to see here
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            payments.map((payment) => (
+                                <tr
+                                    key={payment.id}
+                                    className="hover:bg-gray-50 transition-colors"
+                                >
+                                    <td className="p-4 text-gray-700 font-mono text-sm">
+                                        {payment.id}
+                                    </td>
+                                    <td className="p-4 font-medium text-gray-900">
+                                        {payment.name}
+                                    </td>
+                                    <td className="p-4">
+                                        <span
+                                            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
+                      ${payment.action === 'Payment Successful' ? 'bg-green-100 text-green-700' :
+                                                    payment.action === 'Payment Failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
+                                        >
+                                            {payment.action}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-gray-500 text-sm">
+                                        {payment.date}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

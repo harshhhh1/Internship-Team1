@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import CalendarWidget from '../../components/Calendar';
 import ReceptionistTable from '../../components/tables/ReceptionistTable';
+import KpiCard from '../../components/KpiCard';
 import { useSalon } from '../../context/SalonContext';
 
 function Receptionist() {
+  console.log('=== RECEPTIONIST COMPONENT LOADED ===');
+
   const { selectedSalon } = useSalon();
   const [showNewPatientPopup, setShowNewPatientPopup] = useState(false);
   const [showEmergencyPopup, setShowEmergencyPopup] = useState(false);
 
   const [appointments, setAppointments] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
+  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+
+  console.log('Initial userRole:', userRole);
+  console.log('Initial todayStats:', todayStats);
 
   // Form state for New Client Registration
   const [newClientForm, setNewClientForm] = useState({
@@ -61,6 +69,39 @@ function Receptionist() {
     };
     fetchAppointments();
   }, [selectedSalon]);
+
+  useEffect(() => {
+    const fetchTodayStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/appointments/today-stats?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/appointments/today-stats';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Today stats:', data);
+          setTodayStats(data);
+        } else {
+          console.error('Failed to fetch stats:', response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching today's stats:", error);
+      }
+    };
+
+    // Debug logging
+    const roleFromStorage = localStorage.getItem('role');
+    console.log('User role from localStorage:', roleFromStorage);
+    console.log('userRole state:', userRole);
+
+    // Fetch stats regardless of role for debugging
+    fetchTodayStats();
+  }, [selectedSalon, userRole]);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -282,6 +323,25 @@ function Receptionist() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Today's Appointments</h1>
         <p className="text-gray-500">Wed, Jan 29, 2026</p>
       </div>
+
+      {/* Stats Cards - Temporarily showing to all users for debugging */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <KpiCard
+          title="Today's Customers"
+          value={todayStats.customerCount.toString()}
+          trend="+0%"
+          isPositive={true}
+          icon={<span className="text-2xl">👥</span>}
+        />
+        <KpiCard
+          title="Today's Revenue"
+          value={`₹${todayStats.revenue.toLocaleString()}`}
+          trend="+0%"
+          isPositive={true}
+          icon={<span className="text-2xl">💰</span>}
+        />
+      </div>
+      {/* DEBUG: Role is {userRole} */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Appointments Table */}

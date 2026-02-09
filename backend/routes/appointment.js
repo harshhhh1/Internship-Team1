@@ -5,7 +5,8 @@ import {
     getAppointmentById,
     updateAppointment,
     deleteAppointment,
-    completeAppointment
+    completeAppointment,
+    getTodayStats
 } from "../controllers/appointment.controller.js";
 import { authenticateToken, requireStaff } from "../middleware/auth.js";
 
@@ -15,6 +16,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // All appointment operations require staff role (owners and staff can manage appointments)
+router.get("/today-stats", requireStaff, getTodayStats);
 router.post("/", requireStaff, createAppointment);
 router.get("/", requireStaff, getAppointments);
 router.get("/:id", requireStaff, getAppointmentById);

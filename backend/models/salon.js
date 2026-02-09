@@ -37,6 +37,10 @@ const salonSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  staff: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Staff",
+  }],
   isActive: {
     type: Boolean,
     default: true,

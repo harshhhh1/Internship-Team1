@@ -26,7 +26,35 @@ function Appointments() {
     salonId: ''
   });
 
-  // Update form salonId when selectedSalon changes
+  // Fetch staff's assigned salon for receptionist/staff roles
+  useEffect(() => {
+    const fetchStaffSalon = async () => {
+      const role = localStorage.getItem('role');
+      const userId = localStorage.getItem('userId');
+
+      // If user is staff/receptionist, fetch their salon
+      if (role && role !== 'owner' && userId) {
+        try {
+          const response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
+          if (response.ok) {
+            const staffData = await response.json();
+            if (staffData.salonId) {
+              const salonIdString = typeof staffData.salonId === 'object'
+                ? staffData.salonId._id
+                : staffData.salonId;
+              setFormData(prev => ({ ...prev, salonId: salonIdString }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching staff salon:', error);
+        }
+      }
+    };
+
+    fetchStaffSalon();
+  }, []);
+
+  // Update form salonId when selectedSalon changes (for owners)
   useEffect(() => {
     if (selectedSalon) {
       setFormData(prev => ({ ...prev, salonId: selectedSalon._id }));
@@ -430,13 +458,18 @@ function Appointments() {
                     name="salonId"
                     value={formData.salonId}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
+                    disabled={localStorage.getItem('role') !== 'owner'}
+                    className={`w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white ${localStorage.getItem('role') !== 'owner' ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
                   >
                     <option value="">Select salon</option>
                     {salons.map(salon => (
                       <option key={salon._id} value={salon._id}>{salon.name}</option>
                     ))}
                   </select>
+                  {localStorage.getItem('role') !== 'owner' && (
+                    <p className="text-xs text-gray-500 mt-1">Your assigned branch is pre-selected</p>
+                  )}
                 </div>
 
                 {/* Modal Footer */}

@@ -18,32 +18,40 @@ const RevenueTable = ({ stylists, onEditSalary }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {stylists.map((d) => (
-                            <tr key={d.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4 text-gray-700">{d.id}</td>
-                                <td className="p-4 font-medium text-gray-900">{d.name}</td>
-                                <td className="p-4">
-                                    <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
-                    ${d.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                            d.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                        {d.status}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-gray-700">{d.cases}</td>
-                                <td className="p-4 text-gray-700 font-mono">{d.salary}</td>
-                                <td className="p-4">
-                                    <div className="flex items-center justify-center gap-3">
-                                        <button
-                                            onClick={() => onEditSalary && onEditSalary(d)}
-                                            className="text-blue-500 hover:text-blue-700 transition-colors"
-                                            title="Edit Salary"
-                                        >
-                                            <FaEdit />
-                                        </button>
-                                    </div>
+                        {stylists.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className="p-8 text-center text-gray-500">
+                                    Nothing to see here
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            stylists.map((d) => (
+                                <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4 text-gray-700">{d.id}</td>
+                                    <td className="p-4 font-medium text-gray-900">{d.name}</td>
+                                    <td className="p-4">
+                                        <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
+                    ${d.status === 'Active' ? 'bg-green-100 text-green-700' :
+                                                d.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                            {d.status}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-gray-700">{d.cases}</td>
+                                    <td className="p-4 text-gray-700 font-mono">{d.salary}</td>
+                                    <td className="p-4">
+                                        <div className="flex items-center justify-center gap-3">
+                                            <button
+                                                onClick={() => onEditSalary && onEditSalary(d)}
+                                                className="text-blue-500 hover:text-blue-700 transition-colors"
+                                                title="Edit Salary"
+                                            >
+                                                <FaEdit />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

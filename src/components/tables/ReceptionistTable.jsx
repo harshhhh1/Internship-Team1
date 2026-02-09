@@ -33,37 +33,45 @@ const ReceptionistTable = ({ appointments, onMarkComplete }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {appointments.map((appointment) => (
-                            <tr key={appointment._id || appointment.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4 text-sm font-medium text-gray-900">{appointment.time}</td>
-                                <td className="p-4">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-semibold text-gray-900">{appointment.name}</span>
-                                        <span className="text-xs text-gray-500">{appointment.gender} • {appointment.age}</span>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-sm text-gray-600">{appointment.reason}</td>
-                                <td className="p-4 text-sm text-gray-600">{appointment.stylist}</td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
-                                            {getStatusText(appointment.status)}
-                                        </span>
-                                        {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
-                                            <button
-                                                onClick={() => onMarkComplete && onMarkComplete(appointment.id)}
-                                                className="p-1 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                                                title="Mark as Completed"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </button>
-                                        )}
-                                    </div>
+                        {appointments.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="p-8 text-center text-gray-500">
+                                    Nothing to see here
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            appointments.map((appointment) => (
+                                <tr key={appointment._id || appointment.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4 text-sm font-medium text-gray-900">{appointment.time}</td>
+                                    <td className="p-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-gray-900">{appointment.name}</span>
+                                            <span className="text-xs text-gray-500">{appointment.gender} • {appointment.age}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-sm text-gray-600">{appointment.reason}</td>
+                                    <td className="p-4 text-sm text-gray-600">{appointment.stylist}</td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
+                                                {getStatusText(appointment.status)}
+                                            </span>
+                                            {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                                                <button
+                                                    onClick={() => onMarkComplete && onMarkComplete(appointment.id)}
+                                                    className="p-1 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                                                    title="Mark as Completed"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
