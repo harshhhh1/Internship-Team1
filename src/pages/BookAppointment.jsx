@@ -141,7 +141,7 @@ export default function BookAppointment() {
 
                 <div className="space-y-12">
                     {/* Step 1: Salon */}
-                    <div className="bg-white rounded-2xl shadow-lg p-8">
+                    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
                         <label className="block text-lg font-semibold mb-6">
                             Step 1: Select Salon
                         </label>
@@ -174,7 +174,7 @@ export default function BookAppointment() {
 
                     {/* Step 2: Staff */}
                     {selectedSalon && (
-                        <div className="bg-white rounded-2xl shadow-lg p-8">
+                        <div className="bg-white rounded-2xl shadow-lg p-8 mt-8 mb-8">
                             <label className="block text-lg font-semibold mb-6">
                                 Step 2: Choose Stylist
                             </label>
@@ -208,7 +208,7 @@ export default function BookAppointment() {
 
                 {/* Step 3: Services */}
                 {selectedStaff && (
-                    <div>
+                    <div className="bg-white rounded-2xl shadow-lg p-8">
                         <h2 className="text-2xl font-semibold mb-6">
                             Step 3: Choose Service
                         </h2>
