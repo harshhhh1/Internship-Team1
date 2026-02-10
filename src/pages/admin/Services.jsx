@@ -10,50 +10,58 @@ import {
   FaSearch,
 } from "react-icons/fa";
 
-const services = [
+export const services = [
   {
+    id: 1,
     icon: <FaCut />,
     title: "Hair Styling & Cutting",
     description:
       "Expert cuts, styling, and texturing tailored to your face shape and lifestyle.",
   },
   {
+    id: 2,
     icon: <FaMagic />,
     title: "Express Facial",
     description:
       "Quick, rejuvenating facials to give your skin a healthy, radiant glow.",
   },
   {
+    id: 3,
     icon: <FaSpa />,
     title: "Spa & Massage",
     description:
       "Relaxing massages and body treatments to relieve stress and tension.",
   },
   {
+    id: 4,
     icon: <FaSearch />,
     title: "Skin Consultation",
     description:
       "In-depth skin analysis to recommend the best treatments and products.",
   },
   {
+    id: 5,
     icon: <FaPaintBrush />,
     title: "Coloring & Highlights",
     description:
       "Professional hair coloring, balayage, and highlights using premium products.",
   },
   {
+    id: 6,
     icon: <FaPumpSoap />,
     title: "Beauty Products",
     description:
       "Curated selection of high-end beauty and haircare products for home use.",
   },
   {
+    id: 7,
     icon: <FaHandSparkles />,
     title: "Manicure & Pedicure",
     description:
       "Luxurious nail care services including gel polish, nail art, and spa treatments.",
   },
   {
+    id: 8,
     icon: <FaGem />,
     title: "Bridal Packages",
     description:

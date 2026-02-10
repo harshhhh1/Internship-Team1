@@ -1,48 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import InfoField from '../../components/InfoField';
+import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 
 function DashboardProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+
+  const userId = localStorage.getItem('userId');
+  const role = localStorage.getItem('role');
+
+  const fetchProfileData = async () => {
+    try {
+      let userData = {};
+
+      if (userId && role) {
+        const response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
+        if (response.ok) {
+          userData = await response.json();
+        }
+      }
+
+      // Map backend data to frontend model
+      const mappedData = {
+        id: userData._id || '1',
+        firstName: userData.name ? userData.name.split(' ')[0] : 'User',
+        lastName: userData.name ? userData.name.split(' ').slice(1).join(' ') : '',
+        role: (role || 'Staff').charAt(0).toUpperCase() + (role || 'Staff').slice(1),
+        // Backend doesn't have age/gender/address yet, keep placeholders or show empty
+        age: userData.age || '--',
+        phone: userData.phone || userData.mobile || '',
+        email: userData.email || '',
+        avatar: 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
+        // Random/Default data for visual completeness until backend supports it
+        preferences: 'Dry Scalp, Wavy Hair',
+        notes: 'Prefer sulfate-free shampoo. Sensitive scalp.',
+        dob: userData.dob ? new Date(userData.dob).toLocaleDateString() : '--',
+        gender: userData.gender || 'N/A',
+        address: userData.address || '',
+        city: userData.city || '--',
+        zipCode: userData.zipCode || '--',
+        memberStatus: userData.isActive ? 'Active' : 'Active Member',
+        registeredDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
+      };
+
+      setProfile(mappedData);
+      setEditFormData({
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone || userData.mobile || '',
+        dob: userData.dob ? userData.dob.split('T')[0] : '',
+        gender: userData.gender || '',
+        address: userData.address || '',
+        city: userData.city || '',
+        zipCode: userData.zipCode || ''
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate fetching data from backend
-    const fetchProfileData = async () => {
-      try {
-        // Replace this with actual API call
-        // const response = await fetch('/api/patient/profile');
-        // const data = await response.json();
-
-        // Mock data
-        const mockData = {
-          id: '1',
-          firstName: 'Marcus',
-          lastName: 'Horizon',
-          age: 24,
-          phone: '+1 (555) 000-1234',
-          email: 'marcus.h@example.com',
-          avatar: 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
-          diagnosis: 'Seasonal Allergies',
-          notes: 'Patient reports mild symptoms during spring. Recommended daily antihistamine.',
-          dob: 'June 12, 1999',
-          gender: 'Male',
-          address: '123 Health St, Wellness City',
-          city: 'San Francisco',
-          zipCode: '94103',
-          memberStatus: 'Active Member',
-          registeredDate: 'Jan 15, 2023'
-        };
-
-        setProfile(mockData);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfileData();
   }, []);
+
+  const handleSave = async () => {
+    try {
+      const payload = {
+        userId,
+        role,
+        ...editFormData
+      };
+
+      const response = await fetch('http://localhost:5050/auth/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        setIsEditing(false);
+        fetchProfileData(); // Refresh data
+        alert('Profile updated successfully!');
+      } else {
+        alert('Failed to update profile');
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+  };
+
 
   if (loading) {
     return (
@@ -57,7 +111,32 @@ function DashboardProfile() {
   return (
     <div className="min-h-screen">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Patient Profile</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors"
+            >
+              <FaEdit /> Edit Profile
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                <FaTimes /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <FaSave /> Save Changes
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
 
@@ -79,11 +158,11 @@ function DashboardProfile() {
               <span className="font-semibold text-sm">{profile.phone}</span>
             </div>
 
-            {/* Diagnosis */}
+            {/* Preferences */}
             <div className="w-full mb-6">
-              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Diagnosed with</p>
+              <p className="text-xs uppercase text-gray-400 font-bold tracking-wider mb-2">Hair/Skin Preference</p>
               <div className="bg-accent-cream text-primary p-3 rounded-xl font-semibold text-center border border-accent-peach">
-                {profile.diagnosis}
+                {profile.preferences}
               </div>
             </div>
 
@@ -93,6 +172,7 @@ function DashboardProfile() {
               <textarea
                 className="w-full h-32 p-3 rounded-xl border border-accent-peach/50 resize-none text-sm text-gray-600 bg-bg-light focus:outline-none focus:ring-2 focus:ring-primary/20"
                 defaultValue={profile.notes}
+                disabled // Notes editing not requested on backend yet
               />
             </div>
 
@@ -103,17 +183,110 @@ function DashboardProfile() {
             <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-100">Personal Information</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InfoField label="First Name" value={profile.firstName} />
-              <InfoField label="Last Name" value={profile.lastName} />
-              <InfoField label="Email Address" value={profile.email} />
-              <InfoField label="Phone" value={profile.phone} />
-              <InfoField label="Date of Birth" value={profile.dob} />
-              <InfoField label="Gender" value={profile.gender} />
-              <InfoField label="Address" value={profile.address} fullWidth />
-              <InfoField label="City" value={profile.city} />
-              <InfoField label="Zip Code" value={profile.zipCode} />
-              <InfoField label="Member Status" value={profile.memberStatus} />
-              <InfoField label="Registered Date" value={profile.registeredDate} />
+              {isEditing ? (
+                <>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={editFormData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={editFormData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={editFormData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                    <input
+                    type="date"
+                    name="dob"
+                    value={editFormData.dob}
+                    onChange={handleInputChange}
+                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                    <select
+                      name="gender"
+                      value={editFormData.gender}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={editFormData.address}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={editFormData.city}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={editFormData.zipCode}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <InfoField label="First Name" value={profile.firstName} />
+                  <InfoField label="Last Name" value={profile.lastName} />
+                  <InfoField label="Role" value={profile.role} />
+                  <InfoField label="Email Address" value={profile.email} />
+                  <InfoField label="Phone" value={profile.phone} />
+                  <InfoField label="Date of Birth" value={profile.dob} />
+                  <InfoField label="Gender" value={profile.gender} />
+                  <InfoField label="Address" value={profile.address} fullWidth />
+                  <InfoField label="City" value={profile.city} />
+                  <InfoField label="Zip Code" value={profile.zipCode} />
+                  <InfoField label="Member Status" value={profile.memberStatus} />
+                  <InfoField label="Registered Date" value={profile.registeredDate} />
+                </>
+              )}
             </div>
           </div>
 

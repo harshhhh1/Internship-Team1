@@ -1,10 +1,10 @@
 import React from 'react'
-import HistoryComponent from '../components/historytable'
+import HistoryTable from '../components/tables/HistoryTable'
 
 function History() {
   return (
     <div>
-      <HistoryComponent/>
+      <HistoryTable/>
       
     </div>
   )

@@ -1,217 +1,278 @@
-import React, { useState } from 'react'
-import { FaTimes } from 'react-icons/fa';
-
-const staffData = [
-  {
-    srNo: 1,
-    id: 'STF001',
-    name: 'John Doe',
-    type: 'stylist',
-    onLeave: false,
-    contact: '+1-234-567-8901',
-    email: 'john.doe@salon.com',
-    appointedAt: '2023-01-15'
-  },
-  {
-    srNo: 2,
-    id: 'STF002',
-    name: 'Jane Smith',
-    type: 'assistant',
-    onLeave: true,
-    contact: '+1-234-567-8902',
-    email: 'jane.smith@salon.com',
-    appointedAt: '2023-03-20'
-  },
-  {
-    srNo: 3,
-    id: 'STF003',
-    name: 'Admin User',
-    type: 'admin',
-    onLeave: false,
-    contact: '+1-234-567-8903',
-    email: 'admin@salon.com',
-    appointedAt: '2022-11-10'
-  },
-  {
-    srNo: 4,
-    id: 'STF004',
-    name: 'Emily Johnson',
-    type: 'stylist',
-    onLeave: false,
-    contact: '+1-234-567-8904',
-    email: 'emily.johnson@salon.com',
-    appointedAt: '2023-05-08'
-  },
-  {
-    srNo: 5,
-    id: 'STF005',
-    name: 'Mike Wilson',
-    type: 'assistant',
-    onLeave: true,
-    contact: '+1-234-567-8905',
-    email: 'mike.wilson@salon.com',
-    appointedAt: '2023-07-12'
-  },
-  {
-    srNo: 6,
-    id: 'STF006',
-    name: 'Sarah Admin',
-    type: 'admin',
-    onLeave: false,
-    contact: '+1-234-567-8906',
-    email: 'sarah.admin@salon.com',
-    appointedAt: '2022-09-05'
-  }
-];
+import React, { useState, useEffect } from 'react'
+import { FaTimes, FaSearch } from 'react-icons/fa';
+import StaffTable from '../../components/tables/StaffTable';
+import { useSalon } from '../../context/SalonContext';
+import { getAllTabOptions, DEFAULT_TABS } from '../../config/roleConfig';
 
 function Staff() {
-  const [staffList, setStaffList] = useState(staffData);
+  const [staffList, setStaffList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { salons, selectedSalon, setSelectedSalon } = useSalon(); // Use Global Context
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'stylist',
-    onLeave: false,
-    contact: '',
+    role: 'staff',
+    profession: 'Stylist',
+    mobile: '',
     email: '',
-    appointedAt: ''
+    password: 'password123',
+    isActive: true,
+    onLeave: false,
+    salonId: '',
+    accessToTabs: []
   });
 
-  const generateId = () => {
-    const lastId = staffList.length > 0 ? parseInt(staffList[staffList.length - 1].id.slice(3)) : 0;
-    return `STF${String(lastId + 1).padStart(3, '0')}`;
+  // Get all available tabs for checkbox display
+  const allTabOptions = getAllTabOptions();
+
+  const fetchStaff = async (salonId = '') => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const url = salonId
+        ? `http://localhost:5050/staff?salonId=${salonId}`
+        : 'http://localhost:5050/staff';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStaffList(data);
+      } else {
+        console.error('Failed to fetch staff');
+      }
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Sync with global selection
+  useEffect(() => {
+    if (selectedSalon) {
+      fetchStaff(selectedSalon._id);
+    } else {
+      fetchStaff(); // Fetch all or handle empty
+    }
+  }, [selectedSalon]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+
+    // When role changes, update default accessToTabs
+    if (name === 'role') {
+      const defaultTabs = DEFAULT_TABS[value] || DEFAULT_TABS.staff;
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        accessToTabs: defaultTabs
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Handle tab access checkbox changes
+  const handleTabAccessChange = (tabId, isChecked) => {
+    setFormData(prev => {
+      const currentTabs = prev.accessToTabs || [];
+      if (isChecked) {
+        return { ...prev, accessToTabs: [...currentTabs, tabId] };
+      } else {
+        return { ...prev, accessToTabs: currentTabs.filter(t => t !== tabId) };
+      }
+    });
+  };
+
+  const handleSalonFilter = (e) => {
+    const salonId = e.target.value;
+    const salon = salons.find(s => s._id === salonId);
+    setSelectedSalon(salon);
+  };
+
+  const handleEdit = (staff) => {
+    setFormData({
+      ...staff,
+      password: '', // Don't prefill password, keep empty unless changing
+      salonId: staff.salonId?._id || staff.salonId, // Handle populated or ID
+      accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || []
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this staff member?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5050/staff/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        fetchStaff(selectedSalon?._id);
+      } else {
+        console.error('Failed to delete staff');
+      }
+    } catch (error) {
+      console.error('Error deleting staff:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newStaff = {
-      srNo: staffList.length + 1,
-      id: generateId(),
-      ...formData
-    };
-    setStaffList(prev => [...prev, newStaff]);
+    try {
+      const payload = { ...formData };
+      if (!payload.password) delete payload.password; // Don't send empty password on edit
+
+      console.log("=== STAFF SAVE DEBUG ===");
+      console.log("Payload being sent:", payload);
+      console.log("Method:", formData._id ? 'PUT' : 'POST');
+
+      const method = formData._id ? 'PUT' : 'POST';
+      const url = formData._id
+        ? `http://localhost:5050/staff/${formData._id}`
+        : 'http://localhost:5050/staff';
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Success response:", data);
+        fetchStaff(selectedSalon?._id); // Refresh list for current selection
+        setIsModalOpen(false);
+        // Reset form
+        setFormData({
+          name: '',
+          role: 'staff',
+          profession: 'Stylist',
+          mobile: '',
+          email: '',
+          password: 'password123',
+          isActive: true,
+          onLeave: false,
+          salonId: selectedSalon?._id || '',
+          accessToTabs: DEFAULT_TABS.staff
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to save staff. Status:', response.status);
+        console.error('Error response:', errorData);
+        alert(`Failed to save staff: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving staff:', error);
+      alert(`Error saving staff: ${error.message}`);
+    }
+  };
+
+  const openAddModal = () => {
+    const defaultTabs = DEFAULT_TABS.staff;
     setFormData({
       name: '',
-      type: 'stylist',
-      onLeave: false,
-      contact: '',
+      role: 'staff',
+      profession: 'Stylist',
+      mobile: '',
       email: '',
-      appointedAt: ''
+      password: 'password123',
+      isActive: true,
+      onLeave: false,
+      salonId: selectedSalon?._id || '',
+      accessToTabs: defaultTabs
     });
-    setIsModalOpen(false);
+    setIsModalOpen(true);
   };
+
+  // Filter staff based on search term
+  const filteredStaff = staffList.filter(staff => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      staff.name?.toLowerCase().includes(searchLower) ||
+      staff.email?.toLowerCase().includes(searchLower) ||
+      staff.mobile?.includes(searchTerm) ||
+      staff.profession?.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-bg-light">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
               <p className="text-gray-500 mt-2">View and manage salon staff information.</p>
             </div>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={openAddModal}
               className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
               Add Staff
             </button>
           </div>
-        </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Sr.No</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">On Leave</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Appointed At</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {staffList.map((staff) => (
-                  <tr
-                    key={staff.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="p-4 text-gray-700 font-mono text-sm">
-                      {staff.srNo}
-                    </td>
-                    <td className="p-4 text-gray-700 font-mono text-sm">
-                      {staff.id}
-                    </td>
-                    <td className="p-4 font-medium text-gray-900">
-                      {staff.name}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-block px-3 py-1 text-xs font-semibold rounded-full capitalize
-                          ${staff.type === 'stylist' ? 'bg-blue-100 text-blue-700' :
-                            staff.type === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}
-                      >
-                        {staff.type}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-block px-3 py-1 text-xs font-semibold rounded-full
-                          ${staff.onLeave ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
-                      >
-                        {staff.onLeave ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-700 text-sm">
-                      {staff.contact}
-                    </td>
-                    <td className="p-4 text-gray-700 text-sm">
-                      {staff.email}
-                    </td>
-                    <td className="p-4 text-gray-500 text-sm">
-                      {staff.appointedAt}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Search Bar */}
+          <div className="mt-6">
+            <div className="relative max-w-md">
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name, email, phone, or profession..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <p className="text-sm text-gray-500 mt-2">
+                Showing {filteredStaff.length} of {staffList.length} staff members
+              </p>
+            )}
           </div>
         </div>
+
+        <StaffTable staffList={filteredStaff} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
 
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 relative shadow-xl">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 relative shadow-xl max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <FaTimes size={20} />
             </button>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Add New Staff</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{formData._id ? 'Edit Staff' : 'Add New Staff'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                <input
-                  type="text"
-                  value={generateId()}
-                  disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
@@ -223,18 +284,80 @@ function Staff() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                  <select
+                    name="salonId"
+                    value={formData.salonId}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select Branch</option>
+                    {salons.map(salon => (
+                      <option key={salon._id} value={salon._id}>{salon.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="staff">Staff</option>
+                    <option value="receptionist">Receptionist</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                  <select
+                    name="profession"
+                    value={formData.profession}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="Stylist">Stylist</option>
+                    <option value="Barber">Barber</option>
+                    <option value="Masseuse">Masseuse</option>
+                    <option value="Beautician">Beautician</option>
+                    <option value="Nail Technician">Nail Technician</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select
-                  name="type"
-                  value={formData.type}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="stylist">Stylist</option>
-                  <option value="assistant">Assistant</option>
-                  <option value="admin">Admin</option>
-                </select>
+                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${!formData._id && staffList.some(s => s.email === formData.email)
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-300'
+                    }`}
+                />
+                {!formData._id && staffList.some(s => s.email === formData.email) && (
+                  <p className="text-red-500 text-xs mt-1 font-medium">This email is already assigned to another staff member.</p>
+                )}
               </div>
               <div className="flex items-center">
                 <input
@@ -246,39 +369,31 @@ function Staff() {
                 />
                 <label className="ml-2 block text-sm text-gray-900">On Leave</label>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <input
-                  type="text"
-                  name="contact"
-                  value={formData.contact}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+
+              {/* Tab Access Section */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tab Access Permissions
+                  <span className="text-gray-400 font-normal ml-2">(Select which tabs this user can access)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  {allTabOptions.map(tab => (
+                    <label key={tab.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1.5 rounded transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.accessToTabs?.includes(tab.id) || false}
+                        onChange={(e) => handleTabAccessChange(tab.id, e.target.checked)}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <span className="text-gray-700">{tab.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.accessToTabs?.length || 0} tabs selected
+                </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Appointed At</label>
-                <input
-                  type="date"
-                  name="appointedAt"
-                  value={formData.appointedAt}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
@@ -291,7 +406,7 @@ function Staff() {
                   type="submit"
                   className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
                 >
-                  Add Staff
+                  {formData._id ? 'Save Changes' : 'Add Staff'}
                 </button>
               </div>
             </form>

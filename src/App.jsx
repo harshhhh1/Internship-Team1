@@ -21,13 +21,25 @@ import Services from './pages/admin/services.jsx'
 import Receptionist from './pages/admin/receptionist'
 import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
+import Plans_and_pricing from './pages/plans-and-pricing.jsx'
 
+// New pages
+import Earning from './pages/admin/Earning.jsx'
+import Walkin from './pages/admin/Walkin.jsx'
+import Clients from './pages/admin/Clients.jsx'
+import Inventory from './pages/admin/Inventory.jsx'
+import Expenses from './pages/admin/Expenses.jsx'
+import Offers from './pages/admin/Offers.jsx'
 
+// Protected Route Component
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+
+import { SalonProvider } from './context/SalonContext';
 
 function App() {
 
   return (
-    <>
+    <SalonProvider>
       <Navbar />
       <Routes>
         <Route path='/' element={<Home />} />
@@ -37,23 +49,32 @@ function App() {
         <Route path='/profile' element={<Profile />} />
         <Route path='/profile/history' element={<History />} />
         <Route path='/profile/activity' element={<Activity />} />
+        <Route path='/plans-and-pricing' element={<Plans_and_pricing />} />
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
 
         {/* Dashboard routes with layout */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="reviews" element={<Reviews />} />
-          <Route path="profile" element={<DashboardProfile />} />
-          <Route path="appointments" element={<Appointments />} />
-          <Route path="services" element={<Services />} />
-          <Route path="staff" element={<Staff />} />
-          <Route path="revenue-and-report" element={<RevenueReport />} />
-          <Route path="receptionist" element={<Receptionist />} />
+          <Route index element={<ProtectedRoute tabId="dashboard"><Dashboard /></ProtectedRoute>} />
+          <Route path="settings" element={<ProtectedRoute tabId="settings"><Settings /></ProtectedRoute>} />
+          <Route path="reviews" element={<ProtectedRoute tabId="reviews"><Reviews /></ProtectedRoute>} />
+          <Route path="profile" element={<ProtectedRoute tabId="profile"><DashboardProfile /></ProtectedRoute>} />
+          <Route path="appointments" element={<ProtectedRoute tabId="appointment"><Appointments /></ProtectedRoute>} />
+          <Route path="services" element={<ProtectedRoute tabId="services"><Services /></ProtectedRoute>} />
+          <Route path="staff" element={<ProtectedRoute tabId="staff"><Staff /></ProtectedRoute>} />
+          <Route path="revenue-and-report" element={<ProtectedRoute tabId="revenue-and-report"><RevenueReport /></ProtectedRoute>} />
+          <Route path="receptionist" element={<ProtectedRoute tabId="receptionist"><Receptionist /></ProtectedRoute>} />
+
+          {/* New pages */}
+          <Route path="earning" element={<ProtectedRoute tabId="earning"><Earning /></ProtectedRoute>} />
+          <Route path="walkin" element={<ProtectedRoute tabId="walkin"><Walkin /></ProtectedRoute>} />
+          <Route path="clients" element={<ProtectedRoute tabId="client"><Clients /></ProtectedRoute>} />
+          <Route path="inventory" element={<ProtectedRoute tabId="inventory"><Inventory /></ProtectedRoute>} />
+          <Route path="expenses" element={<ProtectedRoute tabId="expenses"><Expenses /></ProtectedRoute>} />
+          <Route path="offers" element={<ProtectedRoute tabId="offers"><Offers /></ProtectedRoute>} />
         </Route>
       </Routes>
-    </>
+    </SalonProvider>
   )
 }
 
