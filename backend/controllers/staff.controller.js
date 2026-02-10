@@ -34,15 +34,29 @@ export const createStaff = async (req, res) => {
         // Hash the password
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+        // Default tabs per role
+        const DEFAULT_TABS = {
+            staff: ['profile', 'appointment', 'earning', 'report', 'services', 'settings'],
+            receptionist: ['profile', 'dashboard', 'appointment', 'revenue-and-report', 'services',
+                'settings', 'staff', 'walkin', 'client', 'inventory', 'expenses', 'offers'],
+            admin: ['profile', 'dashboard', 'appointment', 'revenue-and-report', 'services',
+                'settings', 'staff', 'receptionist', 'walkin', 'client', 'inventory', 'expenses', 'offers', 'reviews'],
+        };
+
         // Create Staff document with hashed password AND ownerId
         const staffData = {
             ...req.body,
             password: hashedPassword,
-            ownerId: salon.ownerId
+            ownerId: salon.ownerId,
+            accessToTabs: req.body.accessToTabs || DEFAULT_TABS[req.body.role] || DEFAULT_TABS.staff,
         };
 
         const staff = new Staff(staffData);
         await staff.save();
+
+        // Add staff ID to the Salon's staff array for bidirectional relationship
+        await Salon.findByIdAndUpdate(salonId, { $push: { staff: staff._id } });
+
         res.status(201).json(staff);
     } catch (error) {
         console.error("Error creating staff:", error);
@@ -117,8 +131,17 @@ export const updateStaff = async (req, res) => {
 
 export const deleteStaff = async (req, res) => {
     try {
-        const staff = await Staff.findByIdAndDelete(req.params.id);
+        // First find the staff to get their salonId
+        const staff = await Staff.findById(req.params.id);
         if (!staff) return res.status(404).json({ message: "Staff not found" });
+
+        // Remove staff from salon's staff array
+        if (staff.salonId) {
+            await Salon.findByIdAndUpdate(staff.salonId, { $pull: { staff: staff._id } });
+        }
+
+        // Now delete the staff
+        await Staff.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: "Staff deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });

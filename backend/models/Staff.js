@@ -61,6 +61,14 @@ const staffSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    accessToTabs: [{
+        type: String,
+        enum: [
+            'profile', 'dashboard', 'appointment', 'earning', 'report',
+            'services', 'settings', 'staff', 'walkin', 'client',
+            'inventory', 'expenses', 'offers', 'reviews', 'receptionist', 'revenue-and-report'
+        ],
+    }],
 }, { timestamps: true });
 
 const Staff = mongoose.model("Staff", staffSchema);

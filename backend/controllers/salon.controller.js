@@ -49,7 +49,9 @@ export const getSalons = async (req, res) => {
 // Get Salon by ID
 export const getSalonById = async (req, res) => {
   try {
-    const salon = await Salon.findById(req.params.id).populate('ownerId', 'name email');
+    const salon = await Salon.findById(req.params.id)
+      .populate('ownerId', 'name email')
+      .populate('staff', 'name email role profession mobile accessToTabs');
     if (!salon) return res.status(404).json({ message: "Salon not found" });
     res.status(200).json(salon);
   } catch (error) {

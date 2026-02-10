@@ -127,7 +127,9 @@ export const signin = async (req, res) => {
             token,
             userId: user._id,
             role: isOwner ? 'owner' : user.role,
-            name: user.name
+            name: user.name,
+            accessToTabs: isOwner ? null : (user.accessToTabs || []), // null = all access for owners
+            salonId: isOwner ? null : user.salonId, // Include salonId for staff
         });
     } catch (error) {
         console.error("Signin Error:", error);

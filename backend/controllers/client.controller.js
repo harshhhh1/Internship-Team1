@@ -50,3 +50,45 @@ export const deleteClient = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getClientStats = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        const filter = salonId ? { salonId } : {};
+
+        // Total clients
+        const totalClients = await Client.countDocuments(filter);
+
+        // New clients this month
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const newThisMonth = await Client.countDocuments({
+            ...filter,
+            createdAt: { $gte: startOfMonth }
+        });
+
+        // Active clients (visited in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const activeClients = await Client.countDocuments({
+            ...filter,
+            lastVisit: { $gte: thirtyDaysAgo }
+        });
+
+        // VIP clients
+        const vipClients = await Client.countDocuments({
+            ...filter,
+            isVip: true
+        });
+
+        res.status(200).json({
+            totalClients,
+            newThisMonth,
+            activeClients,
+            vipClients
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

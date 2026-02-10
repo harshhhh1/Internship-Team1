@@ -44,7 +44,11 @@ function LoginForm() {
         localStorage.setItem('token', data.token); // Store the JWT token
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('role', data.role); // Store the role
-        // alert(data.message); // removed alert as requested
+        // Store accessToTabs for role-based navigation
+        localStorage.setItem('accessToTabs', JSON.stringify(data.accessToTabs));
+        if (data.salonId) {
+          localStorage.setItem('salonId', data.salonId);
+        }
         navigate('/dashboard');
       } else {
         setError(data.message || "Login failed");

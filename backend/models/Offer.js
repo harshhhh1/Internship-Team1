@@ -6,21 +6,46 @@ const offerSchema = new mongoose.Schema({
         ref: "Salon",
         required: true,
     },
-    title: {
+    name: {
         type: String,
         required: true,
     },
+    code: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     discountType: {
-        type: String, // 'percentage', 'flat'
+        type: String,
+        enum: ['Percentage', 'Fixed'],
         required: true,
     },
-    value: {
+    discount: {
         type: Number,
         required: true,
     },
-    validTill: {
+    validFrom: {
         type: Date,
         required: true,
+    },
+    validTo: {
+        type: Date,
+        required: true,
+    },
+    services: [{
+        type: String, // Service names or 'All Services'
+    }],
+    minPurchase: {
+        type: Number,
+        default: 0,
+    },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+    usageCount: {
+        type: Number,
+        default: 0,
     },
 }, { timestamps: true });
 

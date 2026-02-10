@@ -181,3 +181,172 @@ export const getTodayStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getRevenueStats = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        let matchFilter = {};
+
+        // Apply role-based filtering
+        if (req.user && req.user.role === 'owner') {
+            matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
+            if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (salonId) {
+            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        }
+
+        // Get data for the last 7 months
+        const months = [];
+        const now = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            months.push({
+                year: date.getFullYear(),
+                month: date.getMonth() + 1,
+                name: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+            });
+        }
+
+        // Monthly revenue from completed appointments
+        const revenueData = await Appointment.aggregate([
+            {
+                $match: {
+                    ...matchFilter,
+                    status: 'completed',
+                    date: { $gte: new Date(months[0].year, months[0].month - 1, 1) }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$date' },
+                        month: { $month: '$date' }
+                    },
+                    revenue: { $sum: { $ifNull: ['$service.price', 0] } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // Map revenue data to months
+        const monthlyRevenue = months.map(m => {
+            const found = revenueData.find(r => r._id.year === m.year && r._id.month === m.month);
+            return {
+                name: m.name,
+                value: found ? found.revenue : 0
+            };
+        });
+
+        // Calculate this month's revenue
+        const currentMonthRevenue = monthlyRevenue[monthlyRevenue.length - 1]?.value || 0;
+        const lastMonthRevenue = monthlyRevenue[monthlyRevenue.length - 2]?.value || 0;
+        const revenueTrend = lastMonthRevenue > 0
+            ? (((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(0)
+            : (currentMonthRevenue > 0 ? 100 : 0);
+
+        // Total income (all time)
+        const totalIncomeResult = await Appointment.aggregate([
+            {
+                $match: {
+                    ...matchFilter,
+                    status: 'completed'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                }
+            }
+        ]);
+        const totalIncome = totalIncomeResult[0]?.total || 0;
+
+        // Monthly income trend (cumulative)
+        let cumulative = 0;
+        const incomeData = monthlyRevenue.map(m => {
+            cumulative += m.value;
+            return { name: m.name, value: cumulative };
+        });
+
+        // Client count by month
+        const Client = mongoose.model('Client');
+        const clientFilter = salonId ? { salonId: new mongoose.Types.ObjectId(salonId) } : {};
+
+        const clientData = await Client.aggregate([
+            { $match: clientFilter },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // Map client data - show cumulative growth
+        let cumulativeClients = 0;
+        const monthlyClients = months.map(m => {
+            const found = clientData.find(c => c._id.year === m.year && c._id.month === m.month);
+            cumulativeClients += found ? found.count : 0;
+            return {
+                name: m.name,
+                value: cumulativeClients
+            };
+        });
+
+        const totalClients = await Client.countDocuments(clientFilter);
+        const thisMonthClients = clientData.find(c =>
+            c._id.year === now.getFullYear() && c._id.month === now.getMonth() + 1
+        )?.count || 0;
+        const lastMonthClients = clientData.find(c =>
+            c._id.year === (now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()) &&
+            c._id.month === (now.getMonth() === 0 ? 12 : now.getMonth())
+        )?.count || 0;
+        const clientTrend = lastMonthClients > 0
+            ? (((thisMonthClients - lastMonthClients) / lastMonthClients) * 100).toFixed(0)
+            : (thisMonthClients > 0 ? 100 : 0);
+
+        res.status(200).json({
+            revenueThisMonth: {
+                value: currentMonthRevenue,
+                trend: revenueTrend,
+                data: monthlyRevenue
+            },
+            totalIncome: {
+                value: totalIncome,
+                trend: revenueTrend,
+                data: incomeData
+            },
+            clients: {
+                value: totalClients,
+                trend: clientTrend,
+                data: monthlyClients
+            }
+        });
+    } catch (error) {
+        console.error("Get Revenue Stats Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

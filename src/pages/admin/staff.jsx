@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaSearch } from 'react-icons/fa';
 import StaffTable from '../../components/tables/StaffTable';
 import { useSalon } from '../../context/SalonContext';
+import { getAllTabOptions, DEFAULT_TABS } from '../../config/roleConfig';
 
 function Staff() {
   const [staffList, setStaffList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const { salons, selectedSalon, setSelectedSalon } = useSalon(); // Use Global Context
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,8 +19,12 @@ function Staff() {
     password: 'password123',
     isActive: true,
     onLeave: false,
-    salonId: ''
+    salonId: '',
+    accessToTabs: []
   });
+
+  // Get all available tabs for checkbox display
+  const allTabOptions = getAllTabOptions();
 
   const fetchStaff = async (salonId = '') => {
     try {
@@ -56,10 +62,33 @@ function Staff() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+
+    // When role changes, update default accessToTabs
+    if (name === 'role') {
+      const defaultTabs = DEFAULT_TABS[value] || DEFAULT_TABS.staff;
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        accessToTabs: defaultTabs
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
+  };
+
+  // Handle tab access checkbox changes
+  const handleTabAccessChange = (tabId, isChecked) => {
+    setFormData(prev => {
+      const currentTabs = prev.accessToTabs || [];
+      if (isChecked) {
+        return { ...prev, accessToTabs: [...currentTabs, tabId] };
+      } else {
+        return { ...prev, accessToTabs: currentTabs.filter(t => t !== tabId) };
+      }
+    });
   };
 
   const handleSalonFilter = (e) => {
@@ -72,7 +101,8 @@ function Staff() {
     setFormData({
       ...staff,
       password: '', // Don't prefill password, keep empty unless changing
-      salonId: staff.salonId?._id || staff.salonId // Handle populated or ID
+      salonId: staff.salonId?._id || staff.salonId, // Handle populated or ID
+      accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || []
     });
     setIsModalOpen(true);
   };
@@ -140,7 +170,8 @@ function Staff() {
           password: 'password123',
           isActive: true,
           onLeave: false,
-          salonId: selectedSalon?._id || ''
+          salonId: selectedSalon?._id || '',
+          accessToTabs: DEFAULT_TABS.staff
         });
       } else {
         const errorData = await response.json();
@@ -154,47 +185,86 @@ function Staff() {
     }
   };
 
+  const openAddModal = () => {
+    const defaultTabs = DEFAULT_TABS.staff;
+    setFormData({
+      name: '',
+      role: 'staff',
+      profession: 'Stylist',
+      mobile: '',
+      email: '',
+      password: 'password123',
+      isActive: true,
+      onLeave: false,
+      salonId: selectedSalon?._id || '',
+      accessToTabs: defaultTabs
+    });
+    setIsModalOpen(true);
+  };
+
+  // Filter staff based on search term
+  const filteredStaff = staffList.filter(staff => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      staff.name?.toLowerCase().includes(searchLower) ||
+      staff.email?.toLowerCase().includes(searchLower) ||
+      staff.mobile?.includes(searchTerm) ||
+      staff.profession?.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-bg-light">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
               <p className="text-gray-500 mt-2">View and manage salon staff information.</p>
             </div>
-            <div className="mt-4 md:mt-0">
-              {/* Branch selector managed globally via Navbar */}
-            </div>
             <button
-              onClick={() => {
-                setFormData({
-                  name: '',
-                  role: 'staff',
-                  profession: 'Stylist',
-                  mobile: '',
-                  email: '',
-                  password: 'password123',
-                  isActive: true,
-                  onLeave: false,
-                  salonId: selectedSalon?._id || ''
-                });
-                setIsModalOpen(true);
-              }}
+              onClick={openAddModal}
               className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
               Add Staff
             </button>
           </div>
+
+          {/* Search Bar */}
+          <div className="mt-6">
+            <div className="relative max-w-md">
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name, email, phone, or profession..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <p className="text-sm text-gray-500 mt-2">
+                Showing {filteredStaff.length} of {staffList.length} staff members
+              </p>
+            )}
+          </div>
         </div>
 
-        <StaffTable staffList={staffList} onEdit={handleEdit} onDelete={handleDelete} />
+        <StaffTable staffList={filteredStaff} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
 
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 relative shadow-xl">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 relative shadow-xl max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -214,69 +284,63 @@ function Staff() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                <select
-                  name="salonId"
-                  value={formData.salonId}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select Branch</option>
-                  {salons.map(salon => (
-                    <option key={salon._id} value={salon._id}>{salon.name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                  <select
+                    name="salonId"
+                    value={formData.salonId}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select Branch</option>
+                    {salons.map(salon => (
+                      <option key={salon._id} value={salon._id}>{salon.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="staff">Staff</option>
+                    <option value="receptionist">Receptionist</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="staff">Staff</option>
-                  <option value="receptionist">Receptionist</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
-                <select
-                  name="profession"
-                  value={formData.profession}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="Stylist">Stylist</option>
-                  <option value="Barber">Barber</option>
-                  <option value="Masseuse">Masseuse</option>
-                  <option value="Beautician">Beautician</option>
-                  <option value="Nail Technician">Nail Technician</option>
-                </select>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="onLeave"
-                  checked={formData.onLeave}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-900">On Leave</label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                <input
-                  type="text"
-                  name="mobile"
-                  value={formData.mobile}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                  <select
+                    name="profession"
+                    value={formData.profession}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="Stylist">Stylist</option>
+                    <option value="Barber">Barber</option>
+                    <option value="Masseuse">Masseuse</option>
+                    <option value="Beautician">Beautician</option>
+                    <option value="Nail Technician">Nail Technician</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
+                  <input
+                    type="text"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -295,6 +359,41 @@ function Staff() {
                   <p className="text-red-500 text-xs mt-1 font-medium">This email is already assigned to another staff member.</p>
                 )}
               </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="onLeave"
+                  checked={formData.onLeave}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">On Leave</label>
+              </div>
+
+              {/* Tab Access Section */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tab Access Permissions
+                  <span className="text-gray-400 font-normal ml-2">(Select which tabs this user can access)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  {allTabOptions.map(tab => (
+                    <label key={tab.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1.5 rounded transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.accessToTabs?.includes(tab.id) || false}
+                        onChange={(e) => handleTabAccessChange(tab.id, e.target.checked)}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <span className="text-gray-700">{tab.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.accessToTabs?.length || 0} tabs selected
+                </p>
+              </div>
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"

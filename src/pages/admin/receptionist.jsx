@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaSearch, FaTimes } from 'react-icons/fa';
 import CalendarWidget from '../../components/Calendar';
 import ReceptionistTable from '../../components/tables/ReceptionistTable';
 import KpiCard from '../../components/KpiCard';
@@ -12,6 +13,7 @@ function Receptionist() {
   const [showEmergencyPopup, setShowEmergencyPopup] = useState(false);
 
   const [appointments, setAppointments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [staff, setStaff] = useState([]);
   const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
   const [userRole, setUserRole] = useState(localStorage.getItem('role'));
@@ -316,12 +318,50 @@ function Receptionist() {
     }
   };
 
+  // Filter appointments based on search term
+  const filteredAppointments = appointments.filter(app => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      app.name?.toLowerCase().includes(searchLower) ||
+      app.stylist?.toLowerCase().includes(searchLower) ||
+      app.reason?.toLowerCase().includes(searchLower) ||
+      app.status?.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className="min-h-screen">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Today's Appointments</h1>
         <p className="text-gray-500">Wed, Jan 29, 2026</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by client name, stylist, or service..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <FaTimes />
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <p className="text-sm text-gray-500 mt-2">
+            Showing {filteredAppointments.length} of {appointments.length} appointments
+          </p>
+        )}
       </div>
 
       {/* Stats Cards - Temporarily showing to all users for debugging */}
@@ -345,7 +385,7 @@ function Receptionist() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Appointments Table */}
-        <ReceptionistTable appointments={appointments} onMarkComplete={handleMarkComplete} />
+        <ReceptionistTable appointments={filteredAppointments} onMarkComplete={handleMarkComplete} />
 
 
         {/* Right Panel */}
