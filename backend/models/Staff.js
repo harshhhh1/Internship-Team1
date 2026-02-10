@@ -69,6 +69,10 @@ const staffSchema = new mongoose.Schema({
             'inventory', 'expenses', 'offers', 'reviews', 'receptionist', 'revenue-and-report'
         ],
     }],
+    avatarUrl: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 const Staff = mongoose.model("Staff", staffSchema);

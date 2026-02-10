@@ -22,6 +22,7 @@ import Receptionist from './pages/admin/receptionist'
 import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
 import Plans_and_pricing from './pages/plans-and-pricing.jsx'
+import BookAppointment from './pages/BookAppointment.jsx'
 
 // New pages
 import Earning from './pages/admin/Earning.jsx'
@@ -52,6 +53,7 @@ function App() {
         <Route path='/plans-and-pricing' element={<Plans_and_pricing />} />
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/book-appointment' element={<BookAppointment />} />
 
         {/* Dashboard routes with layout */}
         <Route path="/dashboard" element={<DashboardLayout />}>

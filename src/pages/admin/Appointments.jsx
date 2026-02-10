@@ -43,6 +43,18 @@ function Appointments() {
                 ? staffData.salonId._id
                 : staffData.salonId;
               setFormData(prev => ({ ...prev, salonId: salonIdString }));
+
+              // NEW: Ensure context is aware of the staff's salon
+              if (staffData.salonId) {
+                const salonToSelect = typeof staffData.salonId === 'object'
+                  ? staffData.salonId
+                  : { _id: staffData.salonId, name: 'My Branch' };
+
+                // Only update if current context is missing or different
+                if (!selectedSalon || selectedSalon._id !== salonIdString) {
+                  setSelectedSalon(salonToSelect);
+                }
+              }
             }
           }
         } catch (error) {
@@ -80,15 +92,24 @@ function Appointments() {
         // Map backend data to table expected format
         // Map backend data to table expected format
         const mappedData = filteredData.map(app => {
-          // Find service title from static list
-          const serviceObj = appointmentServices.find(s => s.id == app.serviceId);
+          // If serviceId is populated as an object, use its name. 
+          // Else try to find from static list (backward compatibility / static IDs)
+          let serviceName = 'Service';
+          if (app.serviceId && typeof app.serviceId === 'object') {
+            serviceName = app.serviceId.name;
+          } else if (app.serviceId) {
+            const serviceObj = appointmentServices.find(s => s.id == app.serviceId);
+            if (serviceObj) serviceName = serviceObj.title;
+          }
+
           return {
             id: app._id,
             name: app.clientName,
             mobile: app.clientMobile,
             staff: app.staffId?.name || 'Unassigned',
             date: new Date(app.date).toLocaleDateString(),
-            serviceType: serviceObj ? serviceObj.title : 'Service',
+            serviceType: serviceName,
+            note: app.note || '',
             status: app.status || 'waiting'
           };
         });
@@ -106,28 +127,42 @@ function Appointments() {
     fetchAppointments();
   }, [selectedSalon]);
 
-  // Use static services from Services page for now, or fetch if API ready
-  const fetchServices = () => {
-    // Transform the static services to match dropdown expectation if needed
-    // The static services have { id, title, icon... }
-    // Dropdown expects { _id, name }
-    const formattedServices = appointmentServices.map(s => ({
-      _id: s.id,
-      name: s.title
-    }));
-    setServices(formattedServices);
+  const fetchServices = async () => {
+    try {
+      const salonId = selectedSalon?._id;
+      if (!salonId) return;
+
+      const response = await fetch(`http://localhost:5050/services?salonId=${salonId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setServices(data);
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    }
   };
 
+  const fetchStaffCountRef = React.useRef(0);
   const fetchStaff = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5050/staff', {
+      // Use _id if it's an object, otherwise use the value itself
+      const salonId = selectedSalon?._id || selectedSalon;
+
+      console.log(`Fetching staff for Salon: ${salonId}`);
+
+      const url = salonId
+        ? `http://localhost:5050/staff?salonId=${salonId}`
+        : 'http://localhost:5050/staff';
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       if (response.ok) {
         const data = await response.json();
+        console.log(`Fetched ${data.length} staff members`);
         setStaff(data);
       }
     } catch (error) {
@@ -153,8 +188,13 @@ function Appointments() {
   };
 
   useEffect(() => {
-    fetchServices();
-    fetchStaff();
+    if (selectedSalon) {
+      fetchServices();
+      fetchStaff();
+    }
+  }, [selectedSalon]);
+
+  useEffect(() => {
     fetchSalons();
   }, []);
 
@@ -164,27 +204,29 @@ function Appointments() {
   };
 
   const handleEdit = (appointment) => {
-    // Need to find full details if mappedData doesn't have it, but for now map back or fetch by ID
-    // Since mapped only has name/date/note, we might need to fetch full object or store it.
-    // Let's assume we can re-fetch or use what we have. Ideally mapping should include all needed fields hidden.
-
-    // For simplicity, let's fetch full details or look up in original data if we had it.
-    // But `appointments` state is mapped. 
-    // Let's fetch the single appointment by ID to be safe and fill the form.
-    fetch(`http://localhost:5050/appointments/${appointment.id}`)
+    const token = localStorage.getItem('token');
+    fetch(`http://localhost:5050/appointments/${appointment.id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
         setFormData({
           _id: data._id,
           clientName: data.clientName,
           clientMobile: data.clientMobile,
-          date: data.date.split('T')[0],
-          time: new Date(data.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+          date: data.date ? data.date.split('T')[0] : '',
+          time: data.date ? new Date(data.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
           serviceId: data.serviceId?._id || data.serviceId,
           staffId: data.staffId?._id || data.staffId,
           salonId: data.salonId?._id || data.salonId,
         });
         setShowModal(true);
+      })
+      .catch(err => {
+        console.error("Error fetching appointment for edit:", err);
+        alert("Failed to load appointment details.");
       });
   };
 
@@ -350,7 +392,7 @@ function Appointments() {
       {/* Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setShowModal(false)}
         >
           <div

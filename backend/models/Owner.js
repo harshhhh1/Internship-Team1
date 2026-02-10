@@ -36,7 +36,11 @@ const ownerSchema = new mongoose.Schema({
         billingCycle: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
         startDate: { type: Date, default: Date.now },
         isActive: { type: Boolean, default: true }
-    }
+    },
+    avatarUrl: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 const Owner = mongoose.model("Owner", ownerSchema);

@@ -165,13 +165,13 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { userId, role, name, email, phone, dob, gender, address, city, zipCode } = req.body;
+        const { userId, role, name, email, phone, dob, gender, address, city, zipCode, avatarUrl } = req.body;
 
         if (!userId || !role) {
             return res.status(400).json({ message: "User ID and Role are required" });
         }
 
-        const updateData = { name, email, phone, dob, gender, address, city, zipCode };
+        const updateData = { name, email, phone, dob, gender, address, city, zipCode, avatarUrl };
 
         let user;
         if (role === 'owner') {

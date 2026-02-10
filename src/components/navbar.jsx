@@ -16,6 +16,7 @@ function Navbar() {
   const [isAddSalonModalOpen, setAddSalonModalOpen] = useState(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('userId'));
+  const [avatarUrl, setAvatarUrl] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,22 +37,44 @@ function Navbar() {
     setBranchDropdownOpen(false);
   };
 
+  const fetchUserProfile = async () => {
+    const userId = localStorage.getItem('userId');
+    const role = localStorage.getItem('role');
+    if (userId && role) {
+      try {
+        const response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
+        if (response.ok) {
+          const userData = await response.json();
+          setAvatarUrl(userData.avatarUrl || '');
+        }
+      } catch (err) {
+        console.error("Error fetching avatar:", err);
+      }
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     setIsLoggedIn(false);
     setRole(null);
+    setAvatarUrl(''); // Clear avatar on logout
     setDropdownOpen(false);
     navigate('/');
   };
 
   // Update auth state on location change
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('userId'));
+    const loggedIn = !!localStorage.getItem('userId');
+    setIsLoggedIn(loggedIn);
     setRole(localStorage.getItem('role'));
     setMobileMenuOpen(false);
     setDropdownOpen(false);
+
+    if (loggedIn) {
+      fetchUserProfile();
+    }
   }, [location]);
 
   const handleAddSalon = async (salonData) => {
@@ -106,6 +129,11 @@ function Navbar() {
               <Link to="/about" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>About</li></Link>
               <Link to="/plans-and-pricing" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Plans</li></Link>
               <Link to="/contact" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Contact</li></Link>
+              {!location.pathname.startsWith('/dashboard') && (
+                <Link to="/book-appointment" className="bg-primary/10 text-primary px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all font-semibold border border-primary/20">
+                  <li>Book Appointment</li>
+                </Link>
+              )}
             </ul>
 
             {/* Right Side Actions */}
@@ -122,7 +150,6 @@ function Navbar() {
                   If logged in, we might want to show a 'Dashboard' link leading to /dashboard/appointments or similar?
                   For now, hiding it if logged in as per original logic line 100 which was !isLoggedIn.
                */}
-                {!isLoggedIn && <Link to="/login"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
                 {isLoggedIn && <Link to="/dashboard"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
 
                 {/* Branch Switcher */}
@@ -167,11 +194,10 @@ function Navbar() {
                   </div>
                 )}
 
-                {/* Profile Dropdown - Only show when logged in */}
                 {isLoggedIn && (
                   <div className="relative ml-4">
                     <img
-                      src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
+                      src={avatarUrl || 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'}
                       alt="Profile"
                       className="h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all object-cover"
                       onClick={toggleDropdown}
@@ -200,6 +226,11 @@ function Navbar() {
               <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>About</li></Link>
               <Link to="/plans-and-pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Plans</li></Link>
               <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Contact</li></Link>
+              {!location.pathname.startsWith('/dashboard') && (
+                <Link to="/book-appointment" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-bold text-primary hover:bg-primary/10 transition-colors">
+                  <li>Book Appointment</li>
+                </Link>
+              )}
               {!isLoggedIn && (
                 <>
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Login</li></Link>

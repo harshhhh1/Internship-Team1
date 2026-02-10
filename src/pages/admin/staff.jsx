@@ -20,6 +20,7 @@ function Staff() {
     isActive: true,
     onLeave: false,
     salonId: '',
+    avatarUrl: '',
     accessToTabs: []
   });
 
@@ -102,6 +103,7 @@ function Staff() {
       ...staff,
       password: '', // Don't prefill password, keep empty unless changing
       salonId: staff.salonId?._id || staff.salonId, // Handle populated or ID
+      avatarUrl: staff.avatarUrl || '',
       accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || []
     });
     setIsModalOpen(true);
@@ -171,6 +173,7 @@ function Staff() {
           isActive: true,
           onLeave: false,
           salonId: selectedSalon?._id || '',
+          avatarUrl: '',
           accessToTabs: DEFAULT_TABS.staff
         });
       } else {
@@ -197,6 +200,7 @@ function Staff() {
       isActive: true,
       onLeave: false,
       salonId: selectedSalon?._id || '',
+      avatarUrl: '',
       accessToTabs: defaultTabs
     });
     setIsModalOpen(true);
@@ -281,6 +285,17 @@ function Staff() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+                <input
+                  type="text"
+                  name="avatarUrl"
+                  placeholder="https://example.com/avatar.jpg"
+                  value={formData.avatarUrl}
+                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>

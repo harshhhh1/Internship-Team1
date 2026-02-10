@@ -10,17 +10,17 @@ import { authenticateToken, requireOwner, requireStaff } from "../middleware/aut
 
 const router = express.Router();
 
-// Apply authentication to all service routes
+// Get services - public
+router.get("/", getServices);
+
+// Get service by ID - public
+router.get("/:id", getServiceById);
+
+// Protected routes below
 router.use(authenticateToken);
 
 // Create service - only owners can create services
 router.post("/", requireOwner, createService);
-
-// Get services - both owners and staff can view services
-router.get("/", requireStaff, getServices);
-
-// Get service by ID - both owners and staff can view service details
-router.get("/:id", requireStaff, getServiceById);
 
 // Update service - only owners can update services
 router.put("/:id", requireOwner, updateService);

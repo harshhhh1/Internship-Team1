@@ -41,6 +41,7 @@ function DashboardProfile() {
         address: userData.address || '',
         city: userData.city || '--',
         zipCode: userData.zipCode || '--',
+        avatarUrl: userData.avatarUrl || userData.avatar || 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
         memberStatus: userData.isActive ? 'Active' : 'Active Member',
         registeredDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
       };
@@ -54,7 +55,8 @@ function DashboardProfile() {
         gender: userData.gender || '',
         address: userData.address || '',
         city: userData.city || '',
-        zipCode: userData.zipCode || ''
+        zipCode: userData.zipCode || '',
+        avatarUrl: userData.avatarUrl || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -145,7 +147,7 @@ function DashboardProfile() {
 
             {/* Avatar */}
             <div className="w-32 h-32 rounded-full bg-secondary flex items-center justify-center mb-6 shadow-sm overflow-hidden ring-4 ring-accent-cream">
-              <img src={profile.avatar} alt={`${profile.firstName}'s avatar`} className="w-full h-full object-cover" />
+              <img src={profile.avatarUrl} alt={`${profile.firstName}'s avatar`} className="w-full h-full object-cover" />
             </div>
 
             {/* Name & Age */}
@@ -206,6 +208,17 @@ function DashboardProfile() {
                     />
                   </div>
                   <div className="md:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+                    <input
+                      type="text"
+                      name="avatarUrl"
+                      value={editFormData.avatarUrl}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com/avatar.jpg"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                     <input
                       type="text"
@@ -218,12 +231,12 @@ function DashboardProfile() {
                   <div className="md:col-span-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                     <input
-                    type="date"
-                    name="dob"
-                    value={editFormData.dob}
-                    onChange={handleInputChange}
-                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                      type="date"
+                      name="dob"
+                      value={editFormData.dob}
+                      onChange={handleInputChange}
+                      onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                     />
                   </div>
                   <div className="md:col-span-1">

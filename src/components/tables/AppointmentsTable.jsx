@@ -13,6 +13,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                             <ResizableTh className="p-4">Staff</ResizableTh>
                             <ResizableTh className="p-4">Appointment Date</ResizableTh>
                             <ResizableTh className="p-4">Service Type</ResizableTh>
+                            <ResizableTh className="p-4">Note</ResizableTh>
                             <ResizableTh className="p-4 text-center">Actions</ResizableTh>
                         </tr>
                     </thead>
@@ -34,6 +35,9 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                                         <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full">
                                             {appointment.serviceType}
                                         </span>
+                                    </td>
+                                    <td className="p-4 text-gray-500 italic max-w-xs truncate" title={appointment.note}>
+                                        {appointment.note || '-'}
                                     </td>
                                     <td className="p-4">
                                         <div className="flex items-center justify-center gap-3">
