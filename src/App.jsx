@@ -24,12 +24,22 @@ import Reviews from './pages/admin/rating.jsx'
 
 
 
+import Pricing from './pages/Pricing.jsx'
+
+
+
+
 function App() {
 
   return (
     <>
       <Navbar />
       <Routes>
+           
+
+
+           
+
         <Route path='/' element={<Home />} />
         <Route path='/status' element={<Status />} />
         <Route path='/about' element={<AboutPage />} />
@@ -41,9 +51,19 @@ function App() {
         <Route path='/signup' element={<Signup />} />
 
         {/* Dashboard routes with layout */}
+
+
+
+
+
+
+
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="settings" element={<Settings />} />
+<Route path="pricing" element={<Pricing />} />
+
+
           <Route path="reviews" element={<Reviews />} />
           <Route path="profile" element={<DashboardProfile />} />
           <Route path="appointments" element={<Appointments />} />

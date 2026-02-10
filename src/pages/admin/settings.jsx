@@ -57,6 +57,76 @@ function Settings() {
           </div>
 
           <div className="space-y-6">
+
+
+
+{/* Current Plan Card */}
+<div className="bg-white/90 backdrop-blur-md rounded-2xl p-6
+shadow-[0_20px_40px_rgba(147,129,255,0.15)]
+transition-transform duration-300 hover:-translate-y-1">
+
+  <h2 className="text-xl font-semibold text-primary mb-4">
+    Current Plan
+  </h2>
+
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+    {/* Plan Info */}
+    <div>
+      <p className="text-sm text-gray-500">Plan Name</p>
+      <p className="text-lg font-bold text-gray-900">
+        Premium Salon
+      </p>
+
+      <p className="text-sm text-gray-500 mt-3">Billing</p>
+      <p className="font-semibold text-gray-800">
+        ₹1649 / monthly
+      </p>
+    </div>
+
+    {/* Branch Usage */}
+    <div>
+      <p className="text-sm text-gray-500">Branch Limit</p>
+      <p className="font-semibold text-gray-800">
+        1 / 10 Branches Used
+      </p>
+
+      <div className="w-48 bg-gray-200 rounded-full h-2 mt-2">
+        <div className="bg-primary h-2 rounded-full w-[10%]"></div>
+      </div>
+    </div>
+
+    {/* Action Button */}
+    <div>
+      <button
+        onClick={() => window.location.href = "/dashboard/pricing"}
+        className="px-6 py-3 bg-primary text-white rounded-xl
+        hover:bg-[#7a67e0] transition-colors font-medium"
+      >
+        Upgrade / Change Plan
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
             
             {/* Account Details Card */}
             <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
