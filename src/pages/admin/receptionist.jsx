@@ -1,20 +1,132 @@
-import React from 'react'
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalendarWidget from '../../components/Calendar';
+import ReceptionistTable from '../../components/tables/ReceptionistTable';
+import KpiCard from '../../components/KpiCard';
+import { useSalon } from '../../context/SalonContext';
 
 function Receptionist() {
+  console.log('=== RECEPTIONIST COMPONENT LOADED ===');
+
+  const { selectedSalon } = useSalon();
   const [showNewPatientPopup, setShowNewPatientPopup] = useState(false);
   const [showEmergencyPopup, setShowEmergencyPopup] = useState(false);
 
-  const appointments = [
-    { id: 1, time: "09:30", name: "Amit Sharma", gender: "Male", age: 28, reason: "General Checkup", doctor: "Dr. Mehta", status: "checked" },
-    { id: 2, time: "09:45", name: "Shravani Chavan", gender: "Female", age: 21, reason: "General Checkup", doctor: "Dr. Mehta", status: "checked" },
-    { id: 3, time: "10:00", name: "Rohit Vishwakarma", gender: "Male", age: 21, reason: "General Checkup", doctor: "Dr. Mehta", status: "checked" },
-    { id: 4, time: "10:15", name: "Ajay Bhalerao", gender: "Male", age: 24, reason: "General Checkup", doctor: "Dr. Mehta", status: "checked" },
-    { id: 5, time: "10:30", name: "Harsh Patil", gender: "Male", age: 22, reason: "General Checkup", doctor: "Dr. Mehta", status: "checked" },
-    { id: 6, time: "10:45", name: "Neha Verma", gender: "Female", age: 32, reason: "Consultation", doctor: "Dr. Singh", status: "waiting" },
-    { id: 7, time: "11:00", name: "Rahul Patil", gender: "Male", age: 45, reason: "Follow-up", doctor: "Dr. Joshi", status: "completed" },
-  ];
+  const [appointments, setAppointments] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
+  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+
+  console.log('Initial userRole:', userRole);
+  console.log('Initial todayStats:', todayStats);
+
+  // Form state for New Client Registration
+  const [newClientForm, setNewClientForm] = useState({
+    name: '',
+    mobile: '',
+    age: '',
+    gender: 'Male',
+    reason: ''
+  });
+
+  // Form state for Walk-in Entry
+  const [walkinForm, setWalkinForm] = useState({
+    clientName: '',
+    serviceRequest: '',
+    stylistId: ''
+  });
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5050/appointments', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Filter by selected Salon if available
+          const filteredData = selectedSalon
+            ? data.filter(app => app.salonId?._id === selectedSalon._id || app.salonId === selectedSalon._id)
+            : data;
+
+          const mappedData = filteredData.map(app => ({
+            id: app._id,
+            time: new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            name: app.clientName,
+            gender: "N/A", // Backend doesn't have gender yet
+            age: "--", // Backend doesn't have age yet
+            reason: app.serviceId?.name || "Visit",
+            stylist: app.staffId?.name || "Stylist",
+            status: app.status || "waiting"
+          }));
+          setAppointments(mappedData);
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
+    };
+    fetchAppointments();
+  }, [selectedSalon]);
+
+  useEffect(() => {
+    const fetchTodayStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/appointments/today-stats?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/appointments/today-stats';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Today stats:', data);
+          setTodayStats(data);
+        } else {
+          console.error('Failed to fetch stats:', response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching today's stats:", error);
+      }
+    };
+
+    // Debug logging
+    const roleFromStorage = localStorage.getItem('role');
+    console.log('User role from localStorage:', roleFromStorage);
+    console.log('userRole state:', userRole);
+
+    // Fetch stats regardless of role for debugging
+    fetchTodayStats();
+  }, [selectedSalon, userRole]);
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/staff?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/staff';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Filter for active stylists
+          const stylists = data.filter(s => s.isActive && (s.role === 'stylist' || s.role === 'assistant'));
+          setStaff(stylists);
+        }
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+    fetchStaff();
+  }, [selectedSalon]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -34,6 +146,176 @@ function Receptionist() {
     }
   };
 
+  const handleMarkComplete = async (appointmentId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5050/appointments/${appointmentId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Optimistically update the UI or refetch
+        // Ideally we should refetch to get updated status, but we can also update local state
+        setAppointments(prev => prev.map(app =>
+          app.id === appointmentId ? { ...app, status: 'completed' } : app
+        ));
+      } else {
+        console.error("Failed to mark appointment as complete");
+        alert("Failed to complete appointment");
+      }
+    } catch (error) {
+      console.error("Error completing appointment:", error);
+      alert("Error completing appointment");
+    }
+  };
+
+  const handleNewClientSubmit = async () => {
+    try {
+      if (!selectedSalon) {
+        alert('Please select a salon first');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+
+      // Create appointment for new client
+      const appointmentData = {
+        clientName: newClientForm.name,
+        clientMobile: newClientForm.mobile,
+        date: new Date(), // Current date and time
+        serviceId: newClientForm.reason || null,
+        staffId: null,
+        salonId: selectedSalon?._id || null,
+        status: 'pending'
+      };
+
+      const response = await fetch('http://localhost:5050/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(appointmentData)
+      });
+
+      if (response.ok) {
+        // Refresh appointments list
+        const fetchAppointments = async () => {
+          const res = await fetch('http://localhost:5050/appointments', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const filteredData = selectedSalon
+              ? data.filter(app => app.salonId?._id === selectedSalon._id || app.salonId === selectedSalon._id)
+              : data;
+            const mappedData = filteredData.map(app => ({
+              id: app._id,
+              time: new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              name: app.clientName,
+              gender: "N/A",
+              age: "--",
+              reason: app.serviceId?.name || "Visit",
+              stylist: app.staffId?.name || "Stylist",
+              status: app.status || "waiting"
+            }));
+            setAppointments(mappedData);
+          }
+        };
+        await fetchAppointments();
+
+        // Reset form and close modal
+        setNewClientForm({ name: '', mobile: '', age: '', gender: 'Male', reason: '' });
+        setShowNewPatientPopup(false);
+        alert('New client registered successfully!');
+      } else {
+        alert('Failed to register client');
+      }
+    } catch (error) {
+      console.error('Error registering client:', error);
+      alert('Error registering client');
+    }
+  };
+
+  const handleWalkinSubmit = async () => {
+    try {
+      if (!selectedSalon) {
+        alert('Please select a salon first');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+
+      const appointmentData = {
+        clientName: walkinForm.clientName || 'Walk-in Client',
+        clientMobile: '0000000000',
+        date: new Date(), // Current date and time
+        serviceId: walkinForm.serviceRequest || null,
+        staffId: walkinForm.stylistId || null,
+        salonId: selectedSalon._id,
+        status: 'pending'
+      };
+
+      console.log('Sending appointment data:', appointmentData);
+
+      const response = await fetch('http://localhost:5050/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(appointmentData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error creating appointment:', errorData);
+        alert(`Failed to add walk-in entry: ${errorData.message || 'Unknown error'}`);
+        return;
+      }
+
+      if (response.ok) {
+        // Refresh appointments
+        const fetchAppointments = async () => {
+          const res = await fetch('http://localhost:5050/appointments', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const filteredData = selectedSalon
+              ? data.filter(app => app.salonId?._id === selectedSalon._id || app.salonId === selectedSalon._id)
+              : data;
+            const mappedData = filteredData.map(app => ({
+              id: app._id,
+              time: new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              name: app.clientName,
+              gender: "N/A",
+              age: "--",
+              reason: app.serviceId?.name || "Visit",
+              stylist: app.staffId?.name || "Stylist",
+              status: app.status || "waiting"
+            }));
+            setAppointments(mappedData);
+          }
+        };
+        await fetchAppointments();
+
+        // Reset form and close modal
+        setWalkinForm({ clientName: '', serviceRequest: '', stylistId: '' });
+        setShowEmergencyPopup(false);
+        alert('Walk-in entry added successfully!');
+      } else {
+        alert('Failed to add walk-in entry');
+      }
+    } catch (error) {
+      console.error('Error adding walk-in:', error);
+      alert('Error adding walk-in entry');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Page Header */}
@@ -42,43 +324,29 @@ function Receptionist() {
         <p className="text-gray-500">Wed, Jan 29, 2026</p>
       </div>
 
+      {/* Stats Cards - Temporarily showing to all users for debugging */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <KpiCard
+          title="Today's Customers"
+          value={todayStats.customerCount.toString()}
+          trend="+0%"
+          isPositive={true}
+          icon={<span className="text-2xl">👥</span>}
+        />
+        <KpiCard
+          title="Today's Revenue"
+          value={`₹${todayStats.revenue.toLocaleString()}`}
+          trend="+0%"
+          isPositive={true}
+          icon={<span className="text-2xl">💰</span>}
+        />
+      </div>
+      {/* DEBUG: Role is {userRole} */}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Appointments Table */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left whitespace-nowrap">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                  <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Patient Name</th>
-                  <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
-                  <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Doctor</th>
-                  <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-sm font-medium text-gray-900">{appointment.time}</td>
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-900">{appointment.name}</span>
-                        <span className="text-xs text-gray-500">{appointment.gender} • {appointment.age}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">{appointment.reason}</td>
-                    <td className="p-4 text-sm text-gray-600">{appointment.doctor}</td>
-                    <td className="p-4">
-                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
-                        {getStatusText(appointment.status)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ReceptionistTable appointments={appointments} onMarkComplete={handleMarkComplete} />
+
 
         {/* Right Panel */}
         <div className="space-y-6">
@@ -92,26 +360,35 @@ function Receptionist() {
             className="w-full bg-primary hover:bg-secondary text-white font-semibold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             onClick={() => setShowNewPatientPopup(true)}
           >
-            + New Patient Registration
+            + New Client Registration
           </button>
 
           <button
             className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             onClick={() => setShowEmergencyPopup(true)}
           >
-            🚨 Emergency Entry
+            🚨 Walk-in Entry
           </button>
         </div>
       </div>
 
       {/* Popup Modal */}
       {(showNewPatientPopup || showEmergencyPopup) && (
-        <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-down">
+        <div
+          className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setShowNewPatientPopup(false);
+            setShowEmergencyPopup(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-down"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Popup Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
               <h2 className="text-2xl font-bold text-gray-900">
-                {showNewPatientPopup ? "New Patient Registration" : "Emergency Entry"}
+                {showNewPatientPopup ? "New Client Registration" : "Walk-in Entry"}
               </h2>
               <button
                 className="text-gray-400 hover:text-gray-600 text-3xl leading-none"
@@ -131,7 +408,15 @@ function Receptionist() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
                     type="text"
-                    placeholder="Enter patient name"
+                    placeholder="Enter client name"
+                    value={showNewPatientPopup ? newClientForm.name : walkinForm.clientName}
+                    onChange={(e) => {
+                      if (showNewPatientPopup) {
+                        setNewClientForm({ ...newClientForm, name: e.target.value });
+                      } else {
+                        setWalkinForm({ ...walkinForm, clientName: e.target.value });
+                      }
+                    }}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                   />
                 </div>
@@ -139,17 +424,34 @@ function Receptionist() {
                 {showNewPatientPopup && (
                   <>
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                      <input
+                        type="tel"
+                        placeholder="Enter mobile number"
+                        value={newClientForm.mobile}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, mobile: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
                       <input
                         type="number"
                         placeholder="Enter age"
+                        value={newClientForm.age}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, age: e.target.value })}
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                      <select className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white">
+                      <select
+                        value={newClientForm.gender}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, gender: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
+                      >
                         <option>Male</option>
                         <option>Female</option>
                         <option>Other</option>
@@ -160,7 +462,9 @@ function Receptionist() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
                       <input
                         type="text"
-                        placeholder="Reason for visit"
+                        placeholder="Service needed"
+                        value={newClientForm.reason}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, reason: e.target.value })}
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                       />
                     </div>
@@ -170,20 +474,27 @@ function Receptionist() {
                 {showEmergencyPopup && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Service Request</label>
                       <input
                         type="text"
-                        placeholder="Describe emergency"
+                        placeholder="Describe service needed"
+                        value={walkinForm.serviceRequest}
+                        onChange={(e) => setWalkinForm({ ...walkinForm, serviceRequest: e.target.value })}
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
-                      <select className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-white">
-                        <option>Dr. Mehta</option>
-                        <option>Dr. Singh</option>
-                        <option>Dr. Joshi</option>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                      <select
+                        value={walkinForm.stylistId}
+                        onChange={(e) => setWalkinForm({ ...walkinForm, stylistId: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-white"
+                      >
+                        <option value="">Select Stylist</option>
+                        {staff.map(stylist => (
+                          <option key={stylist._id} value={stylist._id}>{stylist.name}</option>
+                        ))}
                       </select>
                     </div>
                   </>
@@ -196,8 +507,11 @@ function Receptionist() {
               <button
                 className="flex-1 bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
                 onClick={() => {
-                  setShowNewPatientPopup(false);
-                  setShowEmergencyPopup(false);
+                  if (showNewPatientPopup) {
+                    handleNewClientSubmit();
+                  } else if (showEmergencyPopup) {
+                    handleWalkinSubmit();
+                  }
                 }}
               >
                 Save

@@ -21,25 +21,18 @@ import Services from './pages/admin/services.jsx'
 import Receptionist from './pages/admin/receptionist'
 import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
+import Plans_and_pricing from './pages/plans-and-pricing.jsx'
 
 
 
-import Pricing from './pages/Pricing.jsx'
-
-
-
+import { SalonProvider } from './context/SalonContext';
 
 function App() {
 
   return (
-    <>
+    <SalonProvider>
       <Navbar />
       <Routes>
-           
-
-
-           
-
         <Route path='/' element={<Home />} />
         <Route path='/status' element={<Status />} />
         <Route path='/about' element={<AboutPage />} />
@@ -47,23 +40,14 @@ function App() {
         <Route path='/profile' element={<Profile />} />
         <Route path='/profile/history' element={<History />} />
         <Route path='/profile/activity' element={<Activity />} />
+        <Route path='/plans-and-pricing' element={ <Plans_and_pricing />} />
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
 
         {/* Dashboard routes with layout */}
-
-
-
-
-
-
-
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="settings" element={<Settings />} />
-<Route path="pricing" element={<Pricing />} />
-
-
           <Route path="reviews" element={<Reviews />} />
           <Route path="profile" element={<DashboardProfile />} />
           <Route path="appointments" element={<Appointments />} />
@@ -73,7 +57,7 @@ function App() {
           <Route path="receptionist" element={<Receptionist />} />
         </Route>
       </Routes>
-    </>
+    </SalonProvider>
   )
 }
 

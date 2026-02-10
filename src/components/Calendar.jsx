@@ -4,10 +4,26 @@ import '../index.css'
 import 'react-calendar/dist/Calendar.css';
 
 
-function CalendarWidget() {
+function CalendarWidget({ appointments = [], onDateClick, selectedDate }) {
+  // Helper to check if a date has appointments
+  const hasAppointment = (date) => {
+    return appointments.some(app =>
+      new Date(app.date).toDateString() === date.toDateString()
+    );
+  };
+
   return (
     <div className="calendar-wrapper p-2">
-      <ReactCalendar className="w-full border-none rounded-xl shadow-none font-sans" />
+      <ReactCalendar
+        className="w-full border-none rounded-xl shadow-none font-sans"
+        onClickDay={onDateClick}
+        value={selectedDate}
+        tileContent={({ date, view }) => view === 'month' && hasAppointment(date) ? (
+          <div className="flex justify-center mt-1">
+            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+          </div>
+        ) : null}
+      />
       <style>{`
         .react-calendar {
           width: 100%;

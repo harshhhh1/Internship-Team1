@@ -1,34 +1,26 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  role: {
-    type: String,
-    enum: ["staff", "admin"],
-    required: true,
-  },
+  username: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'staff' },
+  registeredAt: { type: Date, default: Date.now }
+}, { strict: false });
 
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
+const User = mongoose.model("User", userSchema);
 
-  password: {
-    type: String,
-    required: true,
-  },
+export const createUser = async (user) => {
+  const newUser = new User(user);
+  return await newUser.save();
+};
 
-  // 🔽 ADD THESE FIELDS FOR PLAN SYSTEM
-  plan: {
-    type: String,
-    enum: ["basic", "standard", "premium"],
-    default: "basic",
-  },
+export const findUserByEmail = async (email) => {
+  return await User.findOne({ email });
+};
 
-  maxBranches: {
-    type: Number,
-    default: 1,
-  },
-});
+export const findUserById = async (id) => {
+  return await User.findById(id);
+};
 
-export default mongoose.model("User", userSchema);
+export default User;

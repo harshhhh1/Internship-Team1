@@ -1,22 +1,32 @@
 import express from "express";
-import Salon from "../models/Salon.js";
+
+import {
+    createSalon,
+    getSalons,
+    getSalonById,
+    updateSalon,
+    deleteSalon
+} from "../controllers/salon.controller.js";
+import { authenticateToken, requireOwner, requireStaff } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Add Salon Branch
-router.post("/add-branch", async (req, res) => {
-  try {
-    const salon = new Salon(req.body);
-    await salon.save();
+// Apply authentication to all salon routes
+router.use(authenticateToken);
 
-    res.status(201).json({
-      message: "Salon branch added successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to add salon branch",
-    });
-  }
-});
+// Create salon - only owners can create salons
+router.post("/", requireOwner, createSalon);
+
+// Get salons - both owners and staff can view salons
+router.get("/", requireStaff, getSalons);
+
+// Get salon by ID - both owners and staff can view salon details
+router.get("/:id", requireStaff, getSalonById);
+
+// Update salon - only owners can update salons
+router.put("/:id", requireOwner, updateSalon);
+
+// Delete salon - only owners can delete salons
+router.delete("/:id", requireOwner, deleteSalon);
 
 export default router;

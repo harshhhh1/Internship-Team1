@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     HiHome,
@@ -13,6 +13,14 @@ import {
 
 const BottomNav = () => {
     const [isMoreOpen, setMoreOpen] = useState(false);
+    const [role, setRole] = useState('staff'); // Default to staff
+
+    useEffect(() => {
+        const storedRole = localStorage.getItem('role');
+        if (storedRole) {
+            setRole(storedRole);
+        }
+    }, []);
 
     const navItems = [
         { to: "/dashboard", icon: <HiHome size={24} />, label: "Home", end: true },
@@ -22,9 +30,12 @@ const BottomNav = () => {
     ];
 
     const moreItems = [
-        { to: "/dashboard/staff", label: "Staff" },
-        { to: "/dashboard/receptionist", label: "Receptionist" },
-        { to: "/dashboard/revenue-and-report", label: "Revenue" },
+        // Admin restricted items
+        ...(role === 'admin' ? [
+            { to: "/dashboard/staff", label: "Staff" },
+            { to: "/dashboard/receptionist", label: "Receptionist" },
+            { to: "/dashboard/revenue-and-report", label: "Revenue" },
+        ] : []),
         { to: "/dashboard/reviews", label: "Reviews" },
         { to: "/dashboard/settings", label: "Settings" },
     ];
