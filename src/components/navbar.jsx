@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import logo from '../assets/learnyticslogopng.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
-import { useSalon } from '../context/SalonContext'; // Import Context
+import { useSalon } from '../context/SalonContext';
 import AddSalonModal from './modals/AddSalonModal';
 
 function Navbar() {
@@ -10,7 +10,6 @@ function Navbar() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isBranchDropdownOpen, setBranchDropdownOpen] = useState(false);
 
-  // Use Context instead of local fetch
   const { salons, selectedSalon, setSelectedSalon, fetchSalons } = useSalon();
   const [role, setRole] = useState(localStorage.getItem('role'));
   const [isAddSalonModalOpen, setAddSalonModalOpen] = useState(false);
@@ -19,17 +18,9 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const toggleDropdown = () => {
-    setDropdownOpen(!isDropdownOpen);
-  };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const toggleBranchDropdown = () => {
-    setBranchDropdownOpen(!isBranchDropdownOpen);
-  };
+  const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
+  const toggleMobileMenu = () => setMobileMenuOpen(!isMobileMenuOpen);
+  const toggleBranchDropdown = () => setBranchDropdownOpen(!isBranchDropdownOpen);
 
   const selectBranch = (salon) => {
     setSelectedSalon(salon);
@@ -37,16 +28,13 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.clear();
     setIsLoggedIn(false);
     setRole(null);
     setDropdownOpen(false);
     navigate('/');
   };
 
-  // Update auth state on location change
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem('userId'));
     setRole(localStorage.getItem('role'));
@@ -61,156 +49,173 @@ function Navbar() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(salonData)
+        body: JSON.stringify(salonData),
       });
 
       if (response.ok) {
         await fetchSalons();
         setAddSalonModalOpen(false);
       } else {
-        const error = await response.json();
-        alert(error.message || "Failed to add salon");
+        alert('Failed to add salon');
       }
-    } catch (err) {
-      console.error("Error adding salon:", err);
-      alert("An error occurred while adding salon");
+    } catch {
+      alert('Error adding salon');
     }
   };
 
   return (
     <>
-      <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 border-b border-gray-100 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
 
-            {/* Logo & Mobile Menu Button */}
+            {/* Logo */}
             <div className="flex items-center">
-              <button
-                className="md:hidden mr-2 text-gray-600 focus:outline-none"
-                onClick={toggleMobileMenu}
-              >
+              <button className="md:hidden mr-2" onClick={toggleMobileMenu}>
                 {isMobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
               </button>
-              <div className="shrink-0 flex items-center cursor-pointer" onClick={() => window.location.href = '/'}>
-                <img src={logo} alt="Company Logo" className="h-10 w-auto" />
-                <span className="ml-3 text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent hidden sm:block">Luxe Salon</span>
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={() => navigate('/')}
+              >
+                <img src={logo} className="h-10" alt="logo" />
+                <span className="ml-3 text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent hidden sm:block">
+                  Luxe Salon
+                </span>
               </div>
             </div>
 
             {/* Desktop Menu */}
-            <ul className="hidden md:flex space-x-8 items-center">
-              <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Home</li></Link>
-              <Link to="/status" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Status</li></Link>
-              <Link to="/about" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>About</li></Link>
-              <Link to="/plans-and-pricing" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Plans</li></Link>
-              <Link to="/contact" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Contact</li></Link>
+            <ul className="hidden md:flex space-x-8">
+              <Link to="/"><li className="nav-link">Home</li></Link>
+              <Link to="/status"><li className="nav-link">Status</li></Link>
+              <Link to="/about"><li className="nav-link">About</li></Link>
+              <Link to="/plans-and-pricing"><li className="nav-link">Plans</li></Link>
+              <Link to="/contact"><li className="nav-link">Contact</li></Link>
             </ul>
 
-            {/* Right Side Actions */}
+            {/* Right Side */}
             <div className="flex items-center space-x-4">
-              <ul className="flex items-center space-x-4">
-                {!isLoggedIn && (
-                  <>
-                    <Link to="/login"><li className="hidden sm:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Login</li></Link>
-                    <Link to="/signup"><li className="hidden sm:block bg-primary text-white px-5 py-2 rounded-full hover:bg-secondary transition-colors shadow-md hover:shadow-lg cursor-pointer font-medium">Sign Up</li></Link>
-                  </>
-                )}
-                {/* Conditional Dashboard Link: Show if NOT logged in (maybe as a prompt?), Logic kept per original but seems redundant if Login exists. 
-                  Actually user asked to remove login/signup when logged in. 
-                  If logged in, we might want to show a 'Dashboard' link leading to /dashboard/appointments or similar?
-                  For now, hiding it if logged in as per original logic line 100 which was !isLoggedIn.
-               */}
-                {!isLoggedIn && <Link to="/login"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
-                {isLoggedIn && <Link to="/dashboard"><li className="hidden lg:block text-gray-600 hover:text-primary font-medium transition-colors cursor-pointer">Dashboard</li></Link>}
 
-                {/* Branch Switcher */}
-                {isLoggedIn && (salons.length > 0 || role === 'owner') && (
-                  <div className="relative mr-4">
-                    <button
-                      onClick={() => toggleBranchDropdown()}
-                      className="flex items-center space-x-2 bg-primary text-white px-3 py-2 rounded-lg hover:bg-secondary transition-colors font-medium text-sm"
-                    >
-                      <span>🏢 {selectedSalon ? selectedSalon.name : (role === 'owner' && salons.length === 0 ? 'Add Branch' : 'Select Branch')}</span>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {isBranchDropdownOpen && (
-                      <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 z-50">
-                        {salons.map((salon) => (
-                          <li
-                            key={salon._id}
-                            className={`block px-4 py-2 text-sm cursor-pointer transition-colors ${selectedSalon?._id === salon._id
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
-                              }`}
-                            onClick={() => selectBranch(salon)}
-                          >
-                            🏢 {salon.name}
-                          </li>
-                        ))}
-                        {role === 'owner' && (
-                          <li
-                            className="block px-4 py-2 text-sm text-primary font-bold hover:bg-gray-50 cursor-pointer border-t border-gray-100 mt-1"
-                            onClick={() => {
-                              setAddSalonModalOpen(true);
-                              setBranchDropdownOpen(false);
-                            }}
-                          >
-                            + Add New Branch
-                          </li>
-                        )}
-                      </ul>
-                    )}
-                  </div>
-                )}
+              {!isLoggedIn && (
+                <>
+                  <Link to="/login" className="hidden sm:block nav-link">
+                    Login
+                  </Link>
+                  <Link to="/signup">
+                    <span className="hidden sm:block bg-primary text-white px-5 py-2 rounded-full">
+                      Sign Up
+                    </span>
+                  </Link>
+                </>
+              )}
 
-                {/* Profile Dropdown - Only show when logged in */}
-                {isLoggedIn && (
-                  <div className="relative ml-4">
+              {isLoggedIn && (
+                <>
+                  <Link to="/dashboard" className="hidden lg:block nav-link">
+                    Dashboard
+                  </Link>
+
+                  {(salons.length > 0 || role === 'owner') && (
+                    <div className="relative">
+                      <button
+                        onClick={toggleBranchDropdown}
+                        className="bg-primary text-white px-3 py-2 rounded-lg text-sm"
+                      >
+                        🏢 {selectedSalon ? selectedSalon.name : 'Select Branch'}
+                      </button>
+
+                      {isBranchDropdownOpen && (
+                        <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg">
+                          {salons.map((salon) => (
+                            <li
+                              key={salon._id}
+                              onClick={() => selectBranch(salon)}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            >
+                              {salon.name}
+                            </li>
+                          ))}
+                          {role === 'owner' && (
+                            <li
+                              onClick={() => setAddSalonModalOpen(true)}
+                              className="px-4 py-2 text-primary font-semibold border-t cursor-pointer"
+                            >
+                              + Add Branch
+                            </li>
+                          )}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Profile */}
+                  <div className="relative">
                     <img
-                      src='https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp'
-                      alt="Profile"
-                      className="h-10 w-10 rounded-full cursor-pointer ring-2 ring-transparent hover:ring-primary transition-all object-cover"
+                      src="https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp"
+                      className="h-10 w-10 rounded-full cursor-pointer"
                       onClick={toggleDropdown}
+                      alt="profile"
                     />
                     {isDropdownOpen && (
-                      <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-fade-in-down z-50">
-                        <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>My Activity</li></Link>
-                        <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>History</li></Link>
-                        <Link to="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"><li>View Profile</li></Link>
-                        <li className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer" onClick={handleLogout}>Logout</li>
+                      <ul className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg">
+                        <Link to="/dashboard/profile"><li className="dropdown-item">Profile</li></Link>
+                        <li onClick={handleLogout} className="dropdown-item text-red-600">
+                          Logout
+                        </li>
                       </ul>
                     )}
                   </div>
-                )}
-              </ul>
+                </>
+              )}
+
+              {/* ⭐ LAST BUTTON – Book Appointment */}
+              <Link to="/book-appointment">
+                <button className="bg-primary text-white px-5 py-2 rounded-full hover:bg-secondary transition shadow-md">
+                  Book Appointment
+                </button>
+              </Link>
+
             </div>
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100">
-            <ul className="px-4 pt-2 pb-4 space-y-1">
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Home</li></Link>
-              <Link to="/status" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Status</li></Link>
-              <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>About</li></Link>
-              <Link to="/plans-and-pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Plans</li></Link>
-              <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Contact</li></Link>
+          <div className="md:hidden bg-white border-t">
+            <ul className="px-4 py-3 space-y-2">
+              <Link to="/" onClick={toggleMobileMenu}><li>Home</li></Link>
+              <Link to="/status" onClick={toggleMobileMenu}><li>Status</li></Link>
+              <Link to="/about" onClick={toggleMobileMenu}><li>About</li></Link>
+              <Link to="/plans-and-pricing" onClick={toggleMobileMenu}><li>Plans</li></Link>
+              <Link to="/contact" onClick={toggleMobileMenu}><li>Contact</li></Link>
+
               {!isLoggedIn && (
                 <>
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Login</li></Link>
-                  <Link to="/signup" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Sign Up</li></Link>
+                  <Link to="/login" onClick={toggleMobileMenu}><li>Login</li></Link>
+                  <Link to="/signup" onClick={toggleMobileMenu}><li>Sign Up</li></Link>
                 </>
               )}
-              {isLoggedIn && <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Dashboard</li></Link>}
+
+              {isLoggedIn && (
+                <Link to="/dashboard" onClick={toggleMobileMenu}>
+                  <li>Dashboard</li>
+                </Link>
+              )}
+
+              {/* ⭐ LAST – Mobile Book Appointment */}
+              <Link to="/book-appointment" onClick={toggleMobileMenu}>
+                <li className="text-primary font-semibold">
+                  Book Appointment
+                </li>
+              </Link>
             </ul>
           </div>
         )}
       </nav>
+
       <AddSalonModal
         isOpen={isAddSalonModalOpen}
         onClose={() => setAddSalonModalOpen(false)}

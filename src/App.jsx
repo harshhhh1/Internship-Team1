@@ -17,7 +17,7 @@ import DashboardProfile from './pages/admin/Profile';
 import Appointments from './pages/admin/Appointments';
 import RevenueReport from './pages/admin/revenueandreport.jsx'
 import Staff from './pages/admin/staff.jsx'
-import Services from './pages/admin/services.jsx'
+import Services from './pages/admin/Services.jsx'
 import Receptionist from './pages/admin/receptionist'
 import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
@@ -26,6 +26,9 @@ import Plans_and_pricing from './pages/plans-and-pricing.jsx'
 
 
 import { SalonProvider } from './context/SalonContext';
+
+import BookAppointment from "./pages/BookAppointment";
+
 
 function App() {
 
@@ -43,6 +46,10 @@ function App() {
         <Route path='/plans-and-pricing' element={ <Plans_and_pricing />} />
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+
+
+        <Route path="/book-appointment" element={<BookAppointment />} />
+
 
         {/* Dashboard routes with layout */}
         <Route path="/dashboard" element={<DashboardLayout />}>
