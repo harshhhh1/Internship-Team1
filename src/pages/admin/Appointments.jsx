@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppointmentsTable from '../../components/tables/AppointmentsTable';
 import CalendarWidget from '../../components/Calendar';
-
 import { useSalon } from '../../context/SalonContext';
 import { services as appointmentServices } from './Services';
 
@@ -149,7 +148,7 @@ function Appointments() {
       // Use _id if it's an object, otherwise use the value itself
       const salonId = selectedSalon?._id || selectedSalon;
 
-      console.log(`Fetching staff for Salon: ${salonId}`);
+  
 
       const url = salonId
         ? `http://localhost:5050/staff?salonId=${salonId}`
@@ -162,7 +161,6 @@ function Appointments() {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log(`Fetched ${data.length} staff members`);
         setStaff(data);
       }
     } catch (error) {

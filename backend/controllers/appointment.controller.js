@@ -350,3 +350,252 @@ export const getRevenueStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getDashboardStats = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        let matchFilter = {};
+        if (req.user && req.user.role === 'owner') {
+            matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
+            if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (salonId) {
+            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (req.user) { // Staff fallback
+            const userStaff = await Staff.findById(req.user.id);
+            if (userStaff && userStaff.salonId) {
+                matchFilter.salonId = userStaff.salonId;
+            }
+        }
+
+        // Total Earnings (All Time)
+        const totalEarningsResult = await Appointment.aggregate([
+            { $match: { ...matchFilter, status: 'completed' } },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                }
+            }
+        ]);
+        const totalEarnings = totalEarningsResult[0]?.total || 0;
+
+        // Earnings Last Week & Previous Week for Trend
+        const today = new Date();
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - 7);
+        const previousWeekStart = new Date(today);
+        previousWeekStart.setDate(today.getDate() - 14);
+
+        const weeklyEarnings = await Appointment.aggregate([
+            {
+                $match: {
+                    ...matchFilter,
+                    status: 'completed',
+                    date: { $gte: previousWeekStart, $lt: today }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    date: 1,
+                    price: { $ifNull: ['$service.price', 0] }
+                }
+            }
+        ]);
+
+        let lastWeekTotal = 0;
+        let previousWeekTotal = 0;
+
+        weeklyEarnings.forEach(app => {
+            if (app.date >= lastWeekStart) {
+                lastWeekTotal += app.price;
+            } else {
+                previousWeekTotal += app.price;
+            }
+        });
+
+        const weeklyTrend = previousWeekTotal > 0
+            ? (((lastWeekTotal - previousWeekTotal) / previousWeekTotal) * 100).toFixed(1)
+            : (lastWeekTotal > 0 ? 100 : 0);
+
+        // Top Services
+        const topServices = await Appointment.aggregate([
+            { $match: { ...matchFilter, status: 'completed' } },
+            {
+                $group: {
+                    _id: '$serviceId',
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: '$service' },
+            {
+                $project: {
+                    name: '$service.name',
+                    count: 1
+                }
+            }
+        ]);
+
+        // Calculate percentages for top services
+        const totalServiceCount = topServices.reduce((acc, curr) => acc + curr.count, 0);
+        const topServicesWithPercentage = topServices.map(s => ({
+            ...s,
+            percentage: totalServiceCount > 0 ? Math.round((s.count / totalServiceCount) * 100) : 0
+        }));
+
+        res.status(200).json({
+            totalEarnings,
+            lastWeekEarnings: lastWeekTotal,
+            weeklyTrend: `${weeklyTrend > 0 ? '+' : ''}${weeklyTrend}%`,
+            topServices: topServicesWithPercentage
+        });
+
+    } catch (error) {
+        console.error("Dashboard Stats Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getEarningsPageData = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        let matchFilter = {};
+        if (req.user && req.user.role === 'owner') {
+            matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
+            if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (salonId) {
+            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (req.user) {
+            const userStaff = await Staff.findById(req.user.id);
+            if (userStaff && userStaff.salonId) {
+                matchFilter.salonId = userStaff.salonId;
+            }
+        }
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        // Fetch all relevant appointments for calculations
+        const appointments = await Appointment.aggregate([
+            {
+                $match: {
+                    ...matchFilter,
+                    date: { $gte: startOfYear } // Fetch from start of year to cover most stats
+                }
+            },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    date: 1,
+                    status: 1,
+                    price: { $ifNull: ['$service.price', 0] }
+                }
+            }
+        ]);
+
+        let thisMonth = 0;
+        let lastMonth = 0;
+        let totalYear = 0;
+
+        // Use a separate query for ALL time pending if needed, but for now lets aggregate pending from the fetched set or do a separate quick count
+        // Actually, pending might be older than this year, so better to do a separate count for pending.
+
+        appointments.forEach(app => {
+            if (app.status === 'completed') {
+                totalYear += app.price;
+                if (app.date >= startOfMonth) {
+                    thisMonth += app.price;
+                } else if (app.date >= startOfLastMonth && app.date <= endOfLastMonth) {
+                    lastMonth += app.price;
+                }
+            }
+        });
+
+        // Pending Amount (All time)
+        const pendingResult = await Appointment.aggregate([
+            { $match: { ...matchFilter, status: { $in: ['pending', 'confirmed'] } } },
+            {
+                $lookup: {
+                    from: 'services',
+                    localField: 'serviceId',
+                    foreignField: '_id',
+                    as: 'service'
+                }
+            },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                }
+            }
+        ]);
+        const pendingAmount = pendingResult[0]?.total || 0;
+
+        // Recent Earnings Table (Last 10)
+        const recentEarnings = await Appointment.find({ ...matchFilter, status: 'completed' })
+            .sort({ date: -1 })
+            .limit(10)
+            .populate('serviceId', 'name price')
+            .lean();
+
+        const formattedRecent = recentEarnings.map(app => ({
+            id: app._id,
+            date: app.date,
+            service: app.serviceId?.name || 'Service',
+            client: app.clientName,
+            amount: app.serviceId?.price || 0,
+            status: 'Paid' // Completed implies paid for this context
+        }));
+
+        res.status(200).json({
+            thisMonth,
+            lastMonth,
+            totalYear,
+            pending: pendingAmount,
+            recentEarnings: formattedRecent
+        });
+
+    } catch (error) {
+        console.error("Earnings Page Data Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

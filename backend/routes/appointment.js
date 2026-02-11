@@ -7,7 +7,9 @@ import {
     deleteAppointment,
     completeAppointment,
     getTodayStats,
-    getRevenueStats
+    getRevenueStats,
+    getDashboardStats,
+    getEarningsPageData
 } from "../controllers/appointment.controller.js";
 import { authenticateToken, requireStaff } from "../middleware/auth.js";
 
@@ -22,6 +24,8 @@ router.use(authenticateToken);
 // All appointment operations require staff role (owners and staff can manage appointments)
 router.get("/today-stats", requireStaff, getTodayStats);
 router.get("/revenue-stats", requireStaff, getRevenueStats);
+router.get("/dashboard-stats", requireStaff, getDashboardStats);
+router.get("/earnings-data", requireStaff, getEarningsPageData);
 router.get("/", requireStaff, getAppointments);
 router.get("/:id", requireStaff, getAppointmentById);
 router.put("/:id", requireStaff, updateAppointment);

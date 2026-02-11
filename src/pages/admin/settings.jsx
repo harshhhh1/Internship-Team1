@@ -3,10 +3,14 @@ import DashboardSidebar from '../../components/DashboardSidebar';
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal';
 import DeleteAccountModal from '../../components/modals/DeleteAccountModal';
 import SalonModal from '../../components/modals/SalonModal';
+import PlanLimitModal from '../../components/modals/PlanLimitModal';
 import ResizableTh from '../../components/ResizableTh';
+import { useSalon } from '../../context/SalonContext';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 function Settings() {
+  const { branchLimit } = useSalon();
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [user, setUser] = useState({
     name: '',
     contact: '',
@@ -451,7 +455,14 @@ function Settings() {
               <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
                 <h2 className="text-xl font-semibold text-primary mb-6">🏢 Salon Management</h2>
                 <button
-                  onClick={() => { setEditingSalon(null); setIsSalonModalOpen(true); }}
+                  onClick={() => {
+                    if (salons.length >= branchLimit) {
+                      setIsLimitModalOpen(true);
+                    } else {
+                      setEditingSalon(null);
+                      setIsSalonModalOpen(true);
+                    }
+                  }}
                   className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-[#7a67e0] transition-colors font-medium"
                 >
                   Add Salon
@@ -546,6 +557,12 @@ function Settings() {
         onClose={() => { setIsSalonModalOpen(false); setEditingSalon(null); }}
         onSubmit={handleSalonModalSubmit}
         initialData={editingSalon}
+      />
+
+      <PlanLimitModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+        currentLimit={branchLimit}
       />
     </div>
   )

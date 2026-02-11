@@ -11,6 +11,7 @@ export const SalonProvider = ({ children }) => {
     const [salons, setSalons] = useState([]);
     const [selectedSalon, setSelectedSalon] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [branchLimit, setBranchLimit] = useState(1);
 
     const fetchSalons = async () => {
         try {
@@ -23,10 +24,19 @@ export const SalonProvider = ({ children }) => {
                 return;
             }
 
-            // Fetch request might need adjustment based on your backend logic (e.g. if it filters by owner automatically)
-            // For now assuming /salons returns all, we might need to filter or backend handles it.
-            // If backend returns all salons, we should filter by ownerId on frontend if specific endpoint missing.
-            // But let's assume /salons returns relevant salons.
+            // Fetch Owner's branch limit if role is owner
+            if (role === 'owner') {
+                const profileRes = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    if (profileData.subscription?.branchLimit) {
+                        setBranchLimit(profileData.subscription.branchLimit);
+                    }
+                }
+            }
+
             let url = 'http://localhost:5050/salons';
             if (role === 'owner' && userId) {
                 url += `?ownerId=${userId}`;
@@ -77,7 +87,8 @@ export const SalonProvider = ({ children }) => {
         selectedSalon,
         setSelectedSalon,
         fetchSalons,
-        loading
+        loading,
+        branchLimit
     };
 
     return (

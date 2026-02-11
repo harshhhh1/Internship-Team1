@@ -21,6 +21,7 @@ export const ALL_TABS = [
     { id: 'expenses', path: '/dashboard/expenses', label: 'Expenses', icon: '/expenses.svg' },
     { id: 'offers', path: '/dashboard/offers', label: 'Offers', icon: '/offers.svg' },
     { id: 'reviews', path: '/dashboard/reviews', label: 'Reviews', icon: '/reviews.svg' },
+    { id: 'attendance', path: '/dashboard/attendance', label: 'Attendance', icon: '/appointment.svg' },
 ];
 
 // Default tabs for each role (used when creating new staff)

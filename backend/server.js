@@ -13,6 +13,7 @@ import offerRoutes from "./routes/offer.js";
 import ownerRoutes from "./routes/owner.js";
 import inventoryRoutes from "./routes/inventory.js";
 import expenseRoutes from "./routes/expense.js";
+import attendanceRoutes from "./routes/attendance.js"; // [NEW]
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use("/offers", offerRoutes);
 app.use("/owner", ownerRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/expenses", expenseRoutes);
+app.use("/attendance", attendanceRoutes); // [NEW]
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });

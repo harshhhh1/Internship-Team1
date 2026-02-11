@@ -18,11 +18,10 @@ const staffSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true,
-        sparse: true, // Allow nulls if some staff don't have email yet, but if they login they need it
+        sparse: true,
     },
     password: {
         type: String,
-        // required: true, // Optional if just a record, required if login
     },
     mobile: {
         type: String,
@@ -31,7 +30,8 @@ const staffSchema = new mongoose.Schema({
     role: {
         type: String,
         required: true,
-        enum: ['staff', 'receptionist', 'admin'],
+        // Removed 'admin' from enum as requested
+        enum: ['staff', 'receptionist'],
         default: 'staff'
     },
     profession: {

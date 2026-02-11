@@ -6,7 +6,7 @@ import KpiCard from '../../components/KpiCard';
 import { useSalon } from '../../context/SalonContext';
 
 function Receptionist() {
-  console.log('=== RECEPTIONIST COMPONENT LOADED ===');
+
 
   const { selectedSalon } = useSalon();
   const [showNewPatientPopup, setShowNewPatientPopup] = useState(false);
@@ -17,9 +17,9 @@ function Receptionist() {
   const [staff, setStaff] = useState([]);
   const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
   const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
 
-  console.log('Initial userRole:', userRole);
-  console.log('Initial todayStats:', todayStats);
+
 
   // Form state for New Client Registration
   const [newClientForm, setNewClientForm] = useState({
@@ -86,7 +86,7 @@ function Receptionist() {
         });
         if (response.ok) {
           const data = await response.json();
-          console.log('Today stats:', data);
+
           setTodayStats(data);
         } else {
           console.error('Failed to fetch stats:', response.status);
@@ -98,8 +98,6 @@ function Receptionist() {
 
     // Debug logging
     const roleFromStorage = localStorage.getItem('role');
-    console.log('User role from localStorage:', roleFromStorage);
-    console.log('userRole state:', userRole);
 
     // Fetch stats regardless of role for debugging
     fetchTodayStats();
@@ -128,6 +126,30 @@ function Receptionist() {
       }
     };
     fetchStaff();
+  }, [selectedSalon]);
+
+  // Fetch Attendance Stats
+  useEffect(() => {
+    const fetchAttendanceStats = async () => {
+      if (!selectedSalon) return;
+      try {
+        const token = localStorage.getItem('token');
+        const date = new Date().toISOString().split('T')[0];
+        const response = await fetch(`http://localhost:5050/attendance/daily?salonId=${selectedSalon._id}&date=${date}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const present = data.filter(d => d.attendance?.status === 'Present' || d.attendance?.status === 'Half Day').length;
+          const absent = data.filter(d => d.attendance?.status === 'Absent').length;
+          const leave = data.filter(d => d.attendance?.status === 'Leave').length;
+          setAttendanceStats({ present, absent, leave });
+        }
+      } catch (error) {
+        console.error("Error fetching attendance stats:", error);
+      }
+    };
+    fetchAttendanceStats();
   }, [selectedSalon]);
 
   const getStatusColor = (status) => {
@@ -393,6 +415,20 @@ function Receptionist() {
           {/* Calendar */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <CalendarWidget />
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Staff Attendance</h4>
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Present: {attendanceStats.present}</span>
+                  <span>Absent: {attendanceStats.absent}</span>
+                  <span>Leave: {attendanceStats.leave}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-gray-400">Manage daily attendance</span>
+                  <a href="/staff" className="text-primary text-sm hover:underline font-medium">View &rarr;</a>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}

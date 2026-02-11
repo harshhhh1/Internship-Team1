@@ -31,6 +31,7 @@ import Clients from './pages/admin/Clients.jsx'
 import Inventory from './pages/admin/Inventory.jsx'
 import Expenses from './pages/admin/Expenses.jsx'
 import Offers from './pages/admin/Offers.jsx'
+import Attendance from './components/Attendance.jsx'
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute.jsx'
@@ -66,6 +67,7 @@ function App() {
           <Route path="staff" element={<ProtectedRoute tabId="staff"><Staff /></ProtectedRoute>} />
           <Route path="revenue-and-report" element={<ProtectedRoute tabId="revenue-and-report"><RevenueReport /></ProtectedRoute>} />
           <Route path="receptionist" element={<ProtectedRoute tabId="receptionist"><Receptionist /></ProtectedRoute>} />
+          <Route path="attendance" element={<ProtectedRoute tabId="receptionist"><Attendance /></ProtectedRoute>} />
 
           {/* New pages */}
           <Route path="earning" element={<ProtectedRoute tabId="earning"><Earning /></ProtectedRoute>} />

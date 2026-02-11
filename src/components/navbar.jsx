@@ -4,14 +4,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { HiMenu, HiX } from 'react-icons/hi';
 import { useSalon } from '../context/SalonContext'; // Import Context
 import AddSalonModal from './modals/AddSalonModal';
+import PlanLimitModal from './modals/PlanLimitModal';
 
 function Navbar() {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isBranchDropdownOpen, setBranchDropdownOpen] = useState(false);
+  const [isLimitModalOpen, setLimitModalOpen] = useState(false);
 
   // Use Context instead of local fetch
-  const { salons, selectedSalon, setSelectedSalon, fetchSalons } = useSalon();
+  const { salons, selectedSalon, setSelectedSalon, fetchSalons, branchLimit } = useSalon();
   const [role, setRole] = useState(localStorage.getItem('role'));
   const [isAddSalonModalOpen, setAddSalonModalOpen] = useState(false);
 
@@ -182,7 +184,11 @@ function Navbar() {
                           <li
                             className="block px-4 py-2 text-sm text-primary font-bold hover:bg-gray-50 cursor-pointer border-t border-gray-100 mt-1"
                             onClick={() => {
-                              setAddSalonModalOpen(true);
+                              if (salons.length >= branchLimit) {
+                                setLimitModalOpen(true);
+                              } else {
+                                setAddSalonModalOpen(true);
+                              }
                               setBranchDropdownOpen(false);
                             }}
                           >
@@ -246,6 +252,11 @@ function Navbar() {
         isOpen={isAddSalonModalOpen}
         onClose={() => setAddSalonModalOpen(false)}
         onSubmit={handleAddSalon}
+      />
+      <PlanLimitModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setLimitModalOpen(false)}
+        currentLimit={branchLimit}
       />
     </>
   );
