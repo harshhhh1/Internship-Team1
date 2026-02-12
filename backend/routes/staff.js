@@ -10,17 +10,17 @@ import { authenticateToken, requireAdmin, requireStaff } from "../middleware/aut
 
 const router = express.Router();
 
-// Apply authentication to all staff routes
+// Get staff - public
+router.get("/", getStaff);
+
+// Get staff by ID - public
+router.get("/:id", getStaffById);
+
+// Protected routes below
 router.use(authenticateToken);
 
 // Create staff - owners and admins can create staff
 router.post("/", requireAdmin, createStaff);
-
-// Get staff - both owners and staff can view
-router.get("/", requireStaff, getStaff);
-
-// Get staff by ID - both owners and staff can view
-router.get("/:id", requireStaff, getStaffById);
 
 // Update staff - owners and admins can update staff
 router.put("/:id", requireAdmin, updateStaff);

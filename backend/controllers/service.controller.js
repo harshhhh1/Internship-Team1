@@ -14,6 +14,8 @@ export const getServices = async (req, res) => {
     try {
         const { salonId } = req.query;
         const filter = salonId ? { salonId } : {};
+        // Optionally filter by ownerId if we want to support that in public, 
+        // but typically services are bound to a salon.
         const services = await Service.find(filter).populate('salonId', 'name');
         res.status(200).json(services);
     } catch (error) {

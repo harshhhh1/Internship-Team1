@@ -67,27 +67,37 @@ export const createStaff = async (req, res) => {
 export const getStaff = async (req, res) => {
     try {
         const { salonId } = req.query;
-        let filter = {};
+        let filter = { isActive: true };
 
-        if (req.user.role === 'owner') {
-            // Force filter by ownerId for owners
-            filter.ownerId = req.user.id;
-            // If they also want a specific salon, add that too
-            if (salonId) {
-                filter.salonId = salonId;
+        if (req.user) {
+            if (req.user.role === 'owner') {
+                // Force filter by ownerId for owners
+                filter.ownerId = req.user.id;
+                // If they also want a specific salon, add that too
+                if (salonId) {
+                    filter.salonId = salonId;
+                }
+            } else {
+                // For staff/admin, continue with existing logic
+                if (salonId) {
+                    filter.salonId = salonId;
+                } else {
+                    // If staff member, see their own salon
+                    const userStaff = await Staff.findById(req.user.id);
+                    if (userStaff && userStaff.salonId) {
+                        filter.salonId = userStaff.salonId;
+                    } else {
+                        return res.status(200).json([]);
+                    }
+                }
             }
         } else {
-            // For staff/admin, continue with existing logic
+            // Public request
             if (salonId) {
                 filter.salonId = salonId;
             } else {
-                // If staff member, see their own salon
-                const userStaff = await Staff.findById(req.user.id);
-                if (userStaff && userStaff.salonId) {
-                    filter.salonId = userStaff.salonId;
-                } else {
-                    return res.status(200).json([]);
-                }
+                // Return no one if no salonId provided to public
+                return res.status(200).json([]);
             }
         }
 

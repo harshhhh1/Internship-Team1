@@ -36,8 +36,15 @@ export const createSalon = async (req, res) => {
 // Get Salons (Optional: Filter by ownerId)
 export const getSalons = async (req, res) => {
   try {
-    const ownerId = req.query.ownerId || req.user.id;
-    const filter = { ownerId };
+    const { ownerId } = req.query;
+    let filter = { isActive: true };
+
+    if (ownerId) {
+      filter.ownerId = ownerId;
+    } else if (req.user && req.user.role === 'owner') {
+      filter.ownerId = req.user.id;
+    }
+    // If no ownerId in query and no req.user (public), return all active salons
 
     const salons = await Salon.find(filter).populate('ownerId', 'name email');
     res.status(200).json(salons);

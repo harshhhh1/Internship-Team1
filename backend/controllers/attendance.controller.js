@@ -1,0 +1,139 @@
+import Attendance from "../models/Attendance.js";
+import Staff from "../models/Staff.js";
+
+// Helper to normalize date to midnight UTC to avoid timezone issues
+const normalizeDate = (date) => {
+    const d = new Date(date);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+};
+
+export const markAttendance = async (req, res) => {
+    try {
+        const { staffId, salonId, date, status, checkIn, checkOut, remarks, leaveType } = req.body;
+
+        if (!staffId || !salonId || !date) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const normalizedDate = normalizeDate(date);
+
+        const filter = { staffId, date: normalizedDate };
+        const update = {
+            salonId,
+            status,
+            remarks,
+            leaveType: status === 'Leave' ? leaveType : null
+        };
+
+        // Only update times if provided
+        if (checkIn !== undefined) update.checkIn = checkIn;
+        if (checkOut !== undefined) update.checkOut = checkOut;
+
+        const attendance = await Attendance.findOneAndUpdate(
+            filter,
+            update,
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        res.status(200).json(attendance);
+    } catch (error) {
+        console.error("Mark Attendance Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getDailyAttendance = async (req, res) => {
+    try {
+        const { salonId, date } = req.query;
+
+        if (!salonId || !date) {
+            return res.status(400).json({ message: "Salon ID and Date are required" });
+        }
+
+        const normalizedDate = normalizeDate(date);
+
+        // Fetch all active staff for this salon
+        const staffMembers = await Staff.find({ salonId, isActive: true }).select('name role profession avatarUrl mobile');
+
+        // Fetch existing attendance records for this date
+        const attendanceRecords = await Attendance.find({
+            salonId,
+            date: normalizedDate
+        });
+
+        // Merge staff with their attendance record
+        const result = staffMembers.map(staff => {
+            const record = attendanceRecords.find(a => a.staffId.toString() === staff._id.toString());
+            return {
+                staff,
+                attendance: record || null
+            };
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Get Daily Attendance Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getMonthlyAttendance = async (req, res) => {
+    try {
+        const { staffId, month, year } = req.query;
+
+        if (!staffId || !month || !year) {
+            return res.status(400).json({ message: "Staff ID, Month, and Year are required" });
+        }
+
+        const startDate = new Date(Date.UTC(year, month - 1, 1));
+        const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+
+        const records = await Attendance.find({
+            staffId,
+            date: { $gte: startDate, $lte: endDate }
+        }).sort({ date: 1 });
+
+        res.status(200).json(records);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const bulkUpdateAttendance = async (req, res) => {
+    try {
+        const { salonId, date, updates } = req.body;
+        // updates: Array of { staffId, status, checkIn, checkOut, remarks, ... }
+
+        if (!updates || !Array.isArray(updates)) {
+            return res.status(400).json({ message: "Invalid updates format" });
+        }
+
+        const normalizedDate = normalizeDate(date);
+        const operations = updates.map(update => ({
+            updateOne: {
+                filter: { staffId: update.staffId, date: normalizedDate },
+                update: {
+                    $set: {
+                        salonId,
+                        status: update.status,
+                        checkIn: update.checkIn,
+                        checkOut: update.checkOut,
+                        remarks: update.remarks,
+                        leaveType: update.status === 'Leave' ? update.leaveType : null
+                    }
+                },
+                upsert: true
+            }
+        }));
+
+        if (operations.length > 0) {
+            await Attendance.bulkWrite(operations);
+        }
+
+        res.status(200).json({ message: "Attendance updated successfully" });
+    } catch (error) {
+        console.error("Bulk Update Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

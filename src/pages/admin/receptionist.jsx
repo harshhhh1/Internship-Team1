@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import CalendarWidget from '../../components/Calendar';
 import ReceptionistTable from '../../components/tables/ReceptionistTable';
@@ -6,7 +8,7 @@ import KpiCard from '../../components/KpiCard';
 import { useSalon } from '../../context/SalonContext';
 
 function Receptionist() {
-  console.log('=== RECEPTIONIST COMPONENT LOADED ===');
+
 
   const { selectedSalon } = useSalon();
   const [showNewPatientPopup, setShowNewPatientPopup] = useState(false);
@@ -16,10 +18,30 @@ function Receptionist() {
   const [searchTerm, setSearchTerm] = useState('');
   const [staff, setStaff] = useState([]);
   const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
-  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
 
-  console.log('Initial userRole:', userRole);
-  console.log('Initial todayStats:', todayStats);
+  // Function to fetch today's stats
+  const fetchTodayStats = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = selectedSalon
+        ? `http://localhost:5050/appointments/today-stats?salonId=${selectedSalon._id}`
+        : 'http://localhost:5050/appointments/today-stats';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTodayStats(data);
+      } else {
+        console.error('Failed to fetch stats:', response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching today's stats:", error);
+    }
+  }, [selectedSalon]);
 
   // Form state for New Client Registration
   const [newClientForm, setNewClientForm] = useState({
@@ -34,76 +56,81 @@ function Receptionist() {
   const [walkinForm, setWalkinForm] = useState({
     clientName: '',
     serviceRequest: '',
-    stylistId: ''
+    stylistId: '',
+    price: ''
   });
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchAppointmentsAndWalkins = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5050/appointments', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        const salonId = selectedSalon?._id;
+
+        // Fetch Appointments
+        const appResponse = await fetch('http://localhost:5050/appointments', {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (response.ok) {
-          const data = await response.json();
-          // Filter by selected Salon if available
+
+        // Fetch Walkins
+        const walkinUrl = salonId
+          ? `http://localhost:5050/walkins?salonId=${salonId}`
+          : 'http://localhost:5050/walkins';
+        const walkinResponse = await fetch(walkinUrl, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        let mappedAppointments = [];
+        let mappedWalkins = [];
+
+        if (appResponse.ok) {
+          const data = await appResponse.json();
           const filteredData = selectedSalon
             ? data.filter(app => app.salonId?._id === selectedSalon._id || app.salonId === selectedSalon._id)
             : data;
 
-          const mappedData = filteredData.map(app => ({
+          mappedAppointments = filteredData.map(app => ({
             id: app._id,
             time: new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             name: app.clientName,
-            gender: "N/A", // Backend doesn't have gender yet
-            age: "--", // Backend doesn't have age yet
+            gender: "N/A",
+            age: "--",
             reason: app.serviceId?.name || "Visit",
             stylist: app.staffId?.name || "Stylist",
-            status: app.status || "waiting"
+            price: app.price || 0,
+            status: app.status || "waiting",
+            type: 'appointment'
           }));
-          setAppointments(mappedData);
         }
+
+        if (walkinResponse.ok) {
+          const data = await walkinResponse.json();
+          mappedWalkins = data.map(w => ({
+            id: w._id,
+            time: new Date(w.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            name: w.clientName,
+            gender: "N/A",
+            age: "--",
+            reason: w.serviceId || "Walk-in", // Could map if it's an ID
+            stylist: w.staffId?.name || "Stylist",
+            price: w.price || 0,
+            status: w.status || "waiting",
+            type: 'walkin'
+          }));
+        }
+
+        // Combine and sort by date/time (most recent first for receptionist or as per requirement)
+        setAppointments([...mappedAppointments, ...mappedWalkins]);
       } catch (error) {
-        console.error("Error fetching appointments:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    fetchAppointments();
+    fetchAppointmentsAndWalkins();
   }, [selectedSalon]);
 
   useEffect(() => {
-    const fetchTodayStats = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const url = selectedSalon
-          ? `http://localhost:5050/appointments/today-stats?salonId=${selectedSalon._id}`
-          : 'http://localhost:5050/appointments/today-stats';
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Today stats:', data);
-          setTodayStats(data);
-        } else {
-          console.error('Failed to fetch stats:', response.status);
-        }
-      } catch (error) {
-        console.error("Error fetching today's stats:", error);
-      }
-    };
-
-    // Debug logging
-    const roleFromStorage = localStorage.getItem('role');
-    console.log('User role from localStorage:', roleFromStorage);
-    console.log('userRole state:', userRole);
-
-    // Fetch stats regardless of role for debugging
+    // Fetch stats on component mount and when selectedSalon changes
     fetchTodayStats();
-  }, [selectedSalon, userRole]);
+  }, [fetchTodayStats]);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -130,6 +157,30 @@ function Receptionist() {
     fetchStaff();
   }, [selectedSalon]);
 
+  // Fetch Attendance Stats
+  useEffect(() => {
+    const fetchAttendanceStats = async () => {
+      if (!selectedSalon) return;
+      try {
+        const token = localStorage.getItem('token');
+        const date = new Date().toISOString().split('T')[0];
+        const response = await fetch(`http://localhost:5050/attendance/daily?salonId=${selectedSalon._id}&date=${date}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const present = data.filter(d => d.attendance?.status === 'Present' || d.attendance?.status === 'Half Day').length;
+          const absent = data.filter(d => d.attendance?.status === 'Absent').length;
+          const leave = data.filter(d => d.attendance?.status === 'Leave').length;
+          setAttendanceStats({ present, absent, leave });
+        }
+      } catch (error) {
+        console.error("Error fetching attendance stats:", error);
+      }
+    };
+    fetchAttendanceStats();
+  }, [selectedSalon]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'checked': return 'bg-blue-100 text-blue-700';
@@ -148,29 +199,39 @@ function Receptionist() {
     }
   };
 
-  const handleMarkComplete = async (appointmentId) => {
+  const handleMarkComplete = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5050/appointments/${appointmentId}/complete`, {
+      const item = appointments.find(app => app.id === id);
+      const isWalkin = item?.type === 'walkin';
+
+      const url = isWalkin
+        ? `http://localhost:5050/walkins/${id}`
+        : `http://localhost:5050/appointments/${id}/complete`;
+
+      const method = isWalkin ? 'PUT' : 'PUT';
+      const body = isWalkin ? JSON.stringify({ status: 'completed' }) : null;
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          ...(isWalkin && { 'Content-Type': 'application/json' })
+        },
+        ...(isWalkin && { body })
       });
 
       if (response.ok) {
-        // Optimistically update the UI or refetch
-        // Ideally we should refetch to get updated status, but we can also update local state
         setAppointments(prev => prev.map(app =>
-          app.id === appointmentId ? { ...app, status: 'completed' } : app
+          app.id === id ? { ...app, status: 'completed' } : app
         ));
+        fetchTodayStats();
       } else {
-        console.error("Failed to mark appointment as complete");
-        alert("Failed to complete appointment");
+        alert("Failed to complete " + (isWalkin ? "walk-in" : "appointment"));
       }
     } catch (error) {
-      console.error("Error completing appointment:", error);
-      alert("Error completing appointment");
+      console.error("Error completing entry:", error);
+      alert("Error completing entry");
     }
   };
 
@@ -251,25 +312,25 @@ function Receptionist() {
 
       const token = localStorage.getItem('token');
 
-      const appointmentData = {
+      const walkinData = {
         clientName: walkinForm.clientName || 'Walk-in Client',
         clientMobile: '0000000000',
-        date: new Date(), // Current date and time
-        serviceId: walkinForm.serviceRequest || null,
+        serviceId: walkinForm.serviceRequest || '',
         staffId: walkinForm.stylistId || null,
         salonId: selectedSalon._id,
-        status: 'pending'
+        price: Number(walkinForm.price) || 0,
+        status: 'waiting'
       };
 
-      console.log('Sending appointment data:', appointmentData);
+      console.log('Sending walk-in data:', walkinData);
 
-      const response = await fetch('http://localhost:5050/appointments', {
+      const response = await fetch('http://localhost:5050/walkins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(appointmentData)
+        body: JSON.stringify(walkinData)
       });
 
       if (!response.ok) {
@@ -306,7 +367,7 @@ function Receptionist() {
         await fetchAppointments();
 
         // Reset form and close modal
-        setWalkinForm({ clientName: '', serviceRequest: '', stylistId: '' });
+        setWalkinForm({ clientName: '', serviceRequest: '', stylistId: '', price: '' });
         setShowEmergencyPopup(false);
         alert('Walk-in entry added successfully!');
       } else {
@@ -393,6 +454,20 @@ function Receptionist() {
           {/* Calendar */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <CalendarWidget />
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Staff Attendance</h4>
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Present: {attendanceStats.present}</span>
+                  <span>Absent: {attendanceStats.absent}</span>
+                  <span>Leave: {attendanceStats.leave}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-gray-400">Manage daily attendance</span>
+                  <a href="/staff" className="text-primary text-sm hover:underline font-medium">View &rarr;</a>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -536,6 +611,17 @@ function Receptionist() {
                           <option key={stylist._id} value={stylist._id}>{stylist.name}</option>
                         ))}
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                      <input
+                        type="number"
+                        placeholder="Enter price"
+                        value={walkinForm.price}
+                        onChange={(e) => setWalkinForm({ ...walkinForm, price: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                      />
                     </div>
                   </>
                 )}

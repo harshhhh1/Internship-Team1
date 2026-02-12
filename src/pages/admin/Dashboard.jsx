@@ -11,6 +11,13 @@ function Dashboard() {
   const { selectedSalon } = useSalon();
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
+  const [dashboardStats, setDashboardStats] = useState({
+    totalEarnings: 0,
+    lastWeekEarnings: 0,
+    weeklyTrend: '0%',
+    topServices: []
+  });
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -35,14 +42,65 @@ function Dashboard() {
     };
     fetchAppointments();
   }, [selectedSalon]);
+
+  // Fetch Attendance Stats
+  useEffect(() => {
+    const fetchAttendanceStats = async () => {
+      if (!selectedSalon) return;
+      try {
+        const token = localStorage.getItem('token');
+        const date = new Date().toISOString().split('T')[0];
+        const response = await fetch(`http://localhost:5050/attendance/daily?salonId=${selectedSalon._id}&date=${date}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const present = data.filter(d => d.attendance?.status === 'Present' || d.attendance?.status === 'Half Day').length;
+          const absent = data.filter(d => d.attendance?.status === 'Absent').length;
+          const leave = data.filter(d => d.attendance?.status === 'Leave').length;
+          setAttendanceStats({ present, absent, leave });
+        }
+      } catch (error) {
+        console.error("Error fetching attendance stats:", error);
+      }
+    };
+    fetchAttendanceStats();
+  }, [selectedSalon]);
+
+  // Fetch Dashboard Stats
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        let url = 'http://localhost:5050/appointments/dashboard-stats';
+        if (selectedSalon) {
+          url += `?salonId=${selectedSalon._id}`;
+        }
+
+        const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardStats(data);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      }
+    };
+    fetchDashboardStats();
+  }, [selectedSalon]);
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const todaysAppointments = appointments.filter(app =>
+    new Date(app.date).toDateString() === new Date().toDateString()
+  );
+
   return (
     // 'flex-col' for Mobile (stacks vertically), 'lg:flex-row' for Desktop (side-by-side)
     <div className="flex flex-col lg:flex-row gap-8 overflow-y-auto">
-
       {/* Left Column - Main Content */}
-      {/* On Mobile, this block appears first. On Desktop, it takes up 2/3 space. */}
       <div className="flex-2 flex flex-col gap-6 w-full">
-
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-1">Dashboard</h1>
@@ -53,35 +111,48 @@ function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <KpiCard
             title="Total Earnings"
-            value="₹24,500"
-            trend="+12.5%"
-            isPositive={true}
+            value={`₹${dashboardStats.totalEarnings.toLocaleString()}`}
+            trend={dashboardStats.weeklyTrend} // Using weekly trend here as a proxy for general growth signal
+            isPositive={!dashboardStats.weeklyTrend.startsWith('-')}
             icon={<span className="text-2xl">💰</span>}
           />
           <KpiCard
             title="Earnings Last Week"
-            value="₹1,250"
-            trend="-2.4%"
-            isPositive={false}
+            value={`₹${dashboardStats.lastWeekEarnings.toLocaleString()}`}
+            trend={dashboardStats.weeklyTrend}
+            isPositive={!dashboardStats.weeklyTrend.startsWith('-')}
             icon={<span className="text-2xl">📉</span>}
           />
         </div>
 
-        {/* Statistics Card */}
+        {/* Top Services Card (Replaces Client Age Group) */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Client Age Group</h3>
-          <div className="flex items-center justify-around flex-wrap gap-5">
-            <Chart />
-            <div className="flex flex-col gap-3">
-              <LegendItem color="var(--primary)" label="13–17 Years" value="25%" />
-              <LegendItem color="var(--secondary)" label="18–29 Years" value="45%" />
-              <LegendItem color="var(--accent-peach)" label="30–45 Years" value="30%" />
-            </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Services</h3>
+          <div className="flex flex-col gap-4">
+            {dashboardStats.topServices.map((service, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${index % 2 === 0 ? 'bg-primary' : 'bg-secondary'}`}></div>
+                  <span className="text-gray-700 font-medium">{service.name}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-32 bg-gray-100 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${index % 2 === 0 ? 'bg-primary' : 'bg-secondary'}`}
+                      style={{ width: `${service.percentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm text-gray-500 min-w-[3rem]">{service.percentage}%</span>
+                </div>
+              </div>
+            ))}
+            {dashboardStats.topServices.length === 0 && (
+              <p className="text-gray-400 text-sm">No service data available yet.</p>
+            )}
           </div>
         </div>
 
         {/* Upcoming Appointments */}
-        {/* This is the last item in the Left Column, so on mobile, the Calendar (next div) will appear right after this. */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 overflow-x-auto">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -104,7 +175,7 @@ function Dashboard() {
                 if (!selectedDate) return true; // Show all (or strictly limit to upcoming) if no date selected
                 return new Date(app.date).toDateString() === selectedDate.toDateString();
               })
-              .slice(0, selectedDate ? 50 : 5) // Show more if filtered, else limit to 5
+              .slice(0, selectedDate ? 50 : 5)
               .map(app => (
                 <AppointmentRow
                   key={app._id}
@@ -123,7 +194,6 @@ function Dashboard() {
       </div>
 
       {/* Right Column - Calendar & Panel */}
-      {/* On Mobile, this block stacks naturally below the Left Column. */}
       <div className="flex-1 w-full lg:min-w-75 flex flex-col gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full">
           <h3 className="text-lg font-semibold text-gray-900 mb-5">Calendar</h3>
@@ -134,18 +204,35 @@ function Dashboard() {
           />
 
           <div className="mt-8 pt-5 border-t border-gray-100">
-            <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Schedule for Oct 27</h4>
+            <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Schedule for {today}</h4>
             <div className="flex flex-col gap-4">
-              <ScheduleItem time="09:00 AM" title="Team Meeting" color="var(--primary)" />
-              <ScheduleItem time="11:00 AM" title="Client Call" color="var(--secondary)" />
-              <ScheduleItem time="02:00 PM" title="Project Review" color="var(--accent-peach)" />
+              {todaysAppointments.length > 0 ? (
+                todaysAppointments.slice(0, 5).map((app, index) => (
+                  <ScheduleItem
+                    key={app._id}
+                    time={app.time ? new Date(`1970-01-01T${app.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                    title={`${app.clientName} - ${app.serviceId?.name || 'Service'}`}
+                    color={index % 2 === 0 ? "var(--primary)" : "var(--secondary)"}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm">No appointments scheduled for today.</p>
+              )}
             </div>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-gray-100">
+            <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Staff Attendance</h4>
+            <div className="text-sm text-gray-500 mb-2">
+              <span className="font-semibold text-green-600">Present:</span> {attendanceStats.present} | <span className="font-semibold text-red-600">Absent:</span> {attendanceStats.absent} | <span className="font-semibold text-blue-600">Leave:</span> {attendanceStats.leave}
+            </div>
+            <a href="/dashboard/staff" className="text-primary text-sm hover:underline font-medium">Manage Attendance &rarr;</a>
           </div>
         </div>
       </div>
 
     </div>
   );
-};
+}
 
 export default Dashboard;

@@ -17,7 +17,7 @@ const appointmentSchema = new mongoose.Schema({
         required: false,
     },
     serviceId: {
-        type: String, // Changed from ObjectId to String to support static service IDs
+        type: String, // String to support both real ObjectIds and dummy IDs like "1", "2"
         required: false,
     },
     clientName: {
@@ -36,6 +36,14 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         enum: ["pending", "confirmed", "completed", "cancelled"],
         default: "pending",
+    },
+    note: {
+        type: String,
+        default: null,
+    },
+    price: {
+        type: Number,
+        required: true,
     },
 }, { timestamps: true });
 
