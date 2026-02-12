@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AppointmentsTable from '../../components/tables/AppointmentsTable';
 import CalendarWidget from '../../components/Calendar';
 import { useSalon } from '../../context/SalonContext';
-import { services as predefinedServices } from './Services';
+// import {  } from './Services';
 
 function Appointments() {
   const { selectedSalon, setSelectedSalon } = useSalon();
