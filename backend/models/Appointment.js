@@ -41,6 +41,10 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    price: {
+        type: Number,
+        required: true,
+    },
 }, { timestamps: true });
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);

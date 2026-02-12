@@ -1,43 +1,144 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaUserPlus, FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-
-// Dummy walk-in data
-const walkinQueue = [
-    { id: 1, name: 'Raj Kumar', phone: '9876543210', service: 'Hair Cut', waitTime: '10 min', status: 'Waiting' },
-    { id: 2, name: 'Meera Patel', phone: '9876543211', service: 'Hair Styling', waitTime: '25 min', status: 'Waiting' },
-    { id: 3, name: 'Vikram Singh', phone: '9876543212', service: 'Beard Trim', waitTime: '5 min', status: 'In Service' },
-];
-
-const recentWalkins = [
-    { id: 4, name: 'Pooja Sharma', phone: '9876543213', service: 'Facial', status: 'Completed', time: '10:30 AM' },
-    { id: 5, name: 'Arjun Reddy', phone: '9876543214', service: 'Hair Cut', status: 'Completed', time: '10:00 AM' },
-    { id: 6, name: 'Sneha Gupta', phone: '9876543215', service: 'Manicure', status: 'Cancelled', time: '09:45 AM' },
-];
-
-const services = [
-    'Hair Cut', 'Hair Styling', 'Hair Coloring', 'Beard Trim', 'Facial',
-    'Manicure', 'Pedicure', 'Hair Spa', 'Threading', 'Waxing'
-];
+import { useSalon } from '../../context/SalonContext';
 
 export default function Walkin() {
+    const { selectedSalon } = useSalon();
     const [showModal, setShowModal] = useState(false);
+    const [walkins, setWalkins] = useState([]);
+    const [staff, setStaff] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
         service: 'Hair Cut',
+        staffId: '',
+        price: ''
     });
+
+    const fetchWalkins = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const salonId = selectedSalon?._id;
+            const url = salonId
+                ? `http://localhost:5050/walkins?salonId=${salonId}`
+                : 'http://localhost:5050/walkins';
+
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setWalkins(data);
+            }
+        } catch (error) {
+            console.error("Error fetching walk-ins:", error);
+        }
+    }, [selectedSalon]);
+
+    const fetchStaff = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const url = selectedSalon
+                ? `http://localhost:5050/staff?salonId=${selectedSalon._id}`
+                : 'http://localhost:5050/staff';
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const stylists = data.filter(s => s.isActive && (s.role === 'stylist' || s.role === 'assistant'));
+                setStaff(stylists);
+            }
+        } catch (error) {
+            console.error("Error fetching staff:", error);
+        }
+    }, [selectedSalon]);
+
+    useEffect(() => {
+        fetchWalkins();
+        fetchStaff();
+    }, [fetchWalkins, fetchStaff]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Would add to queue here
-        alert('Walk-in added to queue!');
-        setShowModal(false);
-        setFormData({ name: '', phone: '', service: 'Hair Cut' });
+        try {
+            if (!selectedSalon) {
+                alert('Please select a salon first');
+                return;
+            }
+            const token = localStorage.getItem('token');
+            const walkinData = {
+                salonId: selectedSalon._id,
+                clientName: formData.name,
+                clientMobile: formData.phone,
+                serviceId: formData.service,
+                staffId: formData.staffId || null,
+                price: Number(formData.price) || 0,
+            };
+
+            const response = await fetch('http://localhost:5050/walkins', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(walkinData)
+            });
+
+            if (response.ok) {
+                alert('Walk-in added successfully!');
+                setShowModal(false);
+                setFormData({ name: '', phone: '', service: 'Hair Cut', staffId: '', price: '' });
+                fetchWalkins();
+            } else {
+                alert('Failed to add walk-in');
+            }
+        } catch (error) {
+            console.error("Error adding walk-in:", error);
+        }
     };
+
+    const handleStatusUpdate = async (id, status) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5050/walkins/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+            if (response.ok) {
+                fetchWalkins();
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Delete this walk-in?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5050/walkins/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                fetchWalkins();
+            }
+        } catch (error) {
+            console.error("Error deleting walk-in:", error);
+        }
+    };
+
+    const inQueue = walkins.filter(w => w.status === 'waiting' || w.status === 'in-service');
+    const completedToday = walkins.filter(w => w.status === 'completed');
 
     return (
         <div className="min-h-screen bg-bg-light">
@@ -46,7 +147,7 @@ export default function Walkin() {
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Walk-in Management</h1>
-                        <p className="text-gray-500 mt-2">Manage walk-in customers and queues.</p>
+                        <p className="text-gray-500 mt-2">Manage walk-in customers and queues for {selectedSalon?.name || 'All Branches'}.</p>
                     </div>
                     <button
                         onClick={() => setShowModal(true)}
@@ -66,7 +167,7 @@ export default function Walkin() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">In Queue</p>
-                                <p className="text-2xl font-bold text-gray-900">3</p>
+                                <p className="text-2xl font-bold text-gray-900">{inQueue.length}</p>
                             </div>
                         </div>
                     </div>
@@ -77,7 +178,7 @@ export default function Walkin() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Completed Today</p>
-                                <p className="text-2xl font-bold text-gray-900">12</p>
+                                <p className="text-2xl font-bold text-gray-900">{completedToday.length}</p>
                             </div>
                         </div>
                     </div>
@@ -106,32 +207,53 @@ export default function Walkin() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Phone</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Wait Time</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {walkinQueue.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{item.phone}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{item.service}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{item.waitTime}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'Waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
-                                                }`}>
-                                                {item.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button className="text-green-600 hover:text-green-700 text-sm font-medium">Start</button>
-                                                <button className="text-red-600 hover:text-red-700 text-sm font-medium">Cancel</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {inQueue.length === 0 ? (
+                                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No customers in queue</td></tr>
+                                ) : (
+                                    inQueue.map((item) => (
+                                        <tr key={item._id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.clientName}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">{item.clientMobile}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">{item.serviceId}</td>
+                                            <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
+                                                    }`}>
+                                                    {item.status === 'waiting' ? 'Waiting' : 'In Service'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-center gap-3">
+                                                    {item.status === 'waiting' ? (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(item._id, 'in-service')}
+                                                            className="text-green-600 hover:text-green-700 text-sm font-medium"
+                                                        >Start</button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate(item._id, 'completed')}
+                                                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                                        >Complete</button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(item._id, 'cancelled')}
+                                                        className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                                    >Cancel</button>
+                                                    <button
+                                                        onClick={() => handleDelete(item._id)}
+                                                        className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                                                    >Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -148,24 +270,30 @@ export default function Walkin() {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Time</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {recentWalkins.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{item.service}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{item.time}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                                }`}>
-                                                {item.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {walkins.filter(w => w.status === 'completed' || w.status === 'cancelled').length === 0 ? (
+                                    <tr><td colSpan="5" className="p-8 text-center text-gray-500">No recent entries</td></tr>
+                                ) : (
+                                    walkins.filter(w => w.status === 'completed' || w.status === 'cancelled').map((item) => (
+                                        <tr key={item._id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.clientName}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">{item.serviceId}</td>
+                                            <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">{new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                    }`}>
+                                                    {item.status === 'completed' ? 'Completed' : 'Cancelled'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -186,7 +314,7 @@ export default function Walkin() {
                                     value={formData.name}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                                     placeholder="Customer name"
                                 />
                             </div>
@@ -198,20 +326,47 @@ export default function Walkin() {
                                     value={formData.phone}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                                     placeholder="Phone number"
                                 />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                                    <input
+                                        type="text"
+                                        name="service"
+                                        value={formData.service}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                        placeholder="Service"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                        placeholder="Price"
+                                    />
+                                </div>
+                            </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
                                 <select
-                                    name="service"
-                                    value={formData.service}
+                                    name="staffId"
+                                    value={formData.staffId}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
                                 >
-                                    {services.map(s => (
-                                        <option key={s} value={s}>{s}</option>
+                                    <option value="">Select Stylist</option>
+                                    {staff.map(s => (
+                                        <option key={s._id} value={s._id}>{s.name}</option>
                                     ))}
                                 </select>
                             </div>
@@ -219,13 +374,13 @@ export default function Walkin() {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                                    className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-md font-semibold"
                                 >
                                     Add to Queue
                                 </button>

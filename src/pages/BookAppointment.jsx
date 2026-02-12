@@ -99,6 +99,7 @@ export default function BookAppointment() {
                 clientMobile: clientMobile,
                 date: new Date(`${date}T${time}`),
                 note: note,
+                price: selectedService.price,
                 status: "pending"
             };
 

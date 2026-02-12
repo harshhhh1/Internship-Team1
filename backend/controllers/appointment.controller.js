@@ -5,7 +5,7 @@ import Staff from "../models/Staff.js";
 
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId } = req.body;
+        const { salonId, serviceId } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -16,9 +16,24 @@ export const createAppointment = async (req, res) => {
             return res.status(404).json({ message: "Salon not found" });
         }
 
+        // Get service price if serviceId is provided
+        let price = req.body.price;
+        if (serviceId && !price) {
+            // Only try to fetch from DB if serviceId is a valid ObjectId
+            if (mongoose.Types.ObjectId.isValid(serviceId)) {
+                const Service = mongoose.model('Service');
+                const service = await Service.findById(serviceId);
+                if (service) {
+                    price = service.price;
+                }
+            }
+            // If serviceId is not a valid ObjectId (e.g., default services with string IDs), price should be provided in req.body.price
+        }
+
         const appointment = new Appointment({
             ...req.body,
-            ownerId: salon.ownerId
+            ownerId: salon.ownerId,
+            price: price || 0
         });
         await appointment.save();
         res.status(201).json(appointment);
@@ -63,8 +78,7 @@ export const getAppointments = async (req, res) => {
 
         const appointments = await Appointment.find(filter)
             .populate('salonId', 'name')
-            .populate('staffId', 'name')
-            .populate('serviceId', 'name price duration');
+            .populate('staffId', 'name');
 
         res.status(200).json(appointments);
     } catch (error) {
@@ -84,7 +98,20 @@ export const getAppointmentById = async (req, res) => {
 
 export const updateAppointment = async (req, res) => {
     try {
-        const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Allow price updates for receptionists and owners
+        const allowedFields = ['clientName', 'clientMobile', 'date', 'status', 'note', 'staffId', 'serviceId'];
+        if (req.user && (req.user.role === 'owner' || req.user.role === 'receptionist')) {
+            allowedFields.push('price');
+        }
+
+        const updateData = {};
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        });
+
+        const appointment = await Appointment.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!appointment) return res.status(404).json({ message: "Appointment not found" });
         res.status(200).json(appointment);
     } catch (error) {
@@ -115,6 +142,16 @@ export const completeAppointment = async (req, res) => {
         appointment.status = 'completed';
         await appointment.save();
 
+        // Create payment record
+        const Payment = mongoose.model('Payment');
+        const payment = new Payment({
+            salonId: appointment.salonId,
+            appointmentId: appointment._id,
+            amount: appointment.price,
+            method: 'cash' // Default method, can be updated later
+        });
+        await payment.save();
+
         // Increment staff appointment count
         if (appointment.staffId) {
             await mongoose.model('Staff').findByIdAndUpdate(
@@ -123,7 +160,7 @@ export const completeAppointment = async (req, res) => {
             );
         }
 
-        res.status(200).json({ message: "Appointment completed successfully", appointment });
+        res.status(200).json({ message: "Appointment completed successfully", appointment, payment });
     } catch (error) {
         console.error("Complete Appointment Error:", error);
         res.status(500).json({ message: error.message });
@@ -167,13 +204,18 @@ export const getTodayStats = async (req, res) => {
         // Calculate customer count (total appointments today)
         const customerCount = appointments.length;
 
-        // Calculate revenue (only from completed appointments)
-        const revenue = appointments
+        // Calculate revenue from payments for completed appointments
+        const Payment = mongoose.model('Payment');
+        const completedAppointmentIds = appointments
             .filter(app => app.status === 'completed')
-            .reduce((sum, app) => {
-                const price = app.serviceId?.price || 0;
-                return sum + price;
-            }, 0);
+            .map(app => app._id);
+
+        const payments = await Payment.find({
+            appointmentId: { $in: completedAppointmentIds },
+            salonId: filter.salonId || appointments[0]?.salonId
+        });
+
+        const revenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
         res.status(200).json({ customerCount, revenue });
     } catch (error) {
@@ -207,31 +249,22 @@ export const getRevenueStats = async (req, res) => {
             });
         }
 
-        // Monthly revenue from completed appointments
-        const revenueData = await Appointment.aggregate([
+        // Monthly revenue from payments
+        const Payment = mongoose.model('Payment');
+        const revenueData = await Payment.aggregate([
             {
                 $match: {
                     ...matchFilter,
-                    status: 'completed',
-                    date: { $gte: new Date(months[0].year, months[0].month - 1, 1) }
+                    createdAt: { $gte: new Date(months[0].year, months[0].month - 1, 1) }
                 }
             },
-            {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: {
-                        year: { $year: '$date' },
-                        month: { $month: '$date' }
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' }
                     },
-                    revenue: { $sum: { $ifNull: ['$service.price', 0] } },
+                    revenue: { $sum: '$amount' },
                     count: { $sum: 1 }
                 }
             },
@@ -254,27 +287,13 @@ export const getRevenueStats = async (req, res) => {
             ? (((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(0)
             : (currentMonthRevenue > 0 ? 100 : 0);
 
-        // Total income (all time)
-        const totalIncomeResult = await Appointment.aggregate([
-            {
-                $match: {
-                    ...matchFilter,
-                    status: 'completed'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+        // Total income (all time from payments)
+        const totalIncomeResult = await Payment.aggregate([
+            { $match: matchFilter },
             {
                 $group: {
                     _id: null,
-                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                    total: { $sum: '$amount' }
                 }
             }
         ]);
@@ -367,22 +386,14 @@ export const getDashboardStats = async (req, res) => {
             }
         }
 
-        // Total Earnings (All Time)
-        const totalEarningsResult = await Appointment.aggregate([
-            { $match: { ...matchFilter, status: 'completed' } },
-            {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+        // Total Earnings (All Time from payments)
+        const Payment = mongoose.model('Payment');
+        const totalEarningsResult = await Payment.aggregate([
+            { $match: matchFilter },
             {
                 $group: {
                     _id: null,
-                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                    total: { $sum: '$amount' }
                 }
             }
         ]);
@@ -505,28 +516,19 @@ export const getEarningsPageData = async (req, res) => {
         const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
         const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-        // Fetch all relevant appointments for calculations
-        const appointments = await Appointment.aggregate([
+        // Fetch earnings data from payments
+        const Payment = mongoose.model('Payment');
+        const earningsData = await Payment.aggregate([
             {
                 $match: {
                     ...matchFilter,
-                    date: { $gte: startOfYear } // Fetch from start of year to cover most stats
+                    createdAt: { $gte: startOfYear }
                 }
             },
-            {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
             {
                 $project: {
-                    date: 1,
-                    status: 1,
-                    price: { $ifNull: ['$service.price', 0] }
+                    createdAt: 1,
+                    amount: 1
                 }
             }
         ]);
@@ -535,36 +537,22 @@ export const getEarningsPageData = async (req, res) => {
         let lastMonth = 0;
         let totalYear = 0;
 
-        // Use a separate query for ALL time pending if needed, but for now lets aggregate pending from the fetched set or do a separate quick count
-        // Actually, pending might be older than this year, so better to do a separate count for pending.
-
-        appointments.forEach(app => {
-            if (app.status === 'completed') {
-                totalYear += app.price;
-                if (app.date >= startOfMonth) {
-                    thisMonth += app.price;
-                } else if (app.date >= startOfLastMonth && app.date <= endOfLastMonth) {
-                    lastMonth += app.price;
-                }
+        earningsData.forEach(payment => {
+            totalYear += payment.amount;
+            if (payment.createdAt >= startOfMonth) {
+                thisMonth += payment.amount;
+            } else if (payment.createdAt >= startOfLastMonth && payment.createdAt <= endOfLastMonth) {
+                lastMonth += payment.amount;
             }
         });
 
-        // Pending Amount (All time)
+        // Pending Amount (All time from appointment prices)
         const pendingResult = await Appointment.aggregate([
             { $match: { ...matchFilter, status: { $in: ['pending', 'confirmed'] } } },
             {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
-            {
                 $group: {
                     _id: null,
-                    total: { $sum: { $ifNull: ['$service.price', 0] } }
+                    total: { $sum: '$price' }
                 }
             }
         ]);

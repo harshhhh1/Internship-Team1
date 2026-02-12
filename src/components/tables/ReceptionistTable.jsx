@@ -29,13 +29,14 @@ const ReceptionistTable = ({ appointments, onMarkComplete }) => {
                             <ResizableTh className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Client Name</ResizableTh>
                             <ResizableTh className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</ResizableTh>
                             <ResizableTh className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Stylist</ResizableTh>
+                            <ResizableTh className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</ResizableTh>
                             <ResizableTh className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</ResizableTh>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {appointments.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="p-8 text-center text-gray-500">
+                                <td colSpan="6" className="p-8 text-center text-gray-500">
                                     Nothing to see here
                                 </td>
                             </tr>
@@ -51,6 +52,7 @@ const ReceptionistTable = ({ appointments, onMarkComplete }) => {
                                     </td>
                                     <td className="p-4 text-sm text-gray-600">{appointment.reason}</td>
                                     <td className="p-4 text-sm text-gray-600">{appointment.stylist}</td>
+                                    <td className="p-4 text-sm font-semibold text-gray-900">₹{appointment.price || 0}</td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-2">
                                             <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
