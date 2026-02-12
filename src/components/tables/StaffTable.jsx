@@ -16,6 +16,7 @@ const StaffTable = ({ staffList, onEdit, onDelete }) => {
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Contact</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Email</ResizableTh>
+                            <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Salary</ResizableTh>
                             <ResizableTh className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</ResizableTh>
                         </tr>
                     </thead>
@@ -80,6 +81,9 @@ const StaffTable = ({ staffList, onEdit, onDelete }) => {
                                     </td>
                                     <td className="p-4 text-gray-700 text-sm hidden md:table-cell">
                                         {staff.email}
+                                    </td>
+                                    <td className="p-4 text-sm font-semibold text-gray-900">
+                                        ₹{staff.salary || 0}
                                     </td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">

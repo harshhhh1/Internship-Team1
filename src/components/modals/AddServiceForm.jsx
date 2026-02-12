@@ -5,7 +5,10 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
     name: "",
     categoryId: "",
     description: "",
-    price: "",
+    gender: "unisex",
+    priceUnisex: "",
+    priceMale: "",
+    priceFemale: "",
     duration: "",
     image: null,
     status: true,
@@ -15,12 +18,6 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && salonId) {
-      fetchCategories();
-    }
-  }, [isOpen, salonId]);
 
   const fetchCategories = async () => {
     try {
@@ -32,6 +29,12 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
     }
   };
 
+  useEffect(() => {
+    if (isOpen && salonId) {
+      fetchCategories();
+    }
+  }, [isOpen, salonId]);
+
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     if (type === "checkbox") setForm({ ...form, [name]: checked });
@@ -41,7 +44,8 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.name || !form.categoryId || !form.price || !form.duration) {
+    const requiredPrice = form.gender === 'unisex' ? form.priceUnisex : form.gender === 'male' ? form.priceMale : form.gender === 'female' ? form.priceFemale : (form.priceMale && form.priceFemale);
+    if (!form.name || !form.categoryId || !requiredPrice || !form.duration) {
       alert("Please fill all required fields!");
       return;
     }
@@ -50,7 +54,10 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
       name: "",
       categoryId: "",
       description: "",
-      price: "",
+      gender: "unisex",
+      priceUnisex: "",
+      priceMale: "",
+      priceFemale: "",
       duration: "",
       image: null,
       status: true,
@@ -84,93 +91,161 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 border-t-4 border-purple-600">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-5">Add New Service</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          {/* Service Name */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">Service Name *</label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="e.g., Men's Haircut"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          {/* Category with inline add */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">Category *</label>
-            <div className="flex gap-2 items-center">
-              <select
-                name="categoryId"
-                value={form.categoryId}
-                onChange={handleChange}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowAddCategory(!showAddCategory)}
-                className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                + Add
-              </button>
-            </div>
-            {showAddCategory && (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="New Category"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                >
-                  Save
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="Short description of the service"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          {/* Price & Duration */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block font-medium text-gray-700 mb-1">Price *</label>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 border-t-4 border-purple-600 flex flex-col max-h-[90vh]">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-2xl font-semibold text-gray-800">Add New Service</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-1">
+            {/* Service Name */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Service Name *</label>
               <input
-                type="number"
-                name="price"
-                value={form.price}
+                type="text"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                placeholder="₹500"
+                placeholder="e.g., Men's Haircut"
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
-            <div className="flex-1">
+
+            {/* Category with inline add */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Category *</label>
+              <div className="flex gap-2 items-center">
+                <select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategory(!showAddCategory)}
+                  className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  + Add
+                </button>
+              </div>
+              {showAddCategory && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="New Category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    Save
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Short description of the service"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Gender *</label>
+              <select
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="unisex">Unisex</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Price *</label>
+              {form.gender === 'unisex' && (
+                <input
+                  type="number"
+                  name="priceUnisex"
+                  value={form.priceUnisex}
+                  onChange={handleChange}
+                  placeholder="₹500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              )}
+              {form.gender === 'male' && (
+                <input
+                  type="number"
+                  name="priceMale"
+                  value={form.priceMale}
+                  onChange={handleChange}
+                  placeholder="₹500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              )}
+              {form.gender === 'female' && (
+                <input
+                  type="number"
+                  name="priceFemale"
+                  value={form.priceFemale}
+                  onChange={handleChange}
+                  placeholder="₹500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              )}
+              {form.gender === 'both' && (
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block font-medium text-gray-700 mb-1">Male Price *</label>
+                    <input
+                      type="number"
+                      name="priceMale"
+                      value={form.priceMale}
+                      onChange={handleChange}
+                      placeholder="₹500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block font-medium text-gray-700 mb-1">Female Price *</label>
+                    <input
+                      type="number"
+                      name="priceFemale"
+                      value={form.priceFemale}
+                      onChange={handleChange}
+                      placeholder="₹500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Duration */}
+            <div>
               <label className="block font-medium text-gray-700 mb-1">Duration (minutes) *</label>
               <input
                 type="number"
@@ -181,60 +256,59 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Image Upload</label>
+              <input
+                type="file"
+                name="image"
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="status"
+                checked={form.status}
+                onChange={handleChange}
+                className="w-4 h-4"
+              />
+              <label className="font-medium text-gray-700">Active</label>
+            </div>
+
+            {/* Special Notes */}
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Special Notes</label>
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                placeholder="Optional notes"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
           </div>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">Image Upload</label>
-            <input
-              type="file"
-              name="image"
-              onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
-            />
-          </div>
-
-          {/* Status */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="status"
-              checked={form.status}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            <label className="font-medium text-gray-700">Active</label>
-          </div>
-
-          {/* Special Notes */}
-          <div>
-            <label className="block font-medium text-gray-700 mb-1">Special Notes</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              placeholder="Optional notes"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 mt-4">
+          {/* Buttons - Pinned at bottom */}
+          <div className="sticky bottom-0 bg-white pt-4 pb-2 flex justify-end gap-3 border-t mt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+              className="px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-medium shadow-lg shadow-purple-200 transition-all active:scale-95"
             >
               Add Service
             </button>
           </div>
-
         </form>
       </div>
     </div>

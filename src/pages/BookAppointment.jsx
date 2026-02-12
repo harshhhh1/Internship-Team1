@@ -99,7 +99,7 @@ export default function BookAppointment() {
                 clientMobile: clientMobile,
                 date: new Date(`${date}T${time}`),
                 note: note,
-                price: selectedService.price,
+                price: selectedService.priceUnisex || selectedService.priceMale || selectedService.priceFemale || selectedService.price || 0,
                 status: "pending"
             };
 
@@ -239,9 +239,22 @@ export default function BookAppointment() {
                                         <p className="text-sm text-gray-500">
                                             Duration: {service.duration} mins
                                         </p>
-                                        <p className="text-primary font-bold mt-3 text-lg">
-                                            ₹{service.price}
-                                        </p>
+                                        <div className="text-primary font-bold mt-3 text-lg">
+                                            {service.price ? `₹${service.price}` : (
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                                    {service.gender === 'unisex' && <span>₹{service.priceUnisex}</span>}
+                                                    {service.gender === 'male' && <span>M: ₹{service.priceMale}</span>}
+                                                    {service.gender === 'female' && <span>F: ₹{service.priceFemale}</span>}
+                                                    {service.gender === 'both' && (
+                                                        <>
+                                                            <span>M: ₹{service.priceMale}</span>
+                                                            <span className="text-gray-300">|</span>
+                                                            <span>F: ₹{service.priceFemale}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                         </div>
@@ -260,79 +273,89 @@ export default function BookAppointment() {
 
             {/* Booking Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-8 w-full max-w-md animate-fade-in">
-                        <h3 className="text-xl font-bold mb-2">
-                            Confirm Appointment
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            {selectedService.name} {selectedStaff && `with ${staffMembers.find(s => s._id === selectedStaff)?.name}`}
-                        </p>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-1">Your Name</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your name"
-                                    value={clientName}
-                                    onChange={(e) => setClientName(e.target.value)}
-                                    className="w-full border rounded-xl px-4 py-3"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 mb-1">Mobile Number</label>
-                                <input
-                                    type="tel"
-                                    placeholder="Enter mobile number"
-                                    value={clientMobile}
-                                    onChange={(e) => setClientMobile(e.target.value)}
-                                    className="w-full border rounded-xl px-4 py-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Date</label>
-                                    <input
-                                        type="date"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                                        className="w-full border rounded-xl px-4 py-3 cursor-pointer"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Time</label>
-                                    <input
-                                        type="time"
-                                        value={time}
-                                        onChange={(e) => setTime(e.target.value)}
-                                        onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                                        className="w-full border rounded-xl px-4 py-3 cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-                            <textarea
-                                placeholder="Special notes (optional)"
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="w-full border rounded-xl px-4 py-3 min-h-[100px]"
-                            />
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                Confirm Appointment
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                                {selectedService.name} {selectedStaff && `with ${staffMembers.find(s => s._id === selectedStaff)?.name}`}
+                            </p>
                         </div>
 
-                        <div className="flex justify-end gap-4 mt-8">
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto scrollbar-hide">
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Full Name *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter your name"
+                                        value={clientName}
+                                        onChange={(e) => setClientName(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile Number *</label>
+                                    <input
+                                        type="tel"
+                                        placeholder="e.g., +91 9876543210"
+                                        value={clientMobile}
+                                        onChange={(e) => setClientMobile(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date *</label>
+                                        <input
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Time *</label>
+                                        <input
+                                            type="time"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Special Notes (Optional)</label>
+                                    <textarea
+                                        placeholder="Any specific requests or requirements..."
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 min-h-[100px] resize-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer - Pinned */}
+                        <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-5 py-2 rounded-xl border hover:bg-gray-100"
+                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold active:scale-95"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmBooking}
                                 disabled={loading}
-                                className="px-5 py-2 rounded-xl bg-primary text-white hover:bg-secondary shadow-md disabled:bg-gray-400"
+                                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 font-bold active:scale-95 disabled:bg-gray-400 disabled:shadow-none"
                             >
-                                {loading ? "Scheduling..." : "Schedule Appointment"}
+                                {loading ? "Scheduling..." : "Schedule"}
                             </button>
                         </div>
                     </div>

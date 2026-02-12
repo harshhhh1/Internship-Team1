@@ -324,137 +324,155 @@ export default function Offers() {
 
             {/* Add/Edit Offer Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingOffer ? 'Edit Offer' : 'Create New Offer'}
-                            </h2>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200" onClick={closeModal}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    {editingOffer ? 'Edit Promotion Offer' : 'Create New Offer'}
+                                </h2>
+                                <p className="text-sm text-gray-500">
+                                    {editingOffer ? 'Update existing promotion details and validity.' : 'Set up a new promotional offer for your salon.'}
+                                </p>
+                            </div>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
                                 <FaTimes size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Offer Name *</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="e.g., Valentine's Special"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Promo Code *</label>
-                                <input
-                                    type="text"
-                                    name="code"
-                                    value={formData.code}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent uppercase"
-                                    placeholder="e.g., SAVE20"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto scrollbar-hide">
+                            <form id="offer-form" onSubmit={handleSubmit} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-                                    <select
-                                        name="discountType"
-                                        value={formData.discountType}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-                                    >
-                                        <option value="Percentage">Percentage (%)</option>
-                                        <option value="Fixed">Fixed (₹)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Offer Name *</label>
                                     <input
-                                        type="number"
-                                        name="discount"
-                                        value={formData.discount}
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
                                         onChange={handleInputChange}
-                                        min="0"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Valid From</label>
-                                    <input
-                                        type="date"
-                                        name="validFrom"
-                                        value={formData.validFrom}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        required
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        placeholder="e.g., Valentine's Day Special"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Valid To</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Promo Code *</label>
                                     <input
-                                        type="date"
-                                        name="validTo"
-                                        value={formData.validTo}
+                                        type="text"
+                                        name="code"
+                                        value={formData.code}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        required
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all uppercase placeholder:text-gray-400 font-mono"
+                                        placeholder="e.g., SAVE20"
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Applicable Services</label>
-                                <input
-                                    type="text"
-                                    name="services"
-                                    value={formData.services}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="Hair Cut, Spa, Facial (comma separated)"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Purchase (₹)</label>
-                                <input
-                                    type="number"
-                                    name="minPurchase"
-                                    value={formData.minPurchase}
-                                    onChange={handleInputChange}
-                                    min="0"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="0 for no minimum"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    name="isActive"
-                                    checked={formData.isActive}
-                                    onChange={handleInputChange}
-                                    className="w-4 h-4 text-primary rounded focus:ring-primary"
-                                />
-                                <label className="text-sm text-gray-700">Make this offer active immediately</label>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={closeModal}
-                                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                                >
-                                    {editingOffer ? 'Save Changes' : 'Create Offer'}
-                                </button>
-                            </div>
-                        </form>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Discount Type</label>
+                                        <select
+                                            name="discountType"
+                                            value={formData.discountType}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
+                                        >
+                                            <option value="Percentage">Percentage (%)</option>
+                                            <option value="Fixed">Fixed Amount (₹)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Discount Value</label>
+                                        <input
+                                            type="number"
+                                            name="discount"
+                                            value={formData.discount}
+                                            onChange={handleInputChange}
+                                            min="0"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Valid From</label>
+                                        <input
+                                            type="date"
+                                            name="validFrom"
+                                            value={formData.validFrom}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Valid Until</label>
+                                        <input
+                                            type="date"
+                                            name="validTo"
+                                            value={formData.validTo}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Applicable Services</label>
+                                    <input
+                                        type="text"
+                                        name="services"
+                                        value={formData.services}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        placeholder="Hair Cut, Spa, Facial (comma separated)"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Minimum Purchase (₹)</label>
+                                        <input
+                                            type="number"
+                                            name="minPurchase"
+                                            value={formData.minPurchase}
+                                            onChange={handleInputChange}
+                                            min="0"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                            placeholder="0 for no minimum"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                                    <input
+                                        type="checkbox"
+                                        name="isActive"
+                                        id="isActive"
+                                        checked={formData.isActive}
+                                        onChange={handleInputChange}
+                                        className="w-5 h-5 text-primary rounded-lg border-gray-300 focus:ring-primary/20 cursor-pointer"
+                                    />
+                                    <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                        Activate this offer immediately
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Modal Footer - Pinned */}
+                        <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold active:scale-95"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                form="offer-form"
+                                type="submit"
+                                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 font-bold active:scale-95"
+                            >
+                                {editingOffer ? 'Update Offer' : 'Create Offer'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -24,7 +24,8 @@ function Staff() {
     salonId: '',
     avatarUrl: '',
     accessToTabs: [],
-    services: []
+    services: [],
+    salary: ''
   });
 
   const [salonServices, setSalonServices] = useState([]);
@@ -125,7 +126,8 @@ function Staff() {
       salonId: staff.salonId?._id || staff.salonId,
       avatarUrl: staff.avatarUrl || '',
       accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || [],
-      services: staff.services?.map(s => s._id || s) || []
+      services: staff.services?.map(s => s._id || s) || [],
+      salary: staff.salary || ''
     });
     setIsModalOpen(true);
   };
@@ -197,7 +199,8 @@ function Staff() {
       salonId: selectedSalon?._id || '',
       avatarUrl: '',
       accessToTabs: DEFAULT_TABS.staff,
-      services: []
+      services: [],
+      salary: ''
     });
   };
 
@@ -295,8 +298,8 @@ function Staff() {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
@@ -312,8 +315,8 @@ function Staff() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-8 overflow-y-auto custom-scrollbar">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <form id="staff-form" onSubmit={handleSubmit} className="p-8 space-y-6">
 
                 {/* Avatar & Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -428,6 +431,17 @@ function Staff() {
                       </div>
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Monthly Salary (₹)</label>
+                    <input
+                      type="number"
+                      name="salary"
+                      placeholder="e.g. 25000"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all outline-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Permissions & Status */}
@@ -470,7 +484,7 @@ function Staff() {
                   {formData.role === 'staff' && (
                     <div className="space-y-3 mt-6">
                       <label className="text-sm font-semibold text-gray-700">Offered Services</label>
-                      <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
+                      <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-100 max-h-48 overflow-y-auto scrollbar-hide">
                         {salonServices.length > 0 ? (
                           salonServices.map(service => (
                             <label key={service._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer">
@@ -489,7 +503,16 @@ function Staff() {
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm text-gray-600 font-semibold">{service.name}</span>
-                                <span className="text-xs text-gray-400">₹{service.price}</span>
+                                <span className="text-xs text-gray-400">
+                                  {service.price ? `₹${service.price}` : (
+                                    <>
+                                      {service.gender === 'unisex' && `₹${service.priceUnisex}`}
+                                      {service.gender === 'male' && `M: ₹${service.priceMale}`}
+                                      {service.gender === 'female' && `F: ₹${service.priceFemale}`}
+                                      {service.gender === 'both' && `M: ₹${service.priceMale} / F: ₹${service.priceFemale}`}
+                                    </>
+                                  )}
+                                </span>
                               </div>
                             </label>
                           ))
@@ -500,24 +523,25 @@ function Staff() {
                     </div>
                   )}
                 </div>
-
-                {/* Footer Buttons */}
-                <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2.5 text-gray-600 font-medium bg-gray-100 rounded-xl hover:bg-gray-200 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-8 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20"
-                  >
-                    {formData._id ? 'Save Changes' : 'Create Staff Member'}
-                  </button>
-                </div>
               </form>
+            </div>
+
+            {/* Footer Buttons - Pinned */}
+            <div className="flex justify-end gap-3 p-8 border-t border-gray-100 sticky bottom-0 bg-white">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-6 py-2.5 text-gray-600 font-bold bg-gray-100 rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                form="staff-form"
+                type="submit"
+                className="px-8 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 active:scale-95"
+              >
+                {formData._id ? 'Save Changes' : 'Create Member'}
+              </button>
             </div>
           </div>
         </div>

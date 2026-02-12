@@ -490,39 +490,52 @@ function Receptionist() {
       {/* Popup Modal */}
       {(showNewPatientPopup || showEmergencyPopup) && (
         <div
-          className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => {
             setShowNewPatientPopup(false);
             setShowEmergencyPopup(false);
           }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-down"
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh] zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Popup Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {showNewPatientPopup ? "New Client Registration" : "Walk-in Entry"}
-              </h2>
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {showNewPatientPopup ? "New Client Registration" : "Walk-in Entry"}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {showNewPatientPopup ? "Register a new client for an appointment." : "Record a direct walk-in service."}
+                </p>
+              </div>
               <button
-                className="text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
                 onClick={() => {
                   setShowNewPatientPopup(false);
                   setShowEmergencyPopup(false);
                 }}
               >
-                &times;
+                <span className="text-2xl leading-none">&times;</span>
               </button>
             </div>
 
             {/* Popup Body */}
-            <div className="p-6">
-              <form className="space-y-4">
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <form id="receptionist-form" className="p-6 space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                if (showNewPatientPopup) {
+                  handleNewClientSubmit();
+                } else if (showEmergencyPopup) {
+                  handleWalkinSubmit();
+                }
+              }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Name</label>
                   <input
                     type="text"
+                    required
                     placeholder="Enter client name"
                     value={showNewPatientPopup ? newClientForm.name : walkinForm.clientName}
                     onChange={(e) => {
@@ -532,55 +545,58 @@ function Receptionist() {
                         setWalkinForm({ ...walkinForm, clientName: e.target.value });
                       }
                     }}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
                   />
                 </div>
 
                 {showNewPatientPopup && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile</label>
                       <input
                         type="tel"
+                        required
                         placeholder="Enter mobile number"
                         value={newClientForm.mobile}
                         onChange={(e) => setNewClientForm({ ...newClientForm, mobile: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                      <input
-                        type="number"
-                        placeholder="Enter age"
-                        value={newClientForm.age}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, age: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Age</label>
+                        <input
+                          type="number"
+                          placeholder="Enter age"
+                          value={newClientForm.age}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, age: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Gender</label>
+                        <select
+                          value={newClientForm.gender}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, gender: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 appearance-none cursor-pointer"
+                        >
+                          <option>Male</option>
+                          <option>Female</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                      <select
-                        value={newClientForm.gender}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, gender: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
-                      >
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Reason</label>
                       <input
                         type="text"
                         placeholder="Service needed"
                         value={newClientForm.reason}
                         onChange={(e) => setNewClientForm({ ...newClientForm, reason: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
                       />
                     </div>
                   </>
@@ -589,22 +605,24 @@ function Receptionist() {
                 {showEmergencyPopup && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Service Request</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Service Request</label>
                       <input
                         type="text"
+                        required
                         placeholder="Describe service needed"
                         value={walkinForm.serviceRequest}
                         onChange={(e) => setWalkinForm({ ...walkinForm, serviceRequest: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all bg-gray-50 placeholder:text-gray-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stylist</label>
                       <select
+                        required
                         value={walkinForm.stylistId}
                         onChange={(e) => setWalkinForm({ ...walkinForm, stylistId: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-white"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all bg-gray-50 appearance-none cursor-pointer"
                       >
                         <option value="">Select Stylist</option>
                         {staff.map(stylist => (
@@ -614,13 +632,14 @@ function Receptionist() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (₹)</label>
                       <input
                         type="number"
+                        required
                         placeholder="Enter price"
                         value={walkinForm.price}
                         onChange={(e) => setWalkinForm({ ...walkinForm, price: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all bg-gray-50 placeholder:text-gray-400"
                       />
                     </div>
                   </>
@@ -628,28 +647,23 @@ function Receptionist() {
               </form>
             </div>
 
-            {/* Popup Footer */}
-            <div className="flex gap-3 p-6 border-t border-gray-100">
+            {/* Popup Footer - Pinned */}
+            <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
               <button
-                className="flex-1 bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                onClick={() => {
-                  if (showNewPatientPopup) {
-                    handleNewClientSubmit();
-                  } else if (showEmergencyPopup) {
-                    handleWalkinSubmit();
-                  }
-                }}
-              >
-                Save
-              </button>
-              <button
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl transition-all active:scale-95"
                 onClick={() => {
                   setShowNewPatientPopup(false);
                   setShowEmergencyPopup(false);
                 }}
               >
                 Cancel
+              </button>
+              <button
+                form="receptionist-form"
+                type="submit"
+                className={`flex-1 ${showEmergencyPopup ? 'bg-red-500 hover:bg-red-600 shadow-red-200' : 'bg-primary hover:bg-secondary shadow-primary/20'} text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md active:scale-95`}
+              >
+                {showNewPatientPopup ? "Register Client" : "Add Walk-in"}
               </button>
             </div>
           </div>

@@ -2,7 +2,17 @@ import React, { useState, useEffect } from 'react';
 import AppointmentsTable from '../../components/tables/AppointmentsTable';
 import CalendarWidget from '../../components/Calendar';
 import { useSalon } from '../../context/SalonContext';
-// import {  } from './Services';
+
+const predefinedServices = [
+  { title: "Hair Styling & Cutting", id: "1" },
+  { title: "Express Facial", id: "2" },
+  { title: "Spa & Massage", id: "3" },
+  { title: "Skin Consultation", id: "4" },
+  { title: "Coloring & Highlights", id: "5" },
+  { title: "Beauty Products", id: "6" },
+  { title: "Manicure & Pedicure", id: "7" },
+  { title: "Bridal Packages", id: "8" },
+];
 
 function Appointments() {
   const { selectedSalon, setSelectedSalon } = useSalon();
@@ -390,157 +400,172 @@ function Appointments() {
       {/* Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900">{formData._id ? 'Edit Appointment' : 'Create New Appointment'}</h2>
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{formData._id ? 'Edit Appointment' : 'Create New Appointment'}</h2>
+                <p className="text-sm text-gray-500">Fill in the details to schedule an appointment.</p>
+              </div>
               <button
-                className="text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
                 onClick={() => setShowModal(false)}
               >
-                &times;
+                <span className="text-2xl leading-none">&times;</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6">
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-                  <input
-                    name="clientName"
-                    value={formData.clientName}
-                    onChange={handleInputChange}
-                    type="text"
-                    placeholder="Enter client name"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  />
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <form id="appointment-form" className="p-6 space-y-6" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Client Name</label>
+                    <input
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={handleInputChange}
+                      type="text"
+                      required
+                      placeholder="Enter client name"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile Number</label>
+                    <input
+                      name="clientMobile"
+                      value={formData.clientMobile}
+                      onChange={handleInputChange}
+                      type="tel"
+                      required
+                      placeholder="Enter mobile number"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 placeholder:text-gray-400"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                  <input
-                    name="clientMobile"
-                    value={formData.clientMobile}
-                    onChange={handleInputChange}
-                    type="tel"
-                    placeholder="Enter mobile number"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date</label>
+                    <input
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInputChange}
+                      type="date"
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Time</label>
+                    <input
+                      name="time"
+                      value={formData.time}
+                      onChange={handleInputChange}
+                      type="time"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 cursor-pointer"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                  <input
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    type="date"
-                    min={new Date().toISOString().split('T')[0]}
-                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all cursor-pointer"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Service Type</label>
+                    <select
+                      name="serviceId"
+                      value={formData.serviceId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 appearance-none cursor-pointer"
+                    >
+                      <option value="">Select service</option>
+                      {services.map(service => (
+                        <option key={service._id} value={service._id}>{service.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (₹)</label>
+                    <input
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      type="number"
+                      required
+                      placeholder="Enter price"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                  <input
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInputChange}
-                    type="time"
-                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all cursor-pointer"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Staff</label>
+                    <select
+                      name="staffId"
+                      value={formData.staffId}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 appearance-none cursor-pointer"
+                    >
+                      <option value="">Select staff</option>
+                      {staff.map(s => (
+                        <option key={s._id} value={s._id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-                  <select
-                    name="serviceId"
-                    value={formData.serviceId}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
-                  >
-                    <option value="">Select service</option>
-                    {services.map(service => (
-                      <option key={service._id} value={service._id}>{service.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-                  <input
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    type="number"
-                    placeholder="Enter price"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Staff</label>
-                  <select
-                    name="staffId"
-                    value={formData.staffId}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
-                  >
-                    <option value="">Select staff</option>
-                    {staff.map(s => (
-                      <option key={s._id} value={s._id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Salon</label>
-                  <select
-                    name="salonId"
-                    value={formData.salonId}
-                    onChange={handleInputChange}
-                    disabled={localStorage.getItem('role') !== 'owner'}
-                    className={`w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white ${localStorage.getItem('role') !== 'owner' ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
-                  >
-                    <option value="">Select salon</option>
-                    {salons.map(salon => (
-                      <option key={salon._id} value={salon._id}>{salon.name}</option>
-                    ))}
-                  </select>
-                  {localStorage.getItem('role') !== 'owner' && (
-                    <p className="text-xs text-gray-500 mt-1">Your assigned branch is pre-selected</p>
-                  )}
-                </div>
-
-                {/* Modal Footer */}
-                <div className="flex gap-3 pt-4 border-t border-gray-100">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </button>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Salon</label>
+                    <select
+                      name="salonId"
+                      value={formData.salonId}
+                      onChange={handleInputChange}
+                      disabled={localStorage.getItem('role') !== 'owner'}
+                      className={`w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 ${localStorage.getItem('role') !== 'owner' ? 'opacity-60 cursor-not-allowed' : 'appearance-none cursor-pointer'
+                        }`}
+                    >
+                      <option value="">Select salon</option>
+                      {salons.map(salon => (
+                        <option key={salon._id} value={salon._id}>{salon.name}</option>
+                      ))}
+                    </select>
+                    {localStorage.getItem('role') !== 'owner' && (
+                      <p className="text-[10px] text-gray-500 mt-1">Your assigned branch is pre-selected</p>
+                    )}
+                  </div>
                 </div>
               </form>
+            </div>
+
+            {/* Modal Footer - Pinned */}
+            <div className="p-6 border-t border-gray-100 flex gap-3 sticky bottom-0 bg-white">
+              <button
+                type="button"
+                className="flex-1 px-6 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                form="appointment-form"
+                type="submit"
+                className="flex-1 px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 active:scale-95"
+              >
+                {formData._id ? 'Update Appointment' : 'Schedule Appointment'}
+              </button>
             </div>
           </div>
         </div>

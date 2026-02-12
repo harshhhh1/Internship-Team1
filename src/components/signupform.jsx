@@ -131,12 +131,14 @@ export default function SignupForm() {
             required
           />
         </div>
-        <button type="submit" className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 mt-4">
-          Sign Up
-        </button>
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Already have an account? <a href="/login" className="text-primary hover:text-secondary font-medium">Login</a>
-        </p>
+        <div className="mt-4">
+          <button type="submit" className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+            Sign Up
+          </button>
+          <p className="text-center text-sm text-gray-600 mt-4">
+            Already have an account? <a href="/login" className="text-primary hover:text-secondary font-medium">Login</a>
+          </p>
+        </div>
       </form>
     </div>
   );

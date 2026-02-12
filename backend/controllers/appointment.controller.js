@@ -145,6 +145,7 @@ export const completeAppointment = async (req, res) => {
         // Create payment record
         const Payment = mongoose.model('Payment');
         const payment = new Payment({
+            ownerId: appointment.ownerId,
             salonId: appointment.salonId,
             appointmentId: appointment._id,
             amount: appointment.price,
@@ -212,7 +213,8 @@ export const getTodayStats = async (req, res) => {
 
         const payments = await Payment.find({
             appointmentId: { $in: completedAppointmentIds },
-            salonId: filter.salonId || appointments[0]?.salonId
+            ...(filter.salonId ? { salonId: filter.salonId } : {}),
+            ...(filter.ownerId ? { ownerId: filter.ownerId } : {})
         });
 
         const revenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -426,7 +428,7 @@ export const getDashboardStats = async (req, res) => {
             {
                 $project: {
                     date: 1,
-                    price: { $ifNull: ['$service.price', 0] }
+                    price: { $ifNull: ['$price', 0] }
                 }
             }
         ]);
@@ -570,7 +572,7 @@ export const getEarningsPageData = async (req, res) => {
             date: app.date,
             service: app.serviceId?.name || 'Service',
             client: app.clientName,
-            amount: app.serviceId?.price || 0,
+            amount: app.price || 0,
             status: 'Paid' // Completed implies paid for this context
         }));
 

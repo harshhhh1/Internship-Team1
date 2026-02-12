@@ -18,9 +18,22 @@ const serviceSchema = new mongoose.Schema({
     description: {
         type: String,
     },
-    price: {
-        type: Number,
+    gender: {
+        type: String,
+        enum: ['unisex', 'male', 'female', 'both'],
         required: true,
+    },
+    priceUnisex: {
+        type: Number,
+        required: function() { return this.gender === 'unisex'; },
+    },
+    priceMale: {
+        type: Number,
+        required: function() { return this.gender === 'male' || this.gender === 'both'; },
+    },
+    priceFemale: {
+        type: Number,
+        required: function() { return this.gender === 'female' || this.gender === 'both'; },
     },
     duration: {
         type: Number, // in minutes

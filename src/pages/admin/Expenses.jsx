@@ -258,8 +258,8 @@ export default function Expenses() {
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${categoryFilter === cat
-                                        ? 'bg-primary text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {cat}
@@ -328,97 +328,110 @@ export default function Expenses() {
 
             {/* Add/Edit Expense Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingExpense ? 'Edit Expense' : 'Add New Expense'}
-                            </h2>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200" onClick={closeModal}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    {editingExpense ? 'Edit Expense Record' : 'Add New Expense'}
+                                </h2>
+                                <p className="text-sm text-gray-500">
+                                    {editingExpense ? 'Update expense category and transaction details.' : 'Record a new transaction for your salon expenses.'}
+                                </p>
+                            </div>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
                                 <FaTimes size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                                <select
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-                                >
-                                    {CATEGORIES.filter(c => c !== 'All').map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    placeholder="What was this expense for?"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto scrollbar-hide">
+                            <form id="expense-form" onSubmit={handleSubmit} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹) *</label>
-                                    <input
-                                        type="number"
-                                        name="amount"
-                                        value={formData.amount}
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category *</label>
+                                    <select
+                                        name="category"
+                                        value={formData.category}
                                         onChange={handleInputChange}
                                         required
-                                        min="0"
-                                        step="0.01"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    />
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
+                                    >
+                                        {CATEGORIES.filter(c => c !== 'All').map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description *</label>
                                     <input
-                                        type="date"
-                                        name="date"
-                                        value={formData.date}
+                                        type="text"
+                                        name="description"
+                                        value={formData.description}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        required
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        placeholder="e.g., Monthly electricity bill"
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Mode</label>
-                                <select
-                                    name="paymentMode"
-                                    value={formData.paymentMode}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-                                >
-                                    {PAYMENT_MODES.map(mode => (
-                                        <option key={mode} value={mode}>{mode}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={closeModal}
-                                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                                >
-                                    {editingExpense ? 'Save Changes' : 'Add Expense'}
-                                </button>
-                            </div>
-                        </form>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Amount (₹) *</label>
+                                        <input
+                                            type="number"
+                                            name="amount"
+                                            value={formData.amount}
+                                            onChange={handleInputChange}
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date</label>
+                                        <input
+                                            type="date"
+                                            name="date"
+                                            value={formData.date}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Mode</label>
+                                    <select
+                                        name="paymentMode"
+                                        value={formData.paymentMode}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
+                                    >
+                                        {PAYMENT_MODES.map(mode => (
+                                            <option key={mode} value={mode}>{mode}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Modal Footer - Pinned */}
+                        <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold active:scale-95"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                form="expense-form"
+                                type="submit"
+                                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 font-bold active:scale-95"
+                            >
+                                {editingExpense ? 'Update Record' : 'Record Expense'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

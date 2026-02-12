@@ -1,4 +1,5 @@
 import Category from "../models/Category.js";
+import Service from "../models/Service.js";
 
 export const createCategory = async (req, res) => {
     try {
@@ -37,9 +38,14 @@ export const updateCategory = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
     try {
-        const category = await Category.findByIdAndDelete(req.params.id);
+        const categoryId = req.params.id;
+
+        // NEW: Delete all services in this category
+        await Service.deleteMany({ categoryId });
+
+        const category = await Category.findByIdAndDelete(categoryId);
         if (!category) return res.status(404).json({ message: "Category not found" });
-        res.status(200).json({ message: "Category deleted successfully" });
+        res.status(200).json({ message: "Category and associated services deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

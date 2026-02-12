@@ -66,8 +66,8 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="p-8 overflow-y-auto">
-                    <form id="add-salon-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-8 overflow-y-auto scrollbar-hide flex-1">
+                    <form id="add-salon-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
 
                         {/* Salon Name */}
                         <div className="col-span-1">
@@ -192,12 +192,12 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
                     </form>
                 </div>
 
-                {/* Footer */}
-                <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-3xl">
+                {/* Footer - Pinned */}
+                <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 rounded-b-3xl sticky bottom-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-2.5 text-gray-700 font-medium bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                        className="px-6 py-2.5 text-gray-700 font-medium bg-gray-100 rounded-xl hover:bg-gray-200 transition-all"
                     >
                         Cancel
                     </button>
