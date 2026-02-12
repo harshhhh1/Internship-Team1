@@ -17,7 +17,7 @@ import DashboardProfile from './pages/admin/Profile';
 import Appointments from './pages/admin/Appointments';
 import RevenueReport from './pages/admin/revenueandreport.jsx'
 import Staff from './pages/admin/staff.jsx'
-import Services from './pages/admin/services.jsx'
+import Services from './pages/admin/Services.jsx'
 import Receptionist from './pages/admin/receptionist'
 import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
