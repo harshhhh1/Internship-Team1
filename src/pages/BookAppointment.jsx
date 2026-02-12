@@ -215,26 +215,45 @@ export default function BookAppointment() {
                         </h2>
 
                         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {services.map((service) => (
-                                <div
-                                    key={service._id}
-                                    onClick={() => openBooking(service)}
-                                    className="bg-white rounded-2xl border p-6 cursor-pointer shadow hover:shadow-xl transition-all hover:border-primary group"
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                                            {service.name}
-                                        </h3>
+                            {services
+                                .filter(service => {
+                                    const staff = staffMembers.find(s => s._id === selectedStaff);
+                                    // If staff has a services array, filter by it. 
+                                    // Otherwise show all services for that salon.
+                                    if (staff && staff.services && staff.services.length > 0) {
+                                        return staff.services.includes(service._id);
+                                    }
+                                    return true;
+                                })
+                                .map((service) => (
+                                    <div
+                                        key={service._id}
+                                        onClick={() => openBooking(service)}
+                                        className="bg-white rounded-2xl border p-6 cursor-pointer shadow hover:shadow-xl transition-all hover:border-primary group"
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                                                {service.name}
+                                            </h3>
+                                        </div>
+                                        <p className="text-sm text-gray-500">
+                                            Duration: {service.duration} mins
+                                        </p>
+                                        <p className="text-primary font-bold mt-3 text-lg">
+                                            ₹{service.price}
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-gray-500">
-                                        Duration: {service.duration} mins
-                                    </p>
-                                    <p className="text-primary font-bold mt-3 text-lg">
-                                        ₹{service.price}
-                                    </p>
-                                </div>
-                            ))}
+                                ))}
                         </div>
+                        {services.filter(service => {
+                            const staff = staffMembers.find(s => s._id === selectedStaff);
+                            if (staff && staff.services && staff.services.length > 0) {
+                                return staff.services.includes(service._id);
+                            }
+                            return true;
+                        }).length === 0 && (
+                                <p className="text-center text-gray-400 italic py-10">No services available for this stylist.</p>
+                            )}
                     </div>
                 )}
             </div>

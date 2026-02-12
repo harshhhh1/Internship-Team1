@@ -6,9 +6,17 @@ const serviceSchema = new mongoose.Schema({
         ref: "Salon",
         required: true,
     },
+    categoryId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+    },
     name: {
         type: String,
         required: true,
+    },
+    description: {
+        type: String,
     },
     price: {
         type: Number,
@@ -17,6 +25,10 @@ const serviceSchema = new mongoose.Schema({
     duration: {
         type: Number, // in minutes
         required: true,
+    },
+    status: {
+        type: Boolean,
+        default: true,
     },
 }, { timestamps: true });
 

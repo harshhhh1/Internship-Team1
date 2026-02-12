@@ -69,6 +69,10 @@ const staffSchema = new mongoose.Schema({
             'inventory', 'expenses', 'offers', 'reviews', 'receptionist', 'revenue-and-report'
         ],
     }],
+    services: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Service",
+    }],
     avatarUrl: {
         type: String,
         default: null,

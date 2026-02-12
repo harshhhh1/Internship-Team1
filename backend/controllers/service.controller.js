@@ -12,11 +12,12 @@ export const createService = async (req, res) => {
 
 export const getServices = async (req, res) => {
     try {
-        const { salonId } = req.query;
-        const filter = salonId ? { salonId } : {};
-        // Optionally filter by ownerId if we want to support that in public, 
-        // but typically services are bound to a salon.
-        const services = await Service.find(filter).populate('salonId', 'name');
+        const { salonId, categoryId } = req.query;
+        let filter = {};
+        if (salonId) filter.salonId = salonId;
+        if (categoryId) filter.categoryId = categoryId;
+
+        const services = await Service.find(filter).populate('categoryId', 'name');
         res.status(200).json(services);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -25,7 +26,7 @@ export const getServices = async (req, res) => {
 
 export const getServiceById = async (req, res) => {
     try {
-        const service = await Service.findById(req.params.id);
+        const service = await Service.findById(req.params.id).populate('categoryId', 'name');
         if (!service) return res.status(404).json({ message: "Service not found" });
         res.status(200).json(service);
     } catch (error) {
