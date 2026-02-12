@@ -23,8 +23,12 @@ function Staff() {
     onLeave: false,
     salonId: '',
     avatarUrl: '',
-    accessToTabs: []
+    accessToTabs: [],
+    services: []
   });
+
+  const [salonServices, setSalonServices] = useState([]);
+
 
   // Get all available tabs for checkbox display
   const allTabOptions = getAllTabOptions();
@@ -54,10 +58,25 @@ function Staff() {
   useEffect(() => {
     if (selectedSalon) {
       fetchStaff(selectedSalon._id);
+      fetchServices(selectedSalon._id);
     } else {
       fetchStaff();
+      setSalonServices([]);
     }
   }, [selectedSalon]);
+
+  const fetchServices = async (salonId) => {
+    try {
+      const res = await fetch(`http://localhost:5050/services?salonId=${salonId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSalonServices(data);
+      }
+    } catch (err) {
+      console.error("Error fetching services:", err);
+    }
+  };
+
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -88,13 +107,25 @@ function Staff() {
     });
   };
 
+  const handleServiceChange = (serviceId, isChecked) => {
+    setFormData(prev => {
+      const currentServices = prev.services || [];
+      if (isChecked) {
+        return { ...prev, services: [...currentServices, serviceId] };
+      } else {
+        return { ...prev, services: currentServices.filter(id => id !== serviceId) };
+      }
+    });
+  };
+
   const handleEdit = (staff) => {
     setFormData({
       ...staff,
       password: '',
       salonId: staff.salonId?._id || staff.salonId,
       avatarUrl: staff.avatarUrl || '',
-      accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || []
+      accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || [],
+      services: staff.services?.map(s => s._id || s) || []
     });
     setIsModalOpen(true);
   };
@@ -165,7 +196,8 @@ function Staff() {
       onLeave: false,
       salonId: selectedSalon?._id || '',
       avatarUrl: '',
-      accessToTabs: DEFAULT_TABS.staff
+      accessToTabs: DEFAULT_TABS.staff,
+      services: []
     });
   };
 
@@ -198,8 +230,8 @@ function Staff() {
             <button
               onClick={() => setActiveTab('list')}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'list'
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-gray-900 text-white shadow-md'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               Staff List
@@ -207,8 +239,8 @@ function Staff() {
             <button
               onClick={() => setActiveTab('attendance')}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'attendance'
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-gray-900 text-white shadow-md'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               Attendance
@@ -434,6 +466,39 @@ function Staff() {
                       ))}
                     </div>
                   </div>
+
+                  {formData.role === 'staff' && (
+                    <div className="space-y-3 mt-6">
+                      <label className="text-sm font-semibold text-gray-700">Offered Services</label>
+                      <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-100 max-h-48 overflow-y-auto custom-scrollbar">
+                        {salonServices.length > 0 ? (
+                          salonServices.map(service => (
+                            <label key={service._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer">
+                              <div className="relative flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.services?.includes(service._id) || false}
+                                  onChange={(e) => handleServiceChange(service._id, e.target.checked)}
+                                  className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 transition-all checked:border-primary checked:bg-primary"
+                                />
+                                <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm text-gray-600 font-semibold">{service.name}</span>
+                                <span className="text-xs text-gray-400">₹{service.price}</span>
+                              </div>
+                            </label>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-400 italic p-2">No services found for this salon.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer Buttons */}
