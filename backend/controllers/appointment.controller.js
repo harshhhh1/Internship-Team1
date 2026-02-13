@@ -3,9 +3,11 @@ import mongoose from "mongoose";
 import Salon from "../models/Salon.js";
 import Staff from "../models/Staff.js";
 
+import Client from "../models/Client.js";
+
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId } = req.body;
+        const { salonId, serviceId, clientName, clientMobile } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -14,6 +16,17 @@ export const createAppointment = async (req, res) => {
         const salon = await Salon.findById(salonId);
         if (!salon) {
             return res.status(404).json({ message: "Salon not found" });
+        }
+
+        // Find or create client
+        let client = await Client.findOne({ mobile: clientMobile, salonId });
+        if (!client) {
+            client = new Client({
+                salonId,
+                name: clientName,
+                mobile: clientMobile,
+            });
+            await client.save();
         }
 
         // Get service price if serviceId is provided
@@ -33,9 +46,16 @@ export const createAppointment = async (req, res) => {
         const appointment = new Appointment({
             ...req.body,
             ownerId: salon.ownerId,
+            clientId: client._id,
             price: price || 0
         });
         await appointment.save();
+
+        // Update client visits and last visit
+        client.visits += 1;
+        client.lastVisit = new Date();
+        await client.save();
+
         res.status(201).json(appointment);
     } catch (error) {
         res.status(400).json({ message: error.message });

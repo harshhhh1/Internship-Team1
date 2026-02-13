@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip, CartesianGrid } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from 'recharts';
 import RevenueTable from '../../components/tables/RevenueTable';
-
 import { useSalon } from '../../context/SalonContext';
 
 const RevenueReport = () => {
@@ -13,38 +12,43 @@ const RevenueReport = () => {
   const [salaryInput, setSalaryInput] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Stats state
-  const [revenueStats, setRevenueStats] = useState({
-    revenueThisMonth: { value: 0, trend: '0', data: [] },
-    totalIncome: { value: 0, trend: '0', data: [] },
-    clients: { value: 0, trend: '0', data: [] }
+  // Report State
+  const [reportPeriod, setReportPeriod] = useState('monthly'); // weekly, monthly, annually
+  const [reportData, setReportData] = useState({
+    bookings: [],
+    clients: [],
+    revenue: []
   });
 
-  // Fetch revenue stats for graphs
+  // Fetch Reports Data
   useEffect(() => {
-    const fetchRevenueStats = async () => {
+    const fetchReports = async () => {
       try {
         const token = localStorage.getItem('token');
         const url = selectedSalon
-          ? `http://localhost:5050/appointments/revenue-stats?salonId=${selectedSalon._id}`
-          : 'http://localhost:5050/appointments/revenue-stats';
+          ? `http://localhost:5050/reports?period=${reportPeriod}&salonId=${selectedSalon._id}`
+          : `http://localhost:5050/reports?period=${reportPeriod}`;
+
         const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
+
         if (response.ok) {
           const data = await response.json();
-          setRevenueStats(data);
+          setReportData({
+            bookings: data.bookings,
+            clients: data.clients,
+            revenue: data.revenue
+          });
         }
       } catch (error) {
-        console.error("Error fetching revenue stats:", error);
+        console.error("Error fetching reports:", error);
       }
     };
-    fetchRevenueStats();
-  }, [selectedSalon]);
+    fetchReports();
+  }, [selectedSalon, reportPeriod]);
 
-  // Fetch appointments
+  // Fetch appointments (for table calculations)
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
@@ -53,9 +57,7 @@ const RevenueReport = () => {
           ? `http://localhost:5050/appointments?salonId=${selectedSalon._id}`
           : 'http://localhost:5050/appointments';
         const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           const data = await response.json();
@@ -175,6 +177,7 @@ const RevenueReport = () => {
 
   // Format currency
   const formatCurrency = (value) => {
+    if (value === undefined || value === null) return '₹0';
     if (value >= 100000) {
       return `₹${(value / 100000).toFixed(2)}L`;
     } else if (value >= 1000) {
@@ -183,71 +186,114 @@ const RevenueReport = () => {
     return `₹${value.toLocaleString()}`;
   };
 
-  // Format trend
-  const formatTrend = (trend) => {
-    const num = parseFloat(trend);
-    if (num > 0) return `↑ ${num}%`;
-    if (num < 0) return `↓ ${Math.abs(num)}%`;
-    return '0%';
-  };
+  const totalRevenue = reportData.revenue.reduce((acc, curr) => acc + curr.amount, 0);
+  const totalBookings = reportData.bookings.reduce((acc, curr) => acc + curr.count, 0);
+  const totalClients = reportData.clients.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-10">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Revenue & Report</h1>
-
-        {/* STATS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="Revenue This Month"
-            value={formatCurrency(revenueStats.revenueThisMonth.value)}
-            trend={formatTrend(revenueStats.revenueThisMonth.trend)}
-            data={revenueStats.revenueThisMonth.data.length > 0 ? revenueStats.revenueThisMonth.data : [{ name: 'No data', value: 0 }]}
-            color="#9381ff"
-          />
-          <StatCard
-            title="Total Income"
-            value={formatCurrency(revenueStats.totalIncome.value)}
-            trend={formatTrend(revenueStats.totalIncome.trend)}
-            data={revenueStats.totalIncome.data.length > 0 ? revenueStats.totalIncome.data : [{ name: 'No data', value: 0 }]}
-            color="#b8b8ff"
-          />
-          <StatCard
-            title="Clients"
-            value={revenueStats.clients.value.toLocaleString()}
-            trend={formatTrend(revenueStats.clients.trend)}
-            data={revenueStats.clients.data.length > 0 ? revenueStats.clients.data : [{ name: 'No data', value: 0 }]}
-            color="#ffd8be"
-          />
-        </div>
-
-        {/* FILTER BAR */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row flex-wrap gap-4 items-center">
-          <input
-            className="w-full md:flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-            placeholder="Search staff..."
-          />
-          <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
-            <input
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-full md:w-44"
-              type="date"
-              placeholder="From date"
-            />
-            <span className="text-gray-400 hidden md:inline">—</span>
-            <input
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm w-full md:w-44"
-              type="date"
-              placeholder="To date"
-            />
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-1 flex">
+            {['weekly', 'monthly', 'annually'].map((period) => (
+              <button
+                key={period}
+                onClick={() => setReportPeriod(period)}
+                className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all ${reportPeriod === period
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+              >
+                {period}
+              </button>
+            ))}
           </div>
-          <select className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm bg-white w-full md:w-40">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>On Leave</option>
-            <option>Inactive</option>
-          </select>
         </div>
 
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase">Total Revenue ({reportPeriod})</p>
+            <h2 className="text-3xl font-bold text-gray-900 mt-2">{formatCurrency(totalRevenue)}</h2>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase">Total Appointments</p>
+            <h2 className="text-3xl font-bold text-gray-900 mt-2">{totalBookings}</h2>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase">New Clients</p>
+            <h2 className="text-3xl font-bold text-gray-900 mt-2">{totalClients}</h2>
+          </div>
+        </div>
+
+        {/* CHARTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Revenue Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Revenue Trend</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={reportData.revenue}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickFormatter={(str) => {
+                      const date = new Date(str);
+                      if (reportPeriod === 'annually') return date.toLocaleDateString('en-US', { month: 'short' });
+                      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                    }}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                  <Tooltip
+                    formatter={(value) => [formatCurrency(value), 'Revenue']}
+                    labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                  />
+                  <Line type="monotone" dataKey="amount" stroke="#9381ff" strokeWidth={3} dot={{ r: 4, fill: '#9381ff' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Bookings & Clients Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Appointments & Clients</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={reportData.bookings}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                    tickFormatter={(str) => {
+                      const date = new Date(str);
+                      if (reportPeriod === 'annually') return date.toLocaleDateString('en-US', { month: 'short' });
+                      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                    }}
+                  />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} />
+                  <Tooltip labelFormatter={(label) => new Date(label).toLocaleDateString()} />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="count" name="Appointments" fill="#b8b8ff" radius={[4, 4, 0, 0]} />
+                  {/* Merging Client Data into same chart might require mapping if dates align perfectly, 
+                                 otherwise separate charts or just showing appointments here is fine for now. 
+                                 Let's simplisticly show Bookings here. */}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+
+        {/* FILTER BAR REMOVED/SIMPLIFIED as main filter is at top */}
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 border-t pt-8">Staff Performance</h2>
         {/* TABLE */}
         {loading ? (
           <div className="bg-white rounded-xl p-8 text-center text-gray-500">Loading staff data...</div>

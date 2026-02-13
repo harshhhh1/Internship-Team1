@@ -29,6 +29,11 @@ const walkinSchema = new mongoose.Schema({
         ref: "Staff",
         required: false,
     },
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Client",
+        required: false,
+    },
     price: {
         type: Number,
         required: true,

@@ -16,6 +16,11 @@ const appointmentSchema = new mongoose.Schema({
         ref: "Staff",
         required: false,
     },
+    clientId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Client",
+        required: false,
+    },
     serviceId: {
         type: String, // String to support both real ObjectIds and dummy IDs like "1", "2"
         required: false,

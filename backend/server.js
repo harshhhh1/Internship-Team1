@@ -16,6 +16,7 @@ import expenseRoutes from "./routes/expense.js";
 import attendanceRoutes from "./routes/attendance.js"; // [NEW]
 import walkinRoutes from "./routes/walkin.js";
 import categoryRoutes from "./routes/category.js";
+import reportRoutes from "./routes/report.js"; // [NEW]
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use("/expenses", expenseRoutes);
 app.use("/attendance", attendanceRoutes); // [NEW]
 app.use("/walkins", walkinRoutes);
 app.use("/categories", categoryRoutes);
+app.use("/reports", reportRoutes); // [NEW]
 
 
 app.get("/api/health", (req, res) => {
