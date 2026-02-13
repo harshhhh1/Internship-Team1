@@ -1,5 +1,5 @@
 import ResizableTh from '../ResizableTh';
-import { FaEdit, FaTrash, FaCheck } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheck, FaUser, FaStar } from 'react-icons/fa';
 
 const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) => {
     return (
@@ -8,38 +8,59 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                 <table className="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                            <ResizableTh className="p-4">Name</ResizableTh>
-                            <ResizableTh className="p-4">Mobile</ResizableTh>
+                            <ResizableTh className="p-4">Client</ResizableTh>
+                            <ResizableTh className="p-4">Contact</ResizableTh>
                             <ResizableTh className="p-4">Staff</ResizableTh>
-                            <ResizableTh className="p-4">Appointment Date</ResizableTh>
-                            <ResizableTh className="p-4">Service Type</ResizableTh>
+                            <ResizableTh className="p-4">Service</ResizableTh>
+                            <ResizableTh className="p-4">Date</ResizableTh>
                             <ResizableTh className="p-4">Price</ResizableTh>
-                            <ResizableTh className="p-4">Note</ResizableTh>
+                            <ResizableTh className="p-4">Status</ResizableTh>
                             <ResizableTh className="p-4 text-center">Actions</ResizableTh>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {appointments.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="p-8 text-center text-gray-500">
-                                    Nothing to see here
+                                <td colSpan="8" className="p-8 text-center text-gray-500">
+                                    No appointments found
                                 </td>
                             </tr>
                         ) : (
                             appointments.map((appointment) => (
                                 <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 font-medium text-gray-900">{appointment.name}</td>
-                                    <td className="p-4 text-gray-600">{appointment.mobile}</td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="font-medium text-gray-900">{appointment.name}</div>
+                                            {appointment.clientDetails?.isVip && (
+                                                <FaStar className="text-yellow-500" title="VIP Client" />
+                                            )}
+                                        </div>
+                                        {appointment.clientDetails && (
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <FaUser className="text-xs" />
+                                                    {appointment.clientDetails.visits} visits
+                                                </span>
+                                                <span className="ml-2">• ₹{appointment.clientDetails.totalSpent.toLocaleString()} spent</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="text-gray-900">{appointment.mobile}</div>
+                                        {appointment.clientDetails?.email && (
+                                            <div className="text-xs text-gray-500">{appointment.clientDetails.email}</div>
+                                        )}
+                                    </td>
                                     <td className="p-4 text-gray-600">{appointment.staff}</td>
-                                    <td className="p-4 text-gray-600">{appointment.date}</td>
-                                    <td className="p-4 text-gray-600">
+                                    <td className="p-4">
                                         <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full">
                                             {appointment.serviceType}
                                         </span>
                                     </td>
+                                    <td className="p-4 text-gray-600">{appointment.date}</td>
                                     <td className="p-4 text-gray-600 font-semibold">₹{appointment.price}</td>
-                                    <td className="p-4 text-gray-500 italic max-w-xs truncate" title={appointment.note}>
-                                        {appointment.note || '-'}
+                                    <td className="p-4">
+                                        <StatusBadge status={appointment.status} />
                                     </td>
                                     <td className="p-4">
                                         <div className="flex items-center justify-center gap-3">
@@ -75,6 +96,29 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                 </table>
             </div>
         </div>
+    );
+};
+
+// Status Badge Component
+const StatusBadge = ({ status }) => {
+    const styles = {
+        completed: 'bg-green-100 text-green-700',
+        confirmed: 'bg-blue-100 text-blue-700',
+        pending: 'bg-yellow-100 text-yellow-700',
+        waiting: 'bg-orange-100 text-orange-700',
+        cancelled: 'bg-red-100 text-red-700'
+    };
+    const labels = {
+        completed: 'Completed',
+        confirmed: 'Confirmed',
+        pending: 'Pending',
+        waiting: 'Waiting',
+        cancelled: 'Cancelled'
+    };
+    return (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+            {labels[status] || status}
+        </span>
     );
 };
 

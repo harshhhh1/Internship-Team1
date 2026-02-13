@@ -32,6 +32,7 @@ import Inventory from './pages/admin/Inventory.jsx'
 import Expenses from './pages/admin/Expenses.jsx'
 import Offers from './pages/admin/Offers.jsx'
 import Attendance from './components/Attendance.jsx'
+import Reports from './pages/admin/Reports.jsx'
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute.jsx'
@@ -65,7 +66,8 @@ function App() {
           <Route path="appointments" element={<ProtectedRoute tabId="appointment"><Appointments /></ProtectedRoute>} />
           <Route path="services" element={<ProtectedRoute tabId="services"><Services /></ProtectedRoute>} />
           <Route path="staff" element={<ProtectedRoute tabId="staff"><Staff /></ProtectedRoute>} />
-          <Route path="revenue-and-report" element={<ProtectedRoute tabId="revenue-and-report"><RevenueReport /></ProtectedRoute>} />
+<Route path="revenue-and-report" element={<ProtectedRoute tabId="revenue-and-report"><RevenueReport /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute tabId="reports"><Reports /></ProtectedRoute>} />
           <Route path="receptionist" element={<ProtectedRoute tabId="receptionist"><Receptionist /></ProtectedRoute>} />
           <Route path="attendance" element={<ProtectedRoute tabId="receptionist"><Attendance /></ProtectedRoute>} />
 

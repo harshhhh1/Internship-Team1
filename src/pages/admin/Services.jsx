@@ -1,289 +1,463 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FaSearch,
   FaPlus,
-  FaEllipsisV,
   FaPen,
   FaTrash,
-  FaChevronDown
+  FaClock,
+  FaTimes,
+  FaCheck,
+  FaSpinner,
+  FaLayerGroup
 } from 'react-icons/fa';
-
-// Mock services data
-const initialServices = [
-  // Facial cleanup
-  { id: 1, name: 'Basic Facial', category: 'Facial cleanup', duration: '45 min', price: 599 },
-  { id: 2, name: 'Gold Facial', category: 'Facial cleanup', duration: '60 min', price: 1299 },
-  { id: 3, name: 'Diamond Facial', category: 'Facial cleanup', duration: '75 min', price: 1899 },
-  { id: 4, name: 'Herbal Facial', category: 'Facial cleanup', duration: '50 min', price: 799 },
-  
-  // Pedicure
-  { id: 5, name: 'Classic Pedicure', category: 'Pedicure', duration: '40 min', price: 449 },
-  { id: 6, name: 'Spa Pedicure', category: 'Pedicure', duration: '55 min', price: 799 },
-  { id: 7, name: 'Gel Pedicure', category: 'Pedicure', duration: '60 min', price: 999 },
-  { id: 8, name: 'Paraffin Pedicure', category: 'Pedicure', duration: '50 min', price: 699 },
-  
-  // Hair repairing treatment
-  { id: 9, name: 'Keratin Treatment', category: 'Hair repairing treatment', duration: '120 min', price: 2499 },
-  { id: 10, name: 'Protein Treatment', category: 'Hair repairing treatment', duration: '90 min', price: 1499 },
-  { id: 11, name: 'Deep Conditioning', category: 'Hair repairing treatment', duration: '45 min', price: 599 },
-  { id: 12, name: 'Hair Spa Treatment', category: 'Hair repairing treatment', duration: '60 min', price: 899 },
-  
-  // Polishing
-  { id: 13, name: 'Hair Polishing', category: 'Polishing', duration: '60 min', price: 1199 },
-  { id: 14, name: 'Gloss Treatment', category: 'Polishing', duration: '45 min', price: 899 },
-  { id: 15, name: 'Silk Blowout', category: 'Polishing', duration: '90 min', price: 1599 },
-  
-  // Hair cut
-  { id: 16, name: 'Basic Haircut', category: 'Hair cut', duration: '30 min', price: 299 },
-  { id: 17, name: 'Layered Cut', category: 'Hair cut', duration: '45 min', price: 499 },
-  { id: 18, name: 'Bob Cut', category: 'Hair cut', duration: '60 min', price: 699 },
-  { id: 19, name: 'Feather Cut', category: 'Hair cut', duration: '45 min', price: 549 },
-  { id: 20, name: 'Kids Haircut', category: 'Hair cut', duration: '25 min', price: 199 },
-  
-  // Hair color
-  { id: 21, name: 'Root Touch Up', category: 'Hair color', duration: '60 min', price: 899 },
-  { id: 22, name: 'Full Hair Color', category: 'Hair color', duration: '120 min', price: 1899 },
-  { id: 23, name: 'Highlights', category: 'Hair color', duration: '150 min', price: 2499 },
-  { id: 24, name: 'Balayage', category: 'Hair color', duration: '180 min', price: 3499 },
-  { id: 25, name: 'Ombre', category: 'Hair color', duration: '150 min', price: 2999 },
-  
-  // Hair spa & head message
-  { id: 26, name: 'Hair Spa', category: 'Hair spa & head message', duration: '45 min', price: 499 },
-  { id: 27, name: 'Head Massage', category: 'Hair spa & head message', duration: '30 min', price: 349 },
-  { id: 28, name: 'Scalp Treatment', category: 'Hair spa & head message', duration: '40 min', price: 599 },
-  { id: 29, name: 'Ayurvedic Head Spa', category: 'Hair spa & head message', duration: '60 min', price: 899 },
-  
-  // Menicure
-  { id: 30, name: 'Classic Manicure', category: 'Menicure', duration: '35 min', price: 399 },
-  { id: 31, name: 'Spa Manicure', category: 'Menicure', duration: '50 min', price: 699 },
-  { id: 32, name: 'Gel Manicure', category: 'Menicure', duration: '55 min', price: 899 },
-  { id: 33, name: 'Paraffin Manicure', category: 'Menicure', duration: '45 min', price: 599 },
-  
-  // Relaxing
-  { id: 34, name: 'Body Massage (30 min)', category: 'Relaxing', duration: '30 min', price: 699 },
-  { id: 35, name: 'Body Massage (60 min)', category: 'Relaxing', duration: '60 min', price: 1299 },
-  { id: 36, name: 'Aromatherapy', category: 'Relaxing', duration: '75 min', price: 1799 },
-  { id: 37, name: 'Hot Stone Massage', category: 'Relaxing', duration: '90 min', price: 2199 },
-  { id: 38, name: 'Reflexology', category: 'Relaxing', duration: '45 min', price: 899 },
-  
-  // Waxing
-  { id: 39, name: 'Full Leg Waxing', category: 'Waxing', duration: '45 min', price: 699 },
-  { id: 40, name: 'Full Arm Waxing', category: 'Waxing', duration: '30 min', price: 499 },
-  { id: 41, name: 'Underarm Waxing', category: 'Waxing', duration: '15 min', price: 249 },
-  { id: 42, name: 'Bikini Waxing', category: 'Waxing', duration: '30 min', price: 599 },
-  { id: 43, name: 'Full Body Waxing', category: 'Waxing', duration: '90 min', price: 1899 },
-  { id: 44, name: 'Face Waxing', category: 'Waxing', duration: '20 min', price: 349 },
-];
-
-const categories = [
-  'All Categories',
-  'Facial cleanup',
-  'Pedicure',
-  'Hair repairing treatment',
-  'Polishing',
-  'Hair cut',
-  'Hair color',
-  'Hair spa & head message',
-  'Menicure',
-  'Relaxing',
-  'Waxing'
-];
+import { useSalon } from '../../context/SalonContext';
 
 function Services() {
+  const { selectedSalon } = useSalon();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
-  const [showAddDropdown, setShowAddDropdown] = useState(false);
-  const [services, setServices] = useState(initialServices);
-
-  // Filter services based on search term and category
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All Categories' || service.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  
+  // Data states
+  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // UI states
+  const [editingService, setEditingService] = useState(null);
+  const [deletingService, setDeletingService] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form states
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    color: '#9381ff'
+  });
+  
+  const [serviceForm, setServiceForm] = useState({
+    name: '',
+    category: '',
+    price: '',
+    malePrice: '',
+    femalePrice: '',
+    duration: '30',
+    description: ''
   });
 
-  const handleEdit = (id) => {
-    console.log('Edit service:', id);
-    // Add edit logic here
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
-      setServices(services.filter(s => s.id !== id));
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const salonId = selectedSalon?._id || localStorage.getItem('salonId');
+      
+      const response = await fetch(
+        `http://localhost:5050/categories?salonId=${salonId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
-  const handleAddService = (category) => {
-    console.log('Add service for category:', category);
-    // Add add service logic here
-    setShowAddDropdown(false);
+  // Fetch services
+  const fetchServices = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const salonId = selectedSalon?._id || localStorage.getItem('salonId');
+      
+      let url = `http://localhost:5050/services?salonId=${salonId}`;
+      if (selectedCategory !== 'All') {
+        const category = categories.find(c => c.name === selectedCategory);
+        if (category) {
+          url += `&categoryId=${category._id}`;
+        }
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setServices(data);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSalon?._id) {
+      fetchCategories();
+    }
+  }, [selectedSalon]);
+
+  useEffect(() => {
+    if (selectedSalon?._id) {
+      fetchServices();
+    }
+  }, [selectedSalon, selectedCategory, categories]);
+
+  // Filter services based on search term and category
+  const filteredServices = services.filter(service => {
+    const matchesSearch = service.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || service.categoryName === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Handle create category
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const salonId = selectedSalon?._id || localStorage.getItem('salonId');
+      
+      const response = await fetch('http://localhost:5050/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...categoryForm,
+          salonId
+        })
+      });
+
+      if (response.ok) {
+        await fetchCategories();
+        setShowCategoryModal(false);
+        setCategoryForm({ name: '', description: '', color: '#9381ff' });
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to create category');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Error creating category');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle create service
+  const handleCreateService = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const salonId = selectedSalon?._id || localStorage.getItem('salonId');
+      
+      const selectedCat = categories.find(c => c._id === serviceForm.category);
+      
+      const payload = {
+        name: serviceForm.name,
+        category: serviceForm.category,
+        categoryName: selectedCat?.name || '',
+        price: parseFloat(serviceForm.price) || 0,
+        malePrice: parseFloat(serviceForm.malePrice) || 0,
+        femalePrice: parseFloat(serviceForm.femalePrice) || 0,
+        duration: parseInt(serviceForm.duration) || 30,
+        description: serviceForm.description,
+        salonId
+      };
+
+      const url = editingService 
+        ? `http://localhost:5050/services/${editingService._id}`
+        : 'http://localhost:5050/services';
+      
+      const method = editingService ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        await fetchServices();
+        setShowServiceModal(false);
+        setServiceForm({
+          name: '',
+          category: '',
+          price: '',
+          malePrice: '',
+          femalePrice: '',
+          duration: '30',
+          description: ''
+        });
+        setEditingService(null);
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to save service');
+      }
+    } catch (error) {
+      console.error('Error saving service:', error);
+      alert('Error saving service');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle delete category
+  const handleDeleteCategory = async (categoryId) => {
+    if (!window.confirm('Are you sure you want to delete this category?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5050/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        await fetchCategories();
+        if (selectedCategory !== 'All') {
+          setSelectedCategory('All');
+        }
+      } else {
+        alert('Failed to delete category');
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
+  };
+
+  // Handle delete service
+  const handleDeleteService = async () => {
+    if (!deletingService) return;
+    
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5050/services/${deletingService._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        await fetchServices();
+        setDeletingService(null);
+      } else {
+        alert('Failed to delete service');
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Open edit service modal
+  const handleEditService = (service) => {
+    setEditingService(service);
+    setServiceForm({
+      name: service.name || '',
+      category: service.category?._id || service.category || '',
+      price: service.price?.toString() || '',
+      malePrice: service.malePrice?.toString() || '',
+      femalePrice: service.femalePrice?.toString() || '',
+      duration: service.duration?.toString() || '30',
+      description: service.description || ''
+    });
+    setShowServiceModal(true);
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f8fb]">
+    <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <section className="py-8 px-5 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#0b3c5d]">Our Premium Services</h2>
-              <p className="text-gray-500 mt-1">Manage your salon services</p>
-            </div>
-            
-            {/* Top Right Buttons with Dropdowns */}
-            <div className="flex gap-3">
-              {/* Options Dropdown */}
-              <div className="relative">
+      <section className="px-5 pb-8 pt-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 pt-6 pb-6 px-6 md:px-8">
+          <div className="relative z-10">
+            {/* Header Row */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800">Services</h2>
+                <p className="text-gray-500 mt-1 text-base flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  {filteredServices.length} services available
+                </p>
+              </div>
+              
+              {/* Buttons */}
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-5 rounded-xl transition-all duration-200 border border-gray-200"
+                >
+                  <FaLayerGroup className="text-sm" />
+                  <span>Add Category</span>
+                </button>
+
                 <button
                   onClick={() => {
-                    setShowOptionsDropdown(!showOptionsDropdown);
-                    setShowAddDropdown(false);
+                    setEditingService(null);
+                    setServiceForm({
+                      name: '',
+                      category: categories[0]?._id || '',
+                      price: '',
+                      malePrice: '',
+                      femalePrice: '',
+                      duration: '30',
+                      description: ''
+                    });
+                    setShowServiceModal(true);
                   }}
-                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-all duration-200"
+                  disabled={categories.length === 0}
+                  className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium py-2.5 px-5 rounded-xl transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaEllipsisV />
-                  <span>Options</span>
-                  <FaChevronDown className={`text-xs transition-transform ${showOptionsDropdown ? 'rotate-180' : ''}`} />
+                  <FaPlus className="text-sm" />
+                  <span>Add Service</span>
                 </button>
-                {showOptionsDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <button className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700">Export Services</button>
-                    <button className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700">Import Services</button>
-                    <button className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700">Bulk Actions</button>
-                    <button className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700">Settings</button>
-                  </div>
-                )}
               </div>
+            </div>
 
-              {/* Add Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowAddDropdown(!showAddDropdown);
-                    setShowOptionsDropdown(false);
-                  }}
-                  className="flex items-center gap-2 bg-[#0b3c5d] hover:bg-[#0a2e4d] text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200"
-                >
-                  <FaPlus />
-                  <span>Add</span>
-                  <FaChevronDown className={`text-xs transition-transform ${showAddDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showAddDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <p className="px-4 py-1 text-xs text-gray-400 uppercase font-semibold">Select Category</p>
-                    {categories.filter(c => c !== 'All Categories').map(category => (
-                      <button
-                        key={category}
-                        onClick={() => handleAddService(category)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm"
-                      >
-                        + {category}
-                      </button>
-                    ))}
-                  </div>
+            {/* Search Bar */}
+            <div className="relative max-w-xl mb-5">
+              <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden border border-gray-200 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-100 transition-all">
+                <div className="pl-4 text-cyan-500">
+                  <FaSearch className="text-lg" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search services..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full py-3 px-3 bg-transparent text-gray-700 placeholder-gray-400 outline-none"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="pr-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <FaTimes />
+                  </button>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Search Bar (Longer) */}
-          <div className="mt-6">
-            <div className="relative max-w-2xl">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search services..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0b3c5d] focus:border-[#0b3c5d] outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Category Dropdown */}
-          <div className="mt-4">
-            <div className="relative inline-block w-64">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-10 focus:ring-2 focus:ring-[#0b3c5d] focus:border-[#0b3c5d] outline-none cursor-pointer transition-all"
+            {/* Category Filter */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <button
+                onClick={() => setSelectedCategory('All')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedCategory === 'All'
+                    ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+                All
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category._id}
+                  onClick={() => setSelectedCategory(category.name)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                    selectedCategory === category.name
+                      ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {category.name}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCategory(category._id);
+                    }}
+                    className="ml-1 text-xs opacity-60 hover:opacity-100 hover:text-red-200"
+                  >
+                    ×
+                  </button>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Services Table */}
-      <section className="py-8 px-5">
+      <section className="py-6 px-5">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wider">Service Name</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wider">Category</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wider">Price</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Normal Price</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Male Price</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Female Price</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredServices.length > 0 ? (
                     filteredServices.map((service, index) => (
                       <tr
-                        key={service.id}
-                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                        key={service._id}
+                        className={`border-b border-gray-100 hover:bg-gradient-to-r hover:from-cyan-50/50 hover:to-teal-50/50 transition-all duration-200 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                        }`}
                       >
-                        <td className="py-4 px-6">
-                          <div className="font-medium text-gray-900">{service.name}</div>
+                        <td className="py-4 px-5">
+                          <div className="font-semibold text-gray-800">{service.name}</div>
+                          {service.description && <div className="text-xs text-gray-500">{service.description}</div>}
                         </td>
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {service.category}
+                        <td className="py-4 px-5">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white bg-gradient-to-r from-cyan-500 to-teal-500">
+                            {service.categoryName || 'Uncategorized'}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center text-gray-600">
-                            <span className="font-medium">{service.duration}</span>
+                        <td className="py-4 px-5"><span className="font-semibold text-gray-800">₹{service.price || 0}</span></td>
+                        <td className="py-4 px-5"><span className="font-semibold text-gray-800">₹{service.malePrice || 0}</span></td>
+                        <td className="py-4 px-5"><span className="font-semibold text-gray-800">₹{service.femalePrice || 0}</span></td>
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><FaClock className="text-xs" /></span>
+                            <span className="font-medium text-gray-700">{service.duration || 30} min</span>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="font-semibold text-[#0b3c5d]">₹{service.price}</div>
-                        </td>
-                        <td className="py-4 px-6">
+                        <td className="py-4 px-5">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEdit(service.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Edit"
-                            >
-                              <FaPen />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(service.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </button>
+                            <button onClick={() => handleEditService(service)} className="p-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-lg" title="Edit"><FaPen className="text-sm" /></button>
+                            <button onClick={() => setDeletingService(service)} className="p-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-lg" title="Delete"><FaTrash className="text-sm" /></button>
                           </div>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="py-12 px-6 text-center text-gray-500">
+                      <td colSpan="7" className="py-16 px-5 text-center">
                         <div className="flex flex-col items-center justify-center">
-                          <FaSearch className="text-4xl text-gray-300 mb-3" />
-                          <p className="text-lg font-medium">No services found</p>
-                          <p className="text-sm">Try adjusting your search or category filter</p>
+                          <p className="text-lg font-medium text-gray-600">No services found</p>
+                          <p className="text-sm text-gray-400">Add a category and service to get started</p>
                         </div>
                       </td>
                     </tr>
@@ -295,15 +469,141 @@ function Services() {
         </div>
       </section>
 
-      {/* Click outside to close dropdowns */}
-      {(showOptionsDropdown || showAddDropdown) && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => {
-            setShowOptionsDropdown(false);
-            setShowAddDropdown(false);
-          }}
-        />
+      {/* Category Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCategoryModal(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-5 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-semibold">Add Category</h3>
+                  <p className="text-purple-100 text-sm mt-1">Create a new service category</p>
+                </div>
+                <button onClick={() => setShowCategoryModal(false)} className="p-2 hover:bg-white/10 rounded-lg"><FaTimes /></button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleCreateCategory} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category Name *</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none"
+                  placeholder="e.g., Hair, Skin, Spa"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none"
+                  rows="2"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button type="submit" disabled={isSubmitting} className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <FaSpinner className="animate-spin" /> : <FaCheck />} Create Category
+                </button>
+                <button type="button" onClick={() => setShowCategoryModal(false)} className="px-6 bg-gray-100 text-gray-700 font-medium py-3 rounded-lg">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Service Modal */}
+      {showServiceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowServiceModal(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-cyan-500 to-teal-500 p-5 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-semibold">{editingService ? 'Edit Service' : 'Add Service'}</h3>
+                </div>
+                <button onClick={() => { setShowServiceModal(false); setEditingService(null); }} className="p-2 hover:bg-white/10 rounded-lg"><FaTimes /></button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleCreateService} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Service Name *</label>
+                <input type="text" value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" required />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
+                <select value={serviceForm.category} onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none bg-white" required>
+                  <option value="">Select category</option>
+                  {categories.map(cat => (<option key={cat._id} value={cat._id}>{cat.name}</option>))}
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Normal Price</label>
+                  <input type="number" value={serviceForm.price} onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Male Price</label>
+                  <input type="number" value={serviceForm.malePrice} onChange={(e) => setServiceForm({ ...serviceForm, malePrice: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" min="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Female Price</label>
+                  <input type="number" value={serviceForm.femalePrice} onChange={(e) => setServiceForm({ ...serviceForm, femalePrice: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" min="0" />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (min)</label>
+                <input type="number" value={serviceForm.duration} onChange={(e) => setServiceForm({ ...serviceForm, duration: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" min="1" />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <textarea value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-cyan-400 outline-none" rows="2" />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button type="submit" disabled={isSubmitting} className="flex-1 bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <FaSpinner className="animate-spin" /> : <FaCheck />} {editingService ? 'Update' : 'Create'} Service
+                </button>
+                <button type="button" onClick={() => { setShowServiceModal(false); setEditingService(null); }} className="px-6 bg-gray-100 text-gray-700 font-medium py-3 rounded-lg">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingService && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setDeletingService(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-rose-500 to-pink-500 p-6 text-white text-center">
+              <h3 className="text-lg font-semibold">Delete Service?</h3>
+              <p className="text-rose-100 text-sm mt-1">This action cannot be undone</p>
+            </div>
+            
+            <div className="p-5">
+              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 mb-5">
+                <div className="font-medium text-gray-800">{deletingService.name}</div>
+                <div className="text-sm text-gray-500">₹{deletingService.price}</div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button onClick={handleDeleteService} disabled={isSubmitting} className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <FaSpinner className="animate-spin" /> : <FaTrash />} Yes, Delete
+                </button>
+                <button onClick={() => setDeletingService(null)} className="px-6 bg-gray-100 text-gray-700 font-medium py-3 rounded-lg">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

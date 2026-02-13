@@ -5,7 +5,8 @@ import {
     getClientById,
     updateClient,
     deleteClient,
-    getClientStats
+    getClientStats,
+    findOrCreateClient
 } from "../controllers/client.controller.js";
 import { authenticateToken, requireStaff } from "../middleware/auth.js";
 
@@ -13,6 +14,9 @@ const router = express.Router();
 
 // Apply authentication to all client routes
 router.use(authenticateToken);
+
+// Find or create client by mobile (for appointment booking)
+router.post("/find-or-create", findOrCreateClient);
 
 // Stats route (must be before /:id route to avoid conflict)
 router.get("/stats", requireStaff, getClientStats);

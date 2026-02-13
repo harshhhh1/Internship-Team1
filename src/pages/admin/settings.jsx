@@ -6,7 +6,7 @@ import SalonModal from '../../components/modals/SalonModal';
 import PlanLimitModal from '../../components/modals/PlanLimitModal';
 import ResizableTh from '../../components/ResizableTh';
 import { useSalon } from '../../context/SalonContext';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaSave, FaTimes } from 'react-icons/fa';
 
 function Settings() {
   const { branchLimit } = useSalon();
@@ -17,6 +17,11 @@ function Settings() {
     email: '',
     subscription: null
   });
+
+  // Salon Profile State
+  const [editingSalon, setEditingSalon] = useState(null);
+  const [editingSalonProfile, setEditingSalonProfile] = useState(null);
+  const [selectedSalonForEdit, setSelectedSalonForEdit] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,7 +50,6 @@ function Settings() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSalonModalOpen, setIsSalonModalOpen] = useState(false);
-  const [editingSalon, setEditingSalon] = useState(null);
 
   const [salons, setSalons] = useState([]);
   const [message, setMessage] = useState('');
@@ -295,6 +299,46 @@ function Settings() {
     fetchSalons();
   }, []);
 
+  // Salon Profile Edit Functions
+  const startEditingSalonProfile = (salon) => {
+    setSelectedSalonForEdit(salon);
+    setEditingSalonProfile({ ...salon });
+  };
+
+  const handleSalonProfileChange = (field, value) => {
+    setEditingSalonProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveSalonProfile = async () => {
+    if (!editingSalonProfile || !selectedSalonForEdit) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5050/salons/${selectedSalonForEdit._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(editingSalonProfile),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setMessage('Salon profile updated successfully!');
+        setEditingSalonProfile(null);
+        setSelectedSalonForEdit(null);
+        fetchSalons(); // Refresh the salons list
+      } else {
+        setMessage(result.message || 'Failed to update salon profile');
+      }
+    } catch (error) {
+      console.error('Error updating salon profile:', error);
+      setMessage('Failed to update salon profile');
+    }
+  };
+
   return (
     <div className="flex min-h-screen font-sans bg-linear-to-br from-bg-light to-accent-cream">
       <DashboardSidebar />
@@ -450,6 +494,131 @@ function Settings() {
               </div>
             </div>
 
+            {/* Salon Profile Section - For editing salon data */}
+            {userRole === 'owner' && salons.length > 0 && (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)]">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-primary">🏢 Salon Profile</h2>
+                  {selectedSalonForEdit && selectedSalonForEdit._id === editingSalonProfile?._id ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveSalonProfile}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                      >
+                        <FaSave /> Save
+                      </button>
+                      <button
+                        onClick={() => setEditingSalonProfile(null)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+                      >
+                        <FaTimes /> Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => startEditingSalonProfile(salons[0])}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-[#7a67e0] transition-colors flex items-center gap-2"
+                    >
+                      <FaEdit /> Edit Profile
+                    </button>
+                  )}
+                </div>
+
+                {message && (
+                  <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">{message}</div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Salon Name</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.name ?? salons[0]?.name ?? ''}
+                      onChange={(e) => handleSalonProfileChange('name', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select
+                      value={editingSalonProfile?.type ?? salons[0]?.type ?? ''}
+                      onChange={(e) => handleSalonProfileChange('type', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    >
+                      <option value="">Select Type</option>
+                      <option value="Hair Salon">Hair Salon</option>
+                      <option value="Beauty Salon">Beauty Salon</option>
+                      <option value="Spa">Spa</option>
+                      <option value="Barber Shop">Barber Shop</option>
+                      <option value="Nail Salon">Nail Salon</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.address ?? salons[0]?.address ?? ''}
+                      onChange={(e) => handleSalonProfileChange('address', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch Area</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.branchArea ?? salons[0]?.branchArea ?? ''}
+                      onChange={(e) => handleSalonProfileChange('branchArea', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.pincode ?? salons[0]?.pincode ?? ''}
+                      onChange={(e) => handleSalonProfileChange('pincode', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.contactNumber ?? salons[0]?.contactNumber ?? ''}
+                      onChange={(e) => handleSalonProfileChange('contactNumber', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={editingSalonProfile?.phoneNumber ?? salons[0]?.phoneNumber ?? ''}
+                      onChange={(e) => handleSalonProfileChange('phoneNumber', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                    <textarea
+                      value={editingSalonProfile?.description ?? salons[0]?.description ?? ''}
+                      onChange={(e) => handleSalonProfileChange('description', e.target.value)}
+                      disabled={!editingSalonProfile}
+                      rows="3"
+                      className="w-full px-4 py-3 rounded-xl border border-secondary bg-bg-light text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-70"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Add Salon Section - Only for Owners */}
             {userRole === 'owner' && (
               <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
@@ -470,60 +639,55 @@ function Settings() {
               </div>
             )}
 
-            {/* My Branch Section */}
-            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
-              <h2 className="text-xl font-semibold text-primary mb-6">
-                🏢 {userRole === 'owner' ? 'My Branches' : 'My Branch'}
-              </h2>
-
-              {salons.length === 0 ? (
+            {/* Salons List Section */}
+            {salons.length === 0 ? (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)]">
                 <p className="text-gray-600">
                   {userRole === 'owner' ? 'No salons added yet.' : 'No branch assigned yet.'}
                 </p>
-              ) : (
-                <div className="space-y-4">
-                  {salons.map((salon) => (
-                    <div key={salon._id} className="bg-bg-light p-4 rounded-xl relative group">
-                      {/* Edit/Delete buttons - Only for Owners */}
-                      {userRole === 'owner' && (
-                        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleEditSalon(salon)}
-                            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                            title="Edit Branch"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSalon(salon._id)}
-                            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                            title="Delete Branch"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      )}
-                      <div className="flex justify-between items-start mb-2 {userRole === 'owner' ? 'pr-20' : ''}">
-                        <h3 className="font-semibold text-primary">{salon.name}</h3>
-                        <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">{salon.type}</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {salons.map((salon) => (
+                  <div key={salon._id} className="bg-bg-light p-4 rounded-xl relative group">
+                    {/* Edit/Delete buttons - Only for Owners */}
+                    {userRole === 'owner' && (
+                      <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEditSalon(salon)}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Edit Branch"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSalon(salon._id)}
+                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                          title="Delete Branch"
+                        >
+                          <FaTrash />
+                        </button>
                       </div>
-                      <p className="text-gray-700 mb-1"><strong>Address:</strong> {salon.address}</p>
-                      <p className="text-gray-700 mb-1"><strong>Branch Area:</strong> {salon.branchArea}</p>
-                      <p className="text-gray-700 mb-1"><strong>Pincode:</strong> {salon.pincode}</p>
-                      <p className="text-gray-700 mb-1"><strong>Contact:</strong> {salon.contactNumber}</p>
-                      <p className="text-gray-700 mb-1"><strong>Phone:</strong> {salon.phoneNumber}</p>
-                      {salon.description && (
-                        <p className="text-gray-700 mb-1"><strong>Description:</strong> {salon.description}</p>
-                      )}
-                      {salon.createdAt && (
-                        <p className="text-sm text-gray-500">Added on: {new Date(salon.createdAt).toLocaleDateString()}</p>
-                      )}
+                    )}
+                    <div className="flex justify-between items-start mb-2 pr-20">
+                      <h3 className="font-semibold text-primary">{salon.name}</h3>
+                      <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">{salon.type}</span>
                     </div>
-                  ))
-                  }
-                </div>
-              )}
-            </div>
+                    <p className="text-gray-700 mb-1"><strong>Address:</strong> {salon.address}</p>
+                    <p className="text-gray-700 mb-1"><strong>Branch Area:</strong> {salon.branchArea}</p>
+                    <p className="text-gray-700 mb-1"><strong>Pincode:</strong> {salon.pincode}</p>
+                    <p className="text-gray-700 mb-1"><strong>Contact:</strong> {salon.contactNumber}</p>
+                    <p className="text-gray-700 mb-1"><strong>Phone:</strong> {salon.phoneNumber}</p>
+                    {salon.description && (
+                      <p className="text-gray-700 mb-1"><strong>Description:</strong> {salon.description}</p>
+                    )}
+                    {salon.createdAt && (
+                      <p className="text-sm text-gray-500">Added on: {new Date(salon.createdAt).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Danger Zone */}
             <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6">

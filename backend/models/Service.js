@@ -10,14 +10,39 @@ const serviceSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        default: null
+    },
+    categoryName: {
+        type: String,
+        default: ''
+    },
     price: {
         type: Number,
-        required: true,
+        default: 0
+    },
+    malePrice: {
+        type: Number,
+        default: 0
+    },
+    femalePrice: {
+        type: Number,
+        default: 0
     },
     duration: {
         type: Number, // in minutes
-        required: true,
+        default: 30
     },
+    description: {
+        type: String,
+        default: ''
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, { timestamps: true });
 
 const Service = mongoose.model("Service", serviceSchema);

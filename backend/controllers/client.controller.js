@@ -92,3 +92,43 @@ export const getClientStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Find or create client by mobile number (used when booking appointments)
+export const findOrCreateClient = async (req, res) => {
+    try {
+        const { salonId, name, mobile, email } = req.body;
+
+        if (!salonId || !mobile) {
+            return res.status(400).json({ message: "Salon ID and mobile number are required" });
+        }
+
+        // Try to find existing client by mobile number within this salon
+        let client = await Client.findOne({ salonId, mobile });
+
+        if (client) {
+            // Update name and email if provided and different
+            if (name || email) {
+                client.name = name || client.name;
+                if (email) client.email = email;
+                await client.save();
+            }
+            return res.status(200).json({ client, isNew: false });
+        }
+
+        // Create new client
+        client = new Client({
+            salonId,
+            name: name || 'Unknown',
+            mobile,
+            email: email || '',
+            visits: 0,
+            totalSpent: 0,
+            isVip: false
+        });
+        await client.save();
+
+        res.status(201).json({ client, isNew: true });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};

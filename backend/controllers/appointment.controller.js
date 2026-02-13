@@ -1,11 +1,12 @@
 import Appointment from "../models/Appointment.js";
+import Client from "../models/Client.js";
 import mongoose from "mongoose";
 import Salon from "../models/Salon.js";
 import Staff from "../models/Staff.js";
 
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId } = req.body;
+        const { salonId, serviceId, clientName, clientMobile, clientEmail } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -30,12 +31,46 @@ export const createAppointment = async (req, res) => {
             // If serviceId is not a valid ObjectId (e.g., default services with string IDs), price should be provided in req.body.price
         }
 
+        // Find or create client based on mobile number
+        let clientId = req.body.clientId;
+        
+        if (!clientId && clientMobile) {
+            // Try to find existing client
+            let client = await Client.findOne({ salonId, mobile: clientMobile });
+            
+            if (client) {
+                clientId = client._id;
+                // Update name if provided
+                if (clientName && clientName !== client.name) {
+                    client.name = clientName;
+                    await client.save();
+                }
+            } else {
+                // Create new client
+                const newClient = new Client({
+                    salonId,
+                    name: clientName || 'Unknown',
+                    mobile: clientMobile,
+                    email: clientEmail || '',
+                    visits: 0,
+                    totalSpent: 0,
+                    isVip: false
+                });
+                await newClient.save();
+                clientId = newClient._id;
+            }
+        }
+
         const appointment = new Appointment({
             ...req.body,
             ownerId: salon.ownerId,
-            price: price || 0
+            price: price || 0,
+            clientId: clientId || null
         });
         await appointment.save();
+        
+        // Populate client info before returning
+        await appointment.populate('clientId', 'name mobile email');
         res.status(201).json(appointment);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -78,7 +113,8 @@ export const getAppointments = async (req, res) => {
 
         const appointments = await Appointment.find(filter)
             .populate('salonId', 'name')
-            .populate('staffId', 'name');
+            .populate('staffId', 'name')
+            .populate('clientId', 'name mobile email visits totalSpent');
 
         res.status(200).json(appointments);
     } catch (error) {
@@ -158,6 +194,14 @@ export const completeAppointment = async (req, res) => {
                 appointment.staffId,
                 { $inc: { appointmentCount: 1 } }
             );
+        }
+
+        // Update client statistics if clientId exists
+        if (appointment.clientId) {
+            await Client.findByIdAndUpdate(appointment.clientId, {
+                $inc: { visits: 1, totalSpent: appointment.price },
+                $set: { lastVisit: new Date() }
+            });
         }
 
         res.status(200).json({ message: "Appointment completed successfully", appointment, payment });

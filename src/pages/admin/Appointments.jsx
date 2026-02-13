@@ -2,7 +2,54 @@ import React, { useState, useEffect } from 'react';
 import AppointmentsTable from '../../components/tables/AppointmentsTable';
 import CalendarWidget from '../../components/Calendar';
 import { useSalon } from '../../context/SalonContext';
-// import {  } from './Services';
+
+// Predefined services (same as Services.jsx)
+const predefinedServices = [
+  { id: 1, title: 'Basic Facial', category: 'Facial cleanup', duration: '45 min', price: 599 },
+  { id: 2, title: 'Gold Facial', category: 'Facial cleanup', duration: '60 min', price: 1299 },
+  { id: 3, title: 'Diamond Facial', category: 'Facial cleanup', duration: '75 min', price: 1899 },
+  { id: 4, title: 'Herbal Facial', category: 'Facial cleanup', duration: '50 min', price: 799 },
+  { id: 5, title: 'Classic Pedicure', category: 'Pedicure', duration: '40 min', price: 449 },
+  { id: 6, title: 'Spa Pedicure', category: 'Pedicure', duration: '55 min', price: 799 },
+  { id: 7, title: 'Gel Pedicure', category: 'Pedicure', duration: '60 min', price: 999 },
+  { id: 8, title: 'Paraffin Pedicure', category: 'Pedicure', duration: '50 min', price: 699 },
+  { id: 9, title: 'Keratin Treatment', category: 'Hair repairing treatment', duration: '120 min', price: 2499 },
+  { id: 10, title: 'Protein Treatment', category: 'Hair repairing treatment', duration: '90 min', price: 1499 },
+  { id: 11, title: 'Deep Conditioning', category: 'Hair repairing treatment', duration: '45 min', price: 599 },
+  { id: 12, title: 'Hair Spa Treatment', category: 'Hair repairing treatment', duration: '60 min', price: 899 },
+  { id: 13, title: 'Hair Polishing', category: 'Polishing', duration: '60 min', price: 1199 },
+  { id: 14, title: 'Gloss Treatment', category: 'Polishing', duration: '45 min', price: 899 },
+  { id: 15, title: 'Silk Blowout', category: 'Polishing', duration: '90 min', price: 1599 },
+  { id: 16, title: 'Basic Haircut', category: 'Hair cut', duration: '30 min', price: 299 },
+  { id: 17, title: 'Layered Cut', category: 'Hair cut', duration: '45 min', price: 499 },
+  { id: 18, title: 'Bob Cut', category: 'Hair cut', duration: '60 min', price: 699 },
+  { id: 19, title: 'Feather Cut', category: 'Hair cut', duration: '45 min', price: 549 },
+  { id: 20, title: 'Kids Haircut', category: 'Hair cut', duration: '25 min', price: 199 },
+  { id: 21, title: 'Root Touch Up', category: 'Hair color', duration: '60 min', price: 899 },
+  { id: 22, title: 'Full Hair Color', category: 'Hair color', duration: '120 min', price: 1899 },
+  { id: 23, title: 'Highlights', category: 'Hair color', duration: '150 min', price: 2499 },
+  { id: 24, title: 'Balayage', category: 'Hair color', duration: '180 min', price: 3499 },
+  { id: 25, title: 'Ombre', category: 'Hair color', duration: '150 min', price: 2999 },
+  { id: 26, title: 'Hair Spa', category: 'Hair spa & head message', duration: '45 min', price: 499 },
+  { id: 27, title: 'Head Massage', category: 'Hair spa & head message', duration: '30 min', price: 349 },
+  { id: 28, title: 'Scalp Treatment', category: 'Hair spa & head message', duration: '40 min', price: 599 },
+  { id: 29, title: 'Ayurvedic Head Spa', category: 'Hair spa & head message', duration: '60 min', price: 899 },
+  { id: 30, title: 'Classic Manicure', category: 'Menicure', duration: '35 min', price: 399 },
+  { id: 31, title: 'Spa Manicure', category: 'Menicure', duration: '50 min', price: 699 },
+  { id: 32, title: 'Gel Manicure', category: 'Menicure', duration: '55 min', price: 899 },
+  { id: 33, title: 'Paraffin Manicure', category: 'Menicure', duration: '45 min', price: 599 },
+  { id: 34, title: 'Body Massage (30 min)', category: 'Relaxing', duration: '30 min', price: 699 },
+  { id: 35, title: 'Body Massage (60 min)', category: 'Relaxing', duration: '60 min', price: 1299 },
+  { id: 36, title: 'Aromatherapy', category: 'Relaxing', duration: '75 min', price: 1799 },
+  { id: 37, title: 'Hot Stone Massage', category: 'Relaxing', duration: '90 min', price: 2199 },
+  { id: 38, title: 'Reflexology', category: 'Relaxing', duration: '45 min', price: 899 },
+  { id: 39, title: 'Full Leg Waxing', category: 'Waxing', duration: '45 min', price: 699 },
+  { id: 40, title: 'Full Arm Waxing', category: 'Waxing', duration: '30 min', price: 499 },
+  { id: 41, title: 'Underarm Waxing', category: 'Waxing', duration: '15 min', price: 249 },
+  { id: 42, title: 'Bikini Waxing', category: 'Waxing', duration: '30 min', price: 599 },
+  { id: 43, title: 'Full Body Waxing', category: 'Waxing', duration: '90 min', price: 1899 },
+  { id: 44, title: 'Face Waxing', category: 'Waxing', duration: '20 min', price: 349 },
+];
 
 function Appointments() {
   const { selectedSalon, setSelectedSalon } = useSalon();
@@ -102,6 +149,11 @@ function Appointments() {
             }
           }
 
+          // Get client details if populated
+          const clientInfo = app.clientId && typeof app.clientId === 'object' 
+            ? app.clientId 
+            : null;
+
           return {
             id: app._id,
             name: app.clientName,
@@ -111,7 +163,14 @@ function Appointments() {
             serviceType: serviceName,
             price: app.price || 0,
             note: app.note || '',
-            status: app.status || 'waiting'
+            status: app.status || 'waiting',
+            // Client details for client management
+            clientDetails: clientInfo ? {
+              visits: clientInfo.visits || 0,
+              totalSpent: clientInfo.totalSpent || 0,
+              isVip: clientInfo.isVip || false,
+              email: clientInfo.email || ''
+            } : null
           };
         });
         setAppointments(mappedData);

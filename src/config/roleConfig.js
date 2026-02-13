@@ -11,6 +11,7 @@ export const ALL_TABS = [
     { id: 'earning', path: '/dashboard/earning', label: 'Earning', icon: '/earning.svg' },
     // { id: 'report', path: '/dashboard/reports', label: 'Report', icon: '/rar.svg' },
     { id: 'revenue-and-report', path: '/dashboard/revenue-and-report', label: 'Revenue & Report', icon: '/rar.svg' },
+    { id: 'reports', path: '/dashboard/reports', label: 'Reports', icon: '/rar.svg' },
     { id: 'services', path: '/dashboard/services', label: 'Services', icon: '/services.svg' },
     { id: 'settings', path: '/dashboard/settings', label: 'Settings', icon: '/settings.svg' },
     { id: 'staff', path: '/dashboard/staff', label: 'Staff', icon: '/staff.svg' },
