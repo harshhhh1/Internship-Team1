@@ -112,6 +112,23 @@ export const updateWalkinStatus = async (req, res) => {
             if (walkin.staffId) {
                 await mongoose.model('Staff').findByIdAndUpdate(walkin.staffId, { $inc: { appointmentCount: 1 } });
             }
+
+            // Update client total spent
+            if (walkin.clientId || walkin.clientMobile) {
+                const clientId = walkin.clientId || (await mongoose.model('Client').findOne({
+                    mobile: walkin.clientMobile,
+                    salonId: walkin.salonId
+                }))?._id;
+
+                if (clientId) {
+                    const finalPrice = Number(walkin.price) || 0;
+                    console.log(`Updating totalSpent for walk-in client ${clientId} with amount ${finalPrice}`);
+                    await mongoose.model('Client').findByIdAndUpdate(
+                        clientId,
+                        { $inc: { totalSpent: finalPrice } }
+                    );
+                }
+            }
         }
 
         walkin.status = status;

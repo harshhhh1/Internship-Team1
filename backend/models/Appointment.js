@@ -19,7 +19,7 @@ const appointmentSchema = new mongoose.Schema({
     clientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Client",
-        required: false,
+        required: true,
     },
     serviceId: {
         type: String, // String to support both real ObjectIds and dummy IDs like "1", "2"

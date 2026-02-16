@@ -7,10 +7,11 @@ export default function Walkin() {
     const [showModal, setShowModal] = useState(false);
     const [walkins, setWalkins] = useState([]);
     const [staff, setStaff] = useState([]);
+    const [services, setServices] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
-        service: 'Hair Cut',
+        serviceId: '',
         staffId: '',
         price: ''
     });
@@ -37,16 +38,16 @@ export default function Walkin() {
 
     const fetchStaff = useCallback(async () => {
         try {
+            if (!selectedSalon) return;
             const token = localStorage.getItem('token');
-            const url = selectedSalon
-                ? `http://localhost:5050/staff?salonId=${selectedSalon._id}`
-                : 'http://localhost:5050/staff';
+            const url = `http://localhost:5050/staff?salonId=${selectedSalon._id}`;
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                const stylists = data.filter(s => s.isActive && (s.role === 'stylist' || s.role === 'assistant'));
+                // Filter: Active, Not on leave, and role is NOT receptionist (since receptionists don't usually serve walk-ins)
+                const stylists = data.filter(s => s.isActive && !s.onLeave && s.role !== 'receptionist');
                 setStaff(stylists);
             }
         } catch (error) {
@@ -54,13 +55,42 @@ export default function Walkin() {
         }
     }, [selectedSalon]);
 
+    const fetchServices = useCallback(async () => {
+        try {
+            if (!selectedSalon) return;
+            const token = localStorage.getItem('token');
+            const url = `http://localhost:5050/services?salonId=${selectedSalon._id}`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setServices(data);
+            }
+        } catch (error) {
+            console.error("Error fetching services:", error);
+        }
+    }, [selectedSalon]);
+
     useEffect(() => {
         fetchWalkins();
         fetchStaff();
-    }, [fetchWalkins, fetchStaff]);
+        fetchServices();
+    }, [fetchWalkins, fetchStaff, fetchServices]);
 
     const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        if (name === 'serviceId') {
+            const selectedService = services.find(s => s._id === value);
+            setFormData(prev => ({
+                ...prev,
+                serviceId: value,
+                price: selectedService ? selectedService.price : ''
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -75,7 +105,7 @@ export default function Walkin() {
                 salonId: selectedSalon._id,
                 clientName: formData.name,
                 clientMobile: formData.phone,
-                serviceId: formData.service,
+                serviceId: formData.serviceId,
                 staffId: formData.staffId || null,
                 price: Number(formData.price) || 0,
             };
@@ -92,7 +122,7 @@ export default function Walkin() {
             if (response.ok) {
                 alert('Walk-in added successfully!');
                 setShowModal(false);
-                setFormData({ name: '', phone: '', service: 'Hair Cut', staffId: '', price: '' });
+                setFormData({ name: '', phone: '', serviceId: '', staffId: '', price: '' });
                 fetchWalkins();
             } else {
                 alert('Failed to add walk-in');
@@ -220,7 +250,9 @@ export default function Walkin() {
                                         <tr key={item._id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.clientName}</td>
                                             <td className="px-6 py-4 text-sm text-gray-700">{item.clientMobile}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-700">{item.serviceId}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {services.find(s => s._id === item.serviceId)?.name || item.serviceId}
+                                            </td>
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
@@ -282,7 +314,9 @@ export default function Walkin() {
                                     walkins.filter(w => w.status === 'completed' || w.status === 'cancelled').map((item) => (
                                         <tr key={item._id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.clientName}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-700">{item.serviceId}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {services.find(s => s._id === item.serviceId)?.name || item.serviceId}
+                                            </td>
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
                                             <td className="px-6 py-4 text-sm text-gray-700">{new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                                             <td className="px-6 py-4">
@@ -343,15 +377,18 @@ export default function Walkin() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
-                                        <input
-                                            type="text"
-                                            name="service"
-                                            value={formData.service}
+                                        <select
+                                            name="serviceId"
+                                            value={formData.serviceId}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50 transition-all"
-                                            placeholder="Service"
-                                        />
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50 transition-all appearance-none"
+                                        >
+                                            <option value="">Select Service</option>
+                                            {services.map(s => (
+                                                <option key={s._id} value={s._id}>{s.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>

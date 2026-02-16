@@ -2,12 +2,12 @@ import Appointment from "../models/Appointment.js";
 import mongoose from "mongoose";
 import Salon from "../models/Salon.js";
 import Staff from "../models/Staff.js";
-
 import Client from "../models/Client.js";
+import Payment from "../models/Payment.js";
 
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId, clientName, clientMobile } = req.body;
+        const { salonId, serviceId, clientName, clientMobile, price } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -25,39 +25,32 @@ export const createAppointment = async (req, res) => {
                 salonId,
                 name: clientName,
                 mobile: clientMobile,
+                totalSpent: 0,
+                visits: 0
             });
             await client.save();
-        }
-
-        // Get service price if serviceId is provided
-        let price = req.body.price;
-        if (serviceId && !price) {
-            // Only try to fetch from DB if serviceId is a valid ObjectId
-            if (mongoose.Types.ObjectId.isValid(serviceId)) {
-                const Service = mongoose.model('Service');
-                const service = await Service.findById(serviceId);
-                if (service) {
-                    price = service.price;
-                }
-            }
-            // If serviceId is not a valid ObjectId (e.g., default services with string IDs), price should be provided in req.body.price
+            console.log('New client created:', client._id);
         }
 
         const appointment = new Appointment({
             ...req.body,
             ownerId: salon.ownerId,
-            clientId: client._id,
+            clientId: client._id,  // Save the clientId reference
             price: price || 0
         });
         await appointment.save();
 
-        // Update client visits and last visit
-        client.visits += 1;
-        client.lastVisit = new Date();
-        await client.save();
+        console.log('Appointment created with clientId:', appointment.clientId);
+
+        // DON'T update visits here - only update when completed
+        // Remove these lines:
+        // client.visits += 1;
+        // client.lastVisit = new Date();
+        // await client.save();
 
         res.status(201).json(appointment);
     } catch (error) {
+        console.error('Create Appointment Error:', error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -152,7 +145,9 @@ export const deleteAppointment = async (req, res) => {
 export const completeAppointment = async (req, res) => {
     try {
         const appointment = await Appointment.findById(req.params.id);
-        if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
 
         if (appointment.status === 'completed') {
             return res.status(400).json({ message: "Appointment already completed" });
@@ -163,31 +158,85 @@ export const completeAppointment = async (req, res) => {
         await appointment.save();
 
         // Create payment record
-        const Payment = mongoose.model('Payment');
         const payment = new Payment({
             ownerId: appointment.ownerId,
             salonId: appointment.salonId,
             appointmentId: appointment._id,
             amount: appointment.price,
-            method: 'cash' // Default method, can be updated later
+            method: 'cash'
         });
         await payment.save();
 
         // Increment staff appointment count
         if (appointment.staffId) {
-            await mongoose.model('Staff').findByIdAndUpdate(
+            await Staff.findByIdAndUpdate(
                 appointment.staffId,
                 { $inc: { appointmentCount: 1 } }
             );
         }
 
-        res.status(200).json({ message: "Appointment completed successfully", appointment, payment });
+        // Update client total spent, visits, and last visit
+        let targetClientId = appointment.clientId;
+        
+        console.log('Appointment clientId:', targetClientId);
+        console.log('Appointment clientMobile:', appointment.clientMobile);
+        
+        // Fallback: if clientId is missing, find by mobile
+        if (!targetClientId && appointment.clientMobile) {
+            const client = await Client.findOne({
+                mobile: appointment.clientMobile,
+                salonId: appointment.salonId
+            });
+            if (client) {
+                targetClientId = client._id;
+                console.log('Found client by mobile:', targetClientId);
+                
+                // Update the appointment with the found clientId for future reference
+                appointment.clientId = client._id;
+                await appointment.save();
+            } else {
+                console.log('No client found with mobile:', appointment.clientMobile);
+            }
+        }
+
+        if (targetClientId) {
+            const finalPrice = Number(appointment.price) || 0;
+            console.log(`Updating client ${targetClientId}: adding ${finalPrice} to totalSpent`);
+            
+            // Use atomic $inc operation for safety
+            const updatedClient = await Client.findByIdAndUpdate(
+                targetClientId,
+                {
+                    $inc: { 
+                        totalSpent: finalPrice,  // Add price to total
+                        visits: 1                // Increment visits
+                    },
+                    lastVisit: new Date()        // Update last visit date
+                },
+                { new: true }  // Return the updated document
+            );
+            
+            if (updatedClient) {
+                console.log('✅ Client updated successfully!');
+                console.log('New totalSpent:', updatedClient.totalSpent);
+                console.log('New visits:', updatedClient.visits);
+            } else {
+                console.log('❌ Client not found with ID:', targetClientId);
+            }
+        } else {
+            console.log('⚠️ No targetClientId found - client will not be updated');
+        }
+
+        res.status(200).json({ 
+            message: "Appointment completed successfully", 
+            appointment, 
+            payment 
+        });
     } catch (error) {
         console.error("Complete Appointment Error:", error);
         res.status(500).json({ message: error.message });
     }
 };
-
 export const getTodayStats = async (req, res) => {
     try {
         const { salonId } = req.query;

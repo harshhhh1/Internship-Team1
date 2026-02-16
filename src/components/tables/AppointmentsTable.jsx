@@ -1,17 +1,47 @@
+import { useState, useMemo } from 'react';
 import ResizableTh from '../ResizableTh';
-import { FaEdit, FaTrash, FaCheck } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheck, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 
 const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) => {
+    const [sortOrder, setSortOrder] = useState('latest');
+
+    // Sort appointments based on sort order
+    const sortedAppointments = useMemo(() => {
+        return [...appointments].sort((a, b) => {
+            // Parse dates for sorting - handle both string and Date formats
+            // The date could be a locale string or ISO string
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            if (sortOrder === 'latest') {
+                return dateB.getTime() - dateA.getTime();
+            } else {
+                return dateA.getTime() - dateB.getTime();
+            }
+        });
+    }, [appointments, sortOrder]);
+
+    const toggleSortOrder = () => {
+        setSortOrder(prev => prev === 'latest' ? 'oldest' : 'latest');
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                            <ResizableTh className="p-4">Name</ResizableTh>
-                            <ResizableTh className="p-4">Mobile</ResizableTh>
+                            <ResizableTh className="p-4">Client</ResizableTh>
+                            <ResizableTh className="p-4">Contact</ResizableTh>
                             <ResizableTh className="p-4">Staff</ResizableTh>
-                            <ResizableTh className="p-4">Appointment Date</ResizableTh>
+                            <ResizableTh className="p-4">
+                                <div className="flex items-center gap-2 cursor-pointer select-none" onClick={toggleSortOrder}>
+                                    <span>Date</span>
+                                    <span className="text-primary">
+                                        {sortOrder === 'latest' ? <FaSortAmountDown /> : <FaSortAmountUp />}
+                                    </span>
+                                </div>
+                            </ResizableTh>
                             <ResizableTh className="p-4">Service Type</ResizableTh>
                             <ResizableTh className="p-4">Price</ResizableTh>
                             <ResizableTh className="p-4">Note</ResizableTh>
@@ -19,14 +49,15 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {appointments.length === 0 ? (
+                        {sortedAppointments.length === 0 ? (
                             <tr>
                                 <td colSpan="7" className="p-8 text-center text-gray-500">
                                     Nothing to see here
                                 </td>
                             </tr>
                         ) : (
-                            appointments.map((appointment) => (
+                            sortedAppointments.map((appointment) => (
+
                                 <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="p-4 font-medium text-gray-900">{appointment.name}</td>
                                     <td className="p-4 text-gray-600">{appointment.mobile}</td>
