@@ -13,12 +13,51 @@ const RevenueReport = () => {
   const [salaryInput, setSalaryInput] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Stats state
+// Stats state
   const [revenueStats, setRevenueStats] = useState({
     revenueThisMonth: { value: 0, trend: '0', data: [] },
     totalIncome: { value: 0, trend: '0', data: [] },
     clients: { value: 0, trend: '0', data: [] }
   });
+
+  // Expense stats state
+  const [expenseStats, setExpenseStats] = useState({
+    thisMonth: 0,
+    lastMonth: 0,
+    netProfit: 0,
+    profitMargin: 0,
+    expenseByCategory: []
+  });
+
+  // Fetch expense stats
+  useEffect(() => {
+    const fetchExpenseStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = selectedSalon
+          ? `http://localhost:5050/expenses/stats?salonId=${selectedSalon._id}`
+          : 'http://localhost:5050/expenses/stats';
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setExpenseStats({
+            thisMonth: data.thisMonth || 0,
+            lastMonth: data.lastMonth || 0,
+            netProfit: 0,
+            profitMargin: 0,
+            expenseByCategory: data.categoryBreakdown || []
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching expense stats:", error);
+      }
+    };
+    fetchExpenseStats();
+  }, [selectedSalon]);
 
   // Fetch revenue stats for graphs
   useEffect(() => {
@@ -196,7 +235,7 @@ const RevenueReport = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Revenue & Report</h1>
 
-        {/* STATS */}
+{/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Revenue This Month"
@@ -220,6 +259,45 @@ const RevenueReport = () => {
             color="#ffd8be"
           />
         </div>
+
+        {/* EXPENSE STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">Expenses This Month</p>
+            <h2 className="text-3xl font-bold text-red-600 mt-2">₹{expenseStats.thisMonth.toLocaleString()}</h2>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">Last Month Expenses</p>
+            <h2 className="text-3xl font-bold text-gray-700 mt-2">₹{expenseStats.lastMonth.toLocaleString()}</h2>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">Net Profit (Est.)</p>
+            <h2 className="text-3xl font-bold text-green-600 mt-2">₹{(revenueStats.revenueThisMonth.value - expenseStats.thisMonth).toLocaleString()}</h2>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">Profit Margin</p>
+            <h2 className="text-3xl font-bold text-primary mt-2">
+              {revenueStats.revenueThisMonth.value > 0 
+                ? (((revenueStats.revenueThisMonth.value - expenseStats.thisMonth) / revenueStats.revenueThisMonth.value) * 100).toFixed(1)
+                : 0}%
+            </h2>
+          </div>
+        </div>
+
+        {/* Expense by Category */}
+        {expenseStats.expenseByCategory.length > 0 && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Expenses by Category</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {expenseStats.expenseByCategory.map((cat, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500">{cat._id}</p>
+                  <p className="text-xl font-bold text-red-600">₹{cat.total.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* FILTER BAR */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row flex-wrap gap-4 items-center">

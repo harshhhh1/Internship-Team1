@@ -1,6 +1,7 @@
 import Appointment from "../models/Appointment.js";
 import Client from "../models/Client.js";
 import Payment from "../models/Payment.js";
+import Expense from "../models/Expense.js";
 import mongoose from "mongoose";
 import Staff from "../models/Staff.js";
 
@@ -178,6 +179,18 @@ export const getRevenueReport = async (req, res) => {
         // Calculate total revenue
         const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
 
+        // Get expenses in the period
+        let expenseFilter = {
+            date: { $gte: start, $lte: end }
+        };
+        
+        if (salonId) {
+            expenseFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        }
+
+        const expenses = await Expense.find(expenseFilter).sort({ date: -1 });
+        const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+
         // Get previous period for comparison
         const periodLength = end.getTime() - start.getTime();
         const prevStart = new Date(start.getTime() - periodLength);
@@ -196,6 +209,16 @@ export const getRevenueReport = async (req, res) => {
 
         const prevPayments = await Payment.find(prevMatchFilter);
         const prevRevenue = prevPayments.reduce((sum, p) => sum + p.amount, 0);
+
+        // Previous period expenses
+        const prevExpenseFilter = {
+            date: { $gte: prevStart, $lte: prevEnd }
+        };
+        if (salonId) {
+            prevExpenseFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        }
+        const prevExpenses = await Expense.find(prevExpenseFilter);
+        const prevTotalExpenses = prevExpenses.reduce((sum, e) => sum + e.amount, 0);
 
         // Calculate growth
         const growth = prevRevenue > 0 
@@ -228,8 +251,16 @@ export const getRevenueReport = async (req, res) => {
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
+        // Category breakdown for expenses
+        const expenseByCategory = await Expense.aggregate([
+            { $match: expenseFilter },
+            { $group: { _id: "$category", total: { $sum: "$amount" } } },
+            { $sort: { total: -1 } }
+        ]);
+
         res.status(200).json({
             payments,
+            expenses,
             summary: {
                 totalRevenue,
                 previousRevenue: prevRevenue,
@@ -237,9 +268,16 @@ export const getRevenueReport = async (req, res) => {
                 transactionCount: payments.length,
                 averageTransaction: payments.length > 0 
                     ? (totalRevenue / payments.length).toFixed(2) 
+                    : 0,
+                totalExpenses,
+                previousExpenses: prevTotalExpenses,
+                netProfit: totalRevenue - totalExpenses,
+                profitMargin: totalRevenue > 0 
+                    ? (((totalRevenue - totalExpenses) / totalRevenue) * 100).toFixed(1)
                     : 0
             },
-            dailyRevenue
+            dailyRevenue,
+            expenseByCategory
         });
     } catch (error) {
         console.error("Get Revenue Report Error:", error);

@@ -47,3 +47,14 @@ export const requireAdmin = (req, res, next) => {
     return res.status(403).json({ error: 'Access denied. Admin or owner role required.' });
   }
 };
+
+// Middleware to require receptionist role (ONLY receptionist can add/edit/delete inventory)
+export const requireReceptionist = (req, res, next) => {
+  // Only receptionist role can add/edit/delete inventory
+  // Admin and Owner can only view
+  if (req.user.role === 'receptionist') {
+    next();
+  } else {
+    return res.status(403).json({ error: 'Access denied. Only receptionist can manage inventory.' });
+  }
+};

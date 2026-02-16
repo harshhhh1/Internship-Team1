@@ -36,6 +36,10 @@ const walkinSchema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now,
+    },
+    timeSlot: {
+        type: String, // Time slot for booking (e.g., "09:00", "10:00")
+        required: false,
     }
 }, { timestamps: true });
 

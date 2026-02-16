@@ -2,7 +2,10 @@ import Expense from "../models/Expense.js";
 
 export const createExpense = async (req, res) => {
     try {
-        const expense = new Expense(req.body);
+        const expense = new Expense({
+            ...req.body,
+            addedBy: req.user.id // Track who added the expense
+        });
         await expense.save();
         res.status(201).json(expense);
     } catch (error) {

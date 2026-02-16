@@ -14,6 +14,7 @@ export default function Expenses() {
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState(localStorage.getItem('role'));
     const [formData, setFormData] = useState({
         category: 'Other',
         description: '',
@@ -21,6 +22,9 @@ export default function Expenses() {
         paymentMode: 'Cash',
         date: new Date().toISOString().split('T')[0]
     });
+
+    // Check if user can add/edit/delete expenses (only admin/owner)
+    const canManageExpenses = userRole === 'owner' || userRole === 'admin';
 
     const fetchExpenses = async () => {
         try {
@@ -182,19 +186,21 @@ export default function Expenses() {
     return (
         <div className="min-h-screen bg-bg-light">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
+{/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Expense Tracker</h1>
                         <p className="text-gray-500 mt-2">Track and manage salon expenses.</p>
                     </div>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
-                    >
-                        <FaPlus />
-                        Add Expense
-                    </button>
+                    {canManageExpenses && (
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
+                        >
+                            <FaPlus />
+                            Add Expense
+                        </button>
+                    )}
                 </div>
 
                 {/* Stats */}
@@ -304,18 +310,20 @@ export default function Expenses() {
                                             <td className="px-6 py-4 text-sm text-gray-700">
                                                 {expense.paymentMode}
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-red-600">
+<td className="px-6 py-4 font-bold text-red-600">
                                                 -₹{expense.amount?.toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex gap-3">
-                                                    <button onClick={() => handleEdit(expense)} className="text-primary hover:text-secondary">
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(expense._id)} className="text-red-500 hover:text-red-700">
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
+                                                {canManageExpenses && (
+                                                    <div className="flex gap-3">
+                                                        <button onClick={() => handleEdit(expense)} className="text-primary hover:text-secondary">
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(expense._id)} className="text-red-500 hover:text-red-700">
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))

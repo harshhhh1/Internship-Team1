@@ -1,19 +1,51 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaUserPlus, FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaUserPlus, FaClock, FaCheckCircle, FaTimesCircle, FaCalendar } from 'react-icons/fa';
 import { useSalon } from '../../context/SalonContext';
+
+// Time slots for walk-in bookings
+const TIME_SLOTS = [
+    "09:00", "10:00", "11:00", "12:00", 
+    "13:00", "14:00", "15:00", "16:00", 
+    "17:00", "18:00", "19:00"
+];
 
 export default function Walkin() {
     const { selectedSalon } = useSalon();
     const [showModal, setShowModal] = useState(false);
     const [walkins, setWalkins] = useState([]);
     const [staff, setStaff] = useState([]);
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [userRole, setUserRole] = useState(localStorage.getItem('role'));
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
         service: 'Hair Cut',
         staffId: '',
-        price: ''
+        price: '',
+        date: new Date().toISOString().split('T')[0],
+        timeSlot: ''
     });
+
+    const fetchAvailableSlots = useCallback(async () => {
+        if (!selectedSalon?._id || !selectedDate) return;
+        
+        try {
+            setLoadingSlots(true);
+            const response = await fetch(
+                `http://localhost:5050/walkins/slots?salonId=${selectedSalon._id}&date=${selectedDate}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableSlots(data.availableSlots || []);
+            }
+        } catch (error) {
+            console.error("Error fetching slots:", error);
+        } finally {
+            setLoadingSlots(false);
+        }
+    }, [selectedSalon, selectedDate]);
 
     const fetchWalkins = useCallback(async () => {
         try {
@@ -54,16 +86,23 @@ export default function Walkin() {
         }
     }, [selectedSalon]);
 
-    useEffect(() => {
+useEffect(() => {
         fetchWalkins();
         fetchStaff();
     }, [fetchWalkins, fetchStaff]);
+
+    // Fetch available slots when modal opens or date changes
+    useEffect(() => {
+        if (showModal) {
+            fetchAvailableSlots();
+        }
+    }, [showModal, fetchAvailableSlots]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (!selectedSalon) {
@@ -78,6 +117,8 @@ export default function Walkin() {
                 serviceId: formData.service,
                 staffId: formData.staffId || null,
                 price: Number(formData.price) || 0,
+                date: formData.date,
+                timeSlot: formData.timeSlot || null,
             };
 
             const response = await fetch('http://localhost:5050/walkins', {
@@ -92,10 +133,15 @@ export default function Walkin() {
             if (response.ok) {
                 alert('Walk-in added successfully!');
                 setShowModal(false);
-                setFormData({ name: '', phone: '', service: 'Hair Cut', staffId: '', price: '' });
+                setFormData({ name: '', phone: '', service: 'Hair Cut', staffId: '', price: '', date: new Date().toISOString().split('T')[0], timeSlot: '' });
                 fetchWalkins();
             } else {
-                alert('Failed to add walk-in');
+                const error = await response.json();
+                alert(error.message || 'Failed to add walk-in');
+                // If error is about slot booking, refresh slots
+                if (error.availableSlots) {
+                    setAvailableSlots(error.availableSlots);
+                }
             }
         } catch (error) {
             console.error("Error adding walk-in:", error);
@@ -300,10 +346,10 @@ export default function Walkin() {
                 </div>
             </div>
 
-            {/* Add Walk-in Modal */}
+{/* Add Walk-in Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Add Walk-in Customer</h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -356,6 +402,56 @@ export default function Walkin() {
                                     />
                                 </div>
                             </div>
+                            
+                            {/* Date and Time Slot Selection */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleInputChange}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Time Slot {availableSlots.length > 0 && `(${availableSlots.length} available)`}
+                                </label>
+                                {loadingSlots ? (
+                                    <div className="text-sm text-gray-500 py-2">Loading available slots...</div>
+                                ) : (
+                                    <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                                        {TIME_SLOTS.map(slot => {
+                                            const isAvailable = availableSlots.includes(slot);
+                                            const isSelected = formData.timeSlot === slot;
+                                            return (
+                                                <button
+                                                    key={slot}
+                                                    type="button"
+                                                    onClick={() => isAvailable && setFormData({...formData, timeSlot: slot})}
+                                                    disabled={!isAvailable}
+                                                    className={`px-2 py-2 text-sm rounded-lg border transition-colors ${
+                                                        isSelected 
+                                                            ? 'bg-primary text-white border-primary'
+                                                            : isAvailable 
+                                                                ? 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                                                                : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                                    }`}
+                                                >
+                                                    {slot}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                {!loadingSlots && availableSlots.length === 0 && (
+                                    <p className="text-sm text-yellow-600 mt-1">No available slots for this date</p>
+                                )}
+                            </div>
+                            
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
                                 <select

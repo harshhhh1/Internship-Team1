@@ -12,6 +12,7 @@ function Dashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
+  const [walkinStats, setWalkinStats] = useState({ today: { total: 0, waiting: 0, completed: 0, revenue: 0 }, thisWeek: { completed: 0, revenue: 0 }, thisMonth: { completed: 0, revenue: 0 } });
   const [dashboardStats, setDashboardStats] = useState({
     totalEarnings: 0,
     lastWeekEarnings: 0,
@@ -67,7 +68,7 @@ function Dashboard() {
     fetchAttendanceStats();
   }, [selectedSalon]);
 
-  // Fetch Dashboard Stats
+// Fetch Dashboard Stats
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
@@ -89,6 +90,26 @@ function Dashboard() {
       }
     };
     fetchDashboardStats();
+  }, [selectedSalon]);
+
+  // Fetch Walk-in Stats
+  useEffect(() => {
+    const fetchWalkinStats = async () => {
+      if (!selectedSalon) return;
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5050/walkins/stats?salonId=${selectedSalon._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWalkinStats(data);
+        }
+      } catch (error) {
+        console.error("Error fetching walk-in stats:", error);
+      }
+    };
+    fetchWalkinStats();
   }, [selectedSalon]);
 
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -221,12 +242,37 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-8 pt-5 border-t border-gray-100">
+<div className="mt-8 pt-5 border-t border-gray-100">
             <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Staff Attendance</h4>
             <div className="text-sm text-gray-500 mb-2">
               <span className="font-semibold text-green-600">Present:</span> {attendanceStats.present} | <span className="font-semibold text-red-600">Absent:</span> {attendanceStats.absent} | <span className="font-semibold text-blue-600">Leave:</span> {attendanceStats.leave}
             </div>
             <a href="/dashboard/staff" className="text-primary text-sm hover:underline font-medium">Manage Attendance &rarr;</a>
+          </div>
+
+          <div className="mt-8 pt-5 border-t border-gray-100">
+            <h4 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">Walk-in Queue</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-yellow-50 rounded-lg p-3">
+                <p className="text-xs text-yellow-600 font-medium">In Queue</p>
+                <p className="text-xl font-bold text-yellow-700">{walkinStats.today?.waiting || 0}</p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3">
+                <p className="text-xs text-green-600 font-medium">Completed</p>
+                <p className="text-xl font-bold text-green-700">{walkinStats.today?.completed || 0}</p>
+              </div>
+            </div>
+            <div className="mt-3 text-sm">
+              <p className="text-gray-500">
+                <span className="font-medium">Today:</span> {walkinStats.today?.total || 0} walk-ins | 
+                <span className="font-medium text-green-600 ml-1">₹{walkinStats.today?.revenue?.toLocaleString() || 0}</span>
+              </p>
+              <p className="text-gray-500">
+                <span className="font-medium">This Week:</span> {walkinStats.thisWeek?.completed || 0} completed | 
+                <span className="font-medium text-green-600 ml-1">₹{walkinStats.thisWeek?.revenue?.toLocaleString() || 0}</span>
+              </p>
+            </div>
+            <a href="/dashboard/walkin" className="text-primary text-sm hover:underline font-medium mt-3 inline-block">Manage Walk-ins &rarr;</a>
           </div>
         </div>
       </div>

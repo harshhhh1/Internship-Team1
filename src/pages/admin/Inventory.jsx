@@ -16,6 +16,7 @@ export default function Inventory() {
     const [restockItem, setRestockItem] = useState(null);
     const [restockQty, setRestockQty] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState(localStorage.getItem('role'));
     const [formData, setFormData] = useState({
         name: '',
         category: 'Other',
@@ -25,6 +26,9 @@ export default function Inventory() {
         unit: 'pcs',
         supplier: ''
     });
+
+    // Check if user can manage inventory (receptionist can manage, admin/owner can only view)
+const canManageInventory = userRole === 'receptionist';
 
     const fetchInventory = async () => {
         try {
@@ -199,19 +203,21 @@ export default function Inventory() {
     return (
         <div className="min-h-screen bg-bg-light">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
+{/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
                         <p className="text-gray-500 mt-2">Track and manage salon inventory.</p>
                     </div>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
-                    >
-                        <FaPlus />
-                        Add Item
-                    </button>
+                    {canManageInventory && (
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
+                        >
+                            <FaPlus />
+                            Add Item
+                        </button>
+                    )}
                 </div>
 
                 {/* Stats */}
@@ -329,24 +335,28 @@ export default function Inventory() {
                                             <td className="px-6 py-4">
                                                 {getStatusBadge(item)}
                                             </td>
-                                            <td className="px-6 py-4 font-semibold text-gray-900">
+<td className="px-6 py-4 font-semibold text-gray-900">
                                                 ₹{item.price?.toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => openRestockModal(item)}
-                                                        className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200"
-                                                    >
-                                                        Restock
-                                                    </button>
-                                                    <button onClick={() => handleEdit(item)} className="text-primary hover:text-secondary">
-                                                        <FaEdit />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
-                                                        <FaTrash />
-                                                    </button>
-                                                </div>
+                                                {canManageInventory ? (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => openRestockModal(item)}
+                                                            className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200"
+                                                        >
+                                                            Restock
+                                                        </button>
+                                                        <button onClick={() => handleEdit(item)} className="text-primary hover:text-secondary">
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700">
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">View Only</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
