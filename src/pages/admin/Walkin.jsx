@@ -13,8 +13,25 @@ export default function Walkin() {
         phone: '',
         serviceId: '',
         staffId: '',
-        price: ''
+        price: '',
+        time: ''
     });
+    const [timeError, setTimeError] = useState('');
+
+
+    // Set default time when modal opens
+    useEffect(() => {
+        if (showModal) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            setFormData(prev => ({ ...prev, time: `${hours}:${minutes}` }));
+        }
+    }, [showModal]);
+
+
+
+
 
     const fetchWalkins = useCallback(async () => {
         try {
@@ -78,6 +95,48 @@ export default function Walkin() {
         fetchServices();
     }, [fetchWalkins, fetchStaff, fetchServices]);
 
+    // Helper function to check if a staff member is available (not in-service with another customer)
+    const isStaffAvailable = (staffId) => {
+        if (!staffId) return true;
+        const staffWalkin = walkins.find(w => 
+            w.staffId === staffId && 
+            w.status === 'in-service'
+        );
+        return !staffWalkin;
+    };
+
+    // Helper function to check time conflicts with 30-minute gap
+    const checkTimeConflict = (selectedTime) => {
+        if (!selectedTime) return { hasConflict: false, message: '' };
+        
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const selectedDate = new Date();
+        selectedDate.setHours(hours, minutes, 0, 0);
+        
+        // Check against all walkins in queue (waiting or in-service)
+        for (const walkin of inQueue) {
+            const walkinDate = new Date(walkin.date);
+            const walkinHours = walkinDate.getHours();
+            const walkinMinutes = walkinDate.getMinutes();
+            
+            // Calculate time difference in minutes
+            const walkinTimeInMinutes = walkinHours * 60 + walkinMinutes;
+            const selectedTimeInMinutes = hours * 60 + minutes;
+            const diffInMinutes = Math.abs(selectedTimeInMinutes - walkinTimeInMinutes);
+            
+            // 30-minute gap required (if diff is less than 30 minutes, it's a conflict)
+            if (diffInMinutes < 30) {
+                const formattedTime = walkinDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return {
+                    hasConflict: true,
+                    message: `Time slot occupied! Someone already booked at ${formattedTime}. Please maintain a 30-minute gap.`
+                };
+            }
+        }
+        
+        return { hasConflict: false, message: '' };
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
@@ -88,19 +147,42 @@ export default function Walkin() {
                 serviceId: value,
                 price: selectedService ? selectedService.price : ''
             }));
+        } else if (name === 'time') {
+            setFormData(prev => ({ ...prev, [name]: value }));
+            const conflict = checkTimeConflict(value);
+            setTimeError(conflict.hasConflict ? conflict.message : '');
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Check time conflict before submitting
+        const conflict = checkTimeConflict(formData.time);
+        if (conflict.hasConflict) {
+            setTimeError(conflict.message);
+            return;
+        }
+        
         try {
             if (!selectedSalon) {
                 alert('Please select a salon first');
                 return;
             }
             const token = localStorage.getItem('token');
+
+            // Get current date and combine with selected time
+            const now = new Date();
+            let walkinDate = now;
+            
+            if (formData.time) {
+                const [hours, minutes] = formData.time.split(':');
+                walkinDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes));
+            }
+
             const walkinData = {
                 salonId: selectedSalon._id,
                 clientName: formData.name,
@@ -108,7 +190,9 @@ export default function Walkin() {
                 serviceId: formData.serviceId,
                 staffId: formData.staffId || null,
                 price: Number(formData.price) || 0,
+                date: walkinDate.toISOString(),
             };
+
 
             const response = await fetch('http://localhost:5050/walkins', {
                 method: 'POST',
@@ -122,8 +206,9 @@ export default function Walkin() {
             if (response.ok) {
                 alert('Walk-in added successfully!');
                 setShowModal(false);
-                setFormData({ name: '', phone: '', serviceId: '', staffId: '', price: '' });
+                setFormData({ name: '', phone: '', serviceId: '', staffId: '', price: '', time: '' });
                 fetchWalkins();
+
             } else {
                 alert('Failed to add walk-in');
             }
@@ -237,14 +322,17 @@ export default function Walkin() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Phone</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Staff</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Time</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
+
                             <tbody className="divide-y divide-gray-100">
                                 {inQueue.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No customers in queue</td></tr>
+                                    <tr><td colSpan="8" className="p-8 text-center text-gray-500">No customers in queue</td></tr>
                                 ) : (
                                     inQueue.map((item) => (
                                         <tr key={item._id} className="hover:bg-gray-50">
@@ -253,8 +341,15 @@ export default function Walkin() {
                                             <td className="px-6 py-4 text-sm text-gray-700">
                                                 {services.find(s => s._id === item.serviceId)?.name || item.serviceId}
                                             </td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {staff.find(s => s._id === item.staffId)?.name || 'Not Assigned'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </td>
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
                                             <td className="px-6 py-4">
+
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
                                                     }`}>
                                                     {item.status === 'waiting' ? 'Waiting' : 'In Service'}
@@ -302,14 +397,16 @@ export default function Walkin() {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Service</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Staff</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Time</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
+
                             <tbody className="divide-y divide-gray-100">
                                 {walkins.filter(w => w.status === 'completed' || w.status === 'cancelled').length === 0 ? (
-                                    <tr><td colSpan="5" className="p-8 text-center text-gray-500">No recent entries</td></tr>
+                                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No recent entries</td></tr>
                                 ) : (
                                     walkins.filter(w => w.status === 'completed' || w.status === 'cancelled').map((item) => (
                                         <tr key={item._id} className="hover:bg-gray-50">
@@ -317,9 +414,13 @@ export default function Walkin() {
                                             <td className="px-6 py-4 text-sm text-gray-700">
                                                 {services.find(s => s._id === item.serviceId)?.name || item.serviceId}
                                             </td>
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {staff.find(s => s._id === item.staffId)?.name || 'Not Assigned'}
+                                            </td>
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{item.price}</td>
                                             <td className="px-6 py-4 text-sm text-gray-700">{new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                                             <td className="px-6 py-4">
+
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                                     }`}>
                                                     {item.status === 'completed' ? 'Completed' : 'Cancelled'}
@@ -403,20 +504,59 @@ export default function Walkin() {
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
-                                    <select
-                                        name="staffId"
-                                        value={formData.staffId}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50 transition-all"
-                                    >
-                                        <option value="">Select Stylist</option>
-                                        {staff.map(s => (
-                                            <option key={s._id} value={s._id}>{s.name}</option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Time <span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <input
+                                                type="time"
+                                                name="time"
+                                                value={formData.time}
+                                                onChange={handleInputChange}
+                                                required
+                                                step="60"
+                                                className={`w-full px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white transition-all cursor-pointer ${timeError ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                                            />
+                                            <FaClock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                        </div>
+                                        {timeError && (
+                                            <p className="mt-1 text-sm text-red-600">{timeError}</p>
+                                        )}
+                                    </div>
+
+
+
+
+
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Stylist</label>
+                                        <select
+                                            name="staffId"
+                                            value={formData.staffId}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-gray-50 transition-all"
+                                        >
+                                            <option value="">Select Stylist</option>
+                                            {staff.map(s => {
+                                                const available = isStaffAvailable(s._id);
+                                                return (
+                                                    <option 
+                                                        key={s._id} 
+                                                        value={s._id}
+                                                        disabled={!available}
+                                                        className={!available ? 'text-gray-400' : ''}
+                                                    >
+                                                        {s.name}{!available ? ' (Unavailable - In Service)' : ''}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </div>
+
                                 </div>
+
+
                             </div>
 
                             <div className="p-6 border-t flex gap-3 sticky bottom-0 bg-white shadow-[0_-10px_20px_rgba(255,255,255,1)]">
@@ -429,10 +569,12 @@ export default function Walkin() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 font-semibold active:scale-95"
+                                    disabled={timeError !== ''}
+                                    className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all shadow-md ${timeError ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-primary text-white hover:bg-secondary shadow-primary/20 active:scale-95'}`}
                                 >
-                                    Add to Queue
+                                    {timeError ? 'Change Time to Continue' : 'Add to Queue'}
                                 </button>
+
                             </div>
                         </form>
                     </div>

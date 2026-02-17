@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaPlus, FaSearch, FaReceipt, FaArrowUp, FaArrowDown, FaTimes, FaEdit, FaTrash, FaCalendarAlt } from 'react-icons/fa';
 import { useSalon } from '../../context/SalonContext';
 
-const CATEGORIES = ['All', 'Products', 'Utilities', 'Rent', 'Salaries', 'Maintenance', 'Marketing', 'Equipment', 'Other'];
+const DEFAULT_CATEGORIES = ['Products', 'Utilities', 'Rent', 'Salaries', 'Maintenance', 'Marketing', 'Equipment', 'Other'];
 const PAYMENT_MODES = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Other'];
 
 export default function Expenses() {
     const { selectedSalon } = useSalon();
+    const categoriesRef = useRef(null);
     const [expenses, setExpenses] = useState([]);
     const [stats, setStats] = useState({ thisMonth: 0, lastMonth: 0, categoryBreakdown: [] });
     const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +15,8 @@ export default function Expenses() {
     const [showModal, setShowModal] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+    const [newCategory, setNewCategory] = useState('');
     const [formData, setFormData] = useState({
         category: 'Other',
         description: '',
@@ -21,6 +24,7 @@ export default function Expenses() {
         paymentMode: 'Cash',
         date: new Date().toISOString().split('T')[0]
     });
+
 
     const fetchExpenses = async () => {
         try {
@@ -57,17 +61,94 @@ export default function Expenses() {
             });
             if (response.ok) {
                 const data = await response.json();
-                setStats(data);
+                setStats({
+                    thisMonth: data.thisMonth || 0,
+                    lastMonth: data.lastMonth || 0,
+                    categoryBreakdown: data.categoryBreakdown || []
+                });
             }
         } catch (error) {
             console.error('Error fetching stats:', error);
         }
     };
 
+
     useEffect(() => {
         fetchExpenses();
         fetchStats();
+        fetchCategories();
     }, [selectedSalon, categoryFilter]);
+
+    // Refresh stats when expenses change
+    useEffect(() => {
+        fetchStats();
+    }, [expenses.length]);
+
+
+
+    const fetchCategories = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const url = selectedSalon
+                ? `http://localhost:5050/categories?salonId=${selectedSalon._id}`
+                : 'http://localhost:5050/categories';
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const categoryNames = data.map(cat => cat.name);
+                // Merge default categories with fetched ones, removing duplicates
+                const mergedCategories = [...new Set([...DEFAULT_CATEGORIES, ...categoryNames])];
+                setCategories(mergedCategories);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const handleAddCategory = async () => {
+        if (!newCategory.trim()) return;
+        if (!selectedSalon) {
+            alert('Please select a salon first');
+            return;
+        }
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5050/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    salonId: selectedSalon._id,
+                    name: newCategory.trim()
+                })
+            });
+
+            if (response.ok) {
+                const savedCategory = await response.json();
+                setCategories(prev => [...new Set([...prev, savedCategory.name])]);
+                setFormData(prev => ({ ...prev, category: savedCategory.name }));
+                setNewCategory('');
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to add category');
+            }
+        } catch (error) {
+            console.error('Error adding category:', error);
+            alert('Error adding category');
+        }
+    };
+
+    const handleWheel = (e) => {
+        if (categoriesRef.current) {
+            e.preventDefault();
+            categoriesRef.current.scrollLeft += e.deltaY;
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value, type } = e.target;
@@ -76,6 +157,7 @@ export default function Expenses() {
             [name]: type === 'number' ? parseFloat(value) || 0 : value
         }));
     };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -184,10 +266,11 @@ export default function Expenses() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Expense Tracker</h1>
-                        <p className="text-gray-500 mt-2">Track and manage salon expenses.</p>
-                    </div>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Expense Tracker</h1>
+                    <p className="text-gray-500 mt-2">Track and manage salon expenses for {selectedSalon?.name || 'All Branches'}.</p>
+                </div>
+
                     <button
                         onClick={() => setShowModal(true)}
                         className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
@@ -206,7 +289,7 @@ export default function Expenses() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">This Month</p>
-                                <p className="text-2xl font-bold text-gray-900">₹{stats.thisMonth?.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-gray-900">₹{Number(stats.thisMonth).toLocaleString()}</p>
                             </div>
                         </div>
                     </div>
@@ -217,10 +300,11 @@ export default function Expenses() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Last Month</p>
-                                <p className="text-2xl font-bold text-gray-900">₹{stats.lastMonth?.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-gray-900">₹{Number(stats.lastMonth).toLocaleString()}</p>
                             </div>
                         </div>
                     </div>
+
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                         <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 ${parseFloat(getPercentageChange()) > 0 ? 'bg-red-100' : 'bg-green-100'} rounded-xl flex items-center justify-center`}>
@@ -241,8 +325,8 @@ export default function Expenses() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="relative flex-1 max-w-md">
+                <div className="flex flex-col gap-4 mb-6">
+                    <div className="relative w-full max-w-xl">
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
@@ -252,12 +336,17 @@ export default function Expenses() {
                             className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
                     </div>
-                    <div className="flex gap-2 flex-wrap">
-                        {CATEGORIES.map(cat => (
+                    <div 
+                        ref={categoriesRef}
+                        onWheel={handleWheel}
+                        className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 cursor-grab active:cursor-grabbing"
+                        style={{ scrollbarWidth: 'thin', msOverflowStyle: 'auto' }}
+                    >
+                        {['All', ...categories].map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${categoryFilter === cat
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${categoryFilter === cat
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
@@ -357,11 +446,32 @@ export default function Expenses() {
                                         required
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none cursor-pointer bg-white"
                                     >
-                                        {CATEGORIES.filter(c => c !== 'All').map(cat => (
+                                        {categories.map(cat => (
                                             <option key={cat} value={cat}>{cat}</option>
                                         ))}
                                     </select>
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Add New Category</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newCategory}
+                                            onChange={(e) => setNewCategory(e.target.value)}
+                                            placeholder="Enter new category name"
+                                            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCategory}
+                                            disabled={!newCategory.trim()}
+                                            className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description *</label>
                                     <input

@@ -6,7 +6,7 @@ import Client from "../models/Client.js";
 
 export const createWalkin = async (req, res) => {
     try {
-        const { salonId, clientName, clientMobile, serviceId, staffId, price } = req.body;
+        const { salonId, clientName, clientMobile, serviceId, staffId, price, date } = req.body;
 
         const salon = await Salon.findById(salonId);
         if (!salon) return res.status(404).json({ message: "Salon not found" });
@@ -55,7 +55,8 @@ export const createWalkin = async (req, res) => {
             staffId,
             clientId: client ? client._id : null,
             price: price || 0,
-            status: "waiting"
+            status: "waiting",
+            date: date ? new Date(date) : new Date() // Use provided date or default to now
         });
 
         await newWalkin.save();

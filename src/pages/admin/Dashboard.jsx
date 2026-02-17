@@ -18,6 +18,7 @@ function Dashboard() {
     weeklyTrend: '0%',
     topServices: []
   });
+  const [weeklyExpenses, setWeeklyExpenses] = useState(0);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -91,6 +92,30 @@ function Dashboard() {
     fetchDashboardStats();
   }, [selectedSalon]);
 
+  // Fetch Weekly Expenses
+  useEffect(() => {
+    const fetchWeeklyExpenses = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        let url = 'http://localhost:5050/expenses/weekly';
+        if (selectedSalon) {
+          url += `?salonId=${selectedSalon._id}`;
+        }
+
+        const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWeeklyExpenses(data.thisWeek || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching weekly expenses:", error);
+      }
+    };
+    fetchWeeklyExpenses();
+  }, [selectedSalon]);
+
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const todaysAppointments = appointments.filter(app =>
     new Date(app.date).toDateString() === new Date().toDateString()
@@ -108,11 +133,11 @@ function Dashboard() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <KpiCard
             title="Total Earnings"
             value={`₹${dashboardStats.totalEarnings.toLocaleString()}`}
-            trend={dashboardStats.weeklyTrend} // Using weekly trend here as a proxy for general growth signal
+            trend={dashboardStats.weeklyTrend}
             isPositive={!dashboardStats.weeklyTrend.startsWith('-')}
             icon={<span className="text-2xl">💰</span>}
           />
@@ -122,6 +147,13 @@ function Dashboard() {
             trend={dashboardStats.weeklyTrend}
             isPositive={!dashboardStats.weeklyTrend.startsWith('-')}
             icon={<span className="text-2xl">📉</span>}
+          />
+          <KpiCard
+            title="Expenses This Week"
+            value={`₹${weeklyExpenses.toLocaleString()}`}
+            trend="0%"
+            isPositive={true}
+            icon={<span className="text-2xl">💸</span>}
           />
         </div>
 
@@ -142,7 +174,7 @@ function Dashboard() {
                       style={{ width: `${service.percentage}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-500 min-w-[3rem]">{service.percentage}%</span>
+                  <span className="text-sm text-gray-500 min-w-12">{service.percentage}%</span>
                 </div>
               </div>
             ))}
@@ -172,7 +204,7 @@ function Dashboard() {
           <div className="flex flex-col gap-4 min-w-75">
             {appointments
               .filter(app => {
-                if (!selectedDate) return true; // Show all (or strictly limit to upcoming) if no date selected
+                if (!selectedDate) return true;
                 return new Date(app.date).toDateString() === selectedDate.toDateString();
               })
               .slice(0, selectedDate ? 50 : 5)

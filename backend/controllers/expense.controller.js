@@ -99,3 +99,77 @@ export const getExpenseStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Get weekly expenses
+export const getWeeklyExpenses = async (req, res) => {
+    try {
+        const { salonId } = req.query;
+        const filter = salonId ? { salonId } : {};
+
+        // Get start of current week (Sunday)
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const weeklyExpenses = await Expense.aggregate([
+            { $match: { ...filter, date: { $gte: startOfWeek } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        res.status(200).json({
+            thisWeek: weeklyExpenses[0]?.total || 0
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get expenses by duration (week/month/year)
+export const getExpensesByDuration = async (req, res) => {
+    try {
+        const { salonId, duration = 'month' } = req.query;
+        const filter = salonId ? { salonId } : {};
+
+        const now = new Date();
+        let startDate = new Date();
+
+        switch (duration) {
+            case 'week':
+                // Start of current week (Sunday)
+                startDate.setDate(now.getDate() - now.getDay());
+                break;
+            case 'month':
+                // Start of current month
+                startDate.setDate(1);
+                break;
+            case 'year':
+                // Start of current year
+                startDate.setMonth(0, 1);
+                break;
+            default:
+                startDate.setDate(1);
+        }
+
+        startDate.setHours(0, 0, 0, 0);
+
+        const expenses = await Expense.find({
+            ...filter,
+            date: { $gte: startDate }
+        })
+            .populate('salonId', 'name')
+            .populate('addedBy', 'name')
+            .sort({ date: -1 });
+
+        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+        res.status(200).json({
+            expenses,
+            total,
+            duration,
+            count: expenses.length
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

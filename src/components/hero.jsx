@@ -12,7 +12,7 @@ function Hero() {
           <p className="text-xl md:text-2xl text-gray-700 mb-10 max-w-2xl mx-auto font-light">
             Relax, Rejuvenate, and Shine. Experience premium beauty services with our expert stylists.
           </p>
-          <Link to='/dashboard'><button className="bg-primary hover:bg-secondary text-white font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+          <Link to='/signup'><button className="bg-primary hover:bg-secondary text-white font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
             Get Started
           </button></Link>
         </div>

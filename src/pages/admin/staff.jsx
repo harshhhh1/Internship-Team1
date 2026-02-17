@@ -283,7 +283,7 @@ function Staff() {
         )}
 
         {/* Content Area */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-125">
           {activeTab === 'list' ? (
             <div className="p-1">
               <StaffTable staffList={filteredStaff} onEdit={handleEdit} onDelete={handleDelete} />
