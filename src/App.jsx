@@ -33,6 +33,7 @@ import Expenses from './pages/admin/Expenses.jsx'
 import Offers from './pages/admin/Offers.jsx'
 import Attendance from './components/Attendance.jsx'
 import Reports from './pages/admin/Reports.jsx'
+import AttendanceReport from './pages/admin/AttendanceReport.jsx'
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute.jsx'
@@ -78,6 +79,7 @@ function App() {
           <Route path="inventory" element={<ProtectedRoute tabId="inventory"><Inventory /></ProtectedRoute>} />
           <Route path="expenses" element={<ProtectedRoute tabId="expenses"><Expenses /></ProtectedRoute>} />
           <Route path="offers" element={<ProtectedRoute tabId="offers"><Offers /></ProtectedRoute>} />
+          <Route path="attendance-report" element={<ProtectedRoute tabId="reports"><AttendanceReport /></ProtectedRoute>} />
         </Route>
       </Routes>
     </SalonProvider>

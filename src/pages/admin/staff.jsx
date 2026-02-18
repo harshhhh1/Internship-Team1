@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { FaTimes, FaSearch } from 'react-icons/fa';
 import StaffTable from '../../components/tables/StaffTable';
 import Attendance from '../../components/Attendance'; // Import the new component
+import AvailabilityManager from '../../components/AvailabilityManager';
 import { useSalon } from '../../context/SalonContext';
 import { getAllTabOptions, DEFAULT_TABS } from '../../config/roleConfig';
 
@@ -9,7 +10,11 @@ function Staff() {
   const [staffList, setStaffList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { salons, selectedSalon } = useSalon();
-  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'attendance'
+  const [activeTab, setActiveTab] = useState('list'); // 'list', 'attendance', or 'availability'
+  
+  // Availability management state
+  const [selectedStaffForAvailability, setSelectedStaffForAvailability] = useState(null);
+  const [availabilityData, setAvailabilityData] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -213,6 +218,15 @@ function Staff() {
             >
               Attendance
             </button>
+            <button
+              onClick={() => setActiveTab('availability')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'availability'
+                  ? 'bg-gray-900 text-white shadow-md'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+            >
+              Availability
+            </button>
           </div>
         </div>
 
@@ -253,9 +267,16 @@ function Staff() {
             <div className="p-1">
               <StaffTable staffList={filteredStaff} onEdit={handleEdit} onDelete={handleDelete} />
             </div>
-          ) : (
+          ) : activeTab === 'attendance' ? (
             <div className="p-6">
               <Attendance />
+            </div>
+          ) : (
+            <div className="p-6">
+              <AvailabilityManager 
+                staffList={staffList} 
+                selectedSalon={selectedSalon}
+              />
             </div>
           )}
         </div>

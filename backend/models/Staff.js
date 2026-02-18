@@ -73,6 +73,16 @@ const staffSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    // Availability management
+    availability: {
+        monday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        tuesday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        wednesday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        thursday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        friday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        saturday: { enabled: { type: Boolean, default: true }, slots: { type: [String], default: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] } },
+        sunday: { enabled: { type: Boolean, default: false }, slots: { type: [String], default: [] } }
+    }
 }, { timestamps: true });
 
 const Staff = mongoose.model("Staff", staffSchema);

@@ -4,9 +4,22 @@ import mongoose from "mongoose";
 import Salon from "../models/Salon.js";
 import Staff from "../models/Staff.js";
 
+// Helper to normalize date to just the date part (no time)
+const normalizeDate = (date) => {
+    const d = new Date(date);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+};
+
+// Get day name from date
+const getDayName = (date) => {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[new Date(date).getUTCDay()];
+};
+
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId, clientName, clientMobile, clientEmail } = req.body;
+        const { salonId, serviceId, clientName, clientMobile, clientEmail, staffId, date, timeSlot } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -15,6 +28,38 @@ export const createAppointment = async (req, res) => {
         const salon = await Salon.findById(salonId);
         if (!salon) {
             return res.status(404).json({ message: "Salon not found" });
+        }
+
+        // Check staff availability if staffId and timeSlot are provided
+        if (staffId && date && timeSlot) {
+            const staff = await Staff.findById(staffId);
+            if (staff) {
+                // Check if staff works on this day
+                const dayName = getDayName(date);
+                const dayAvailability = staff.availability?.[dayName];
+                
+                if (!dayAvailability || !dayAvailability.enabled) {
+                    return res.status(400).json({ message: "Staff does not work on this day" });
+                }
+
+                // Check if the time slot is in the staff's available slots
+                if (!dayAvailability.slots || !dayAvailability.slots.includes(timeSlot)) {
+                    return res.status(400).json({ message: "Time slot not available for this staff" });
+                }
+
+                // Check if there's already an appointment at this time
+                const normalizedDate = normalizeDate(date);
+                const existingAppointment = await Appointment.findOne({
+                    staffId,
+                    date: normalizedDate,
+                    timeSlot,
+                    status: { $nin: ['cancelled'] }
+                });
+
+                if (existingAppointment) {
+                    return res.status(400).json({ message: "This time slot is already booked. Please select a different time." });
+                }
+            }
         }
 
         // Get service price if serviceId is provided

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const uri = process.env.ATLAS_URI || "";
+const uri = process.env.ATLAS_URI || "mongodb://localhost:27017/salon";
 
 const connectDB = async () => {
   try {
@@ -16,3 +16,4 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+

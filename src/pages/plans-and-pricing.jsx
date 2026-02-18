@@ -1,26 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
-import { FaCheck, FaTimes } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 function Plans_and_pricing() {
 
   const [isAnnual, setIsAnnual] = useState(false);
   const [branches, setBranches] = useState(1);
+  const [trialStatus, setTrialStatus] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isTrialExpired = searchParams.get('expired') === 'true';
 
   React.useEffect(() => {
     const fetchCurrentPlan = async () => {
       const userId = localStorage.getItem('userId');
       const role = localStorage.getItem('role');
+      const token = localStorage.getItem('token');
+      
       if (userId && role === 'owner') {
         try {
+          // Fetch current plan
           const response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
           if (response.ok) {
             const data = await response.json();
             if (data.subscription?.branchLimit) {
               setBranches(data.subscription.branchLimit);
+            }
+          }
+          
+          // Fetch trial status
+          if (token) {
+            const trialResponse = await fetch(`http://localhost:5050/auth/trial-status`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (trialResponse.ok) {
+              const trialData = await trialResponse.json();
+              setTrialStatus(trialData);
             }
           }
         } catch (error) {
@@ -137,6 +156,7 @@ function Plans_and_pricing() {
     try {
       const computedPrice = calculatePrice(plan);
 
+      // First, update the plan using owner/update-plan
       const response = await fetch('http://localhost:5050/owner/update-plan', {
         method: 'PUT',
         headers: {
@@ -151,10 +171,27 @@ function Plans_and_pricing() {
         })
       });
 
-      const data = await response.json();
+      // Then, activate the plan to end the trial
+      const activateResponse = await fetch('http://localhost:5050/auth/activate-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          planName: plan.name,
+          price: Number(computedPrice) || 0,
+          branchLimit: Number(plan.maxBranches),
+          billingCycle: isAnnual ? 'yearly' : 'monthly'
+        })
+      });
 
-      if (response.ok) {
+      const data = await activateResponse.json();
+
+      if (activateResponse.ok) {
         alert(`Successfully subscribed to ${plan.name}!`);
+        // Update localStorage trial status
+        localStorage.setItem('trialStatus', JSON.stringify({ isTrialActive: false, trialExpired: false }));
         navigate('/dashboard/settings'); // Redirect to settings to see updated plan
       } else {
         alert(data.message || "Failed to update plan");
@@ -174,6 +211,32 @@ function Plans_and_pricing() {
 
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-10">
+            {/* Trial Expired Alert */}
+            {(isTrialExpired || trialStatus?.trialExpired) && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg text-left">
+                <div className="flex items-center">
+                  <FaExclamationTriangle className="text-red-500 mr-3" size={24} />
+                  <div>
+                    <p className="font-bold text-red-700">Your Free Trial Has Expired!</p>
+                    <p className="text-red-600 text-sm">Your 14-day free trial has ended. Please subscribe to continue using the application.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Trial Active Banner */}
+            {trialStatus && trialStatus.isTrialActive && !trialStatus.trialExpired && (
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-lg text-left">
+                <div className="flex items-center">
+                  <div className="text-blue-500 mr-3 font-bold text-xl">⏰</div>
+                  <div>
+                    <p className="font-bold text-blue-700">You have {trialStatus.daysRemaining} days left in your free trial!</p>
+                    <p className="text-blue-600 text-sm">Subscribe now to continue using the application after your trial ends.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <h2 className="text-primary font-semibold tracking-wide uppercase text-sm mb-2">Pricing Plans</h2>
             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
               Invest in your <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-secondary">Business</span>

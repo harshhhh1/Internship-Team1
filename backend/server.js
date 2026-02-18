@@ -13,10 +13,13 @@ import offerRoutes from "./routes/offer.js";
 import ownerRoutes from "./routes/owner.js";
 import inventoryRoutes from "./routes/inventory.js";
 import expenseRoutes from "./routes/expense.js";
-import attendanceRoutes from "./routes/attendance.js"; // [NEW]
+import attendanceRoutes from "./routes/attendance.js";
 import walkinRoutes from "./routes/walkin.js";
 import reportRoutes from "./routes/report.js";
-import categoryRoutes from "./routes/category.js"; // [NEW]
+import categoryRoutes from "./routes/category.js";
+import trialRoutes from "./routes/trial.js";
+import availabilityRoutes from "./routes/availability.js";
+import { authenticateToken, checkTrialStatus } from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -29,22 +32,30 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes - Public (no authentication required)
 app.use("/auth", authRoutes);
-app.use("/salons", salonRoutes);
-app.use("/staff", staffRoutes);
-app.use("/services", serviceRoutes);
-app.use("/appointments", appointmentRoutes);
-app.use("/payments", paymentRoutes);
-app.use("/clients", clientRoutes);
-app.use("/offers", offerRoutes);
-app.use("/owner", ownerRoutes);
-app.use("/inventory", inventoryRoutes);
-app.use("/expenses", expenseRoutes);
-app.use("/attendance", attendanceRoutes); // [NEW]
-app.use("/walkins", walkinRoutes);
-app.use("/reports", reportRoutes);
-app.use("/categories", categoryRoutes); // [NEW]
+
+// Trial routes (public but will check on login response)
+app.use("/auth", trialRoutes);
+
+// Routes that require authentication AND trial check
+app.use("/salons", authenticateToken, checkTrialStatus, salonRoutes);
+app.use("/staff", authenticateToken, checkTrialStatus, staffRoutes);
+app.use("/services", authenticateToken, checkTrialStatus, serviceRoutes);
+app.use("/appointments", authenticateToken, checkTrialStatus, appointmentRoutes);
+app.use("/payments", authenticateToken, checkTrialStatus, paymentRoutes);
+app.use("/clients", authenticateToken, checkTrialStatus, clientRoutes);
+app.use("/offers", authenticateToken, checkTrialStatus, offerRoutes);
+app.use("/owner", authenticateToken, checkTrialStatus, ownerRoutes);
+app.use("/inventory", authenticateToken, checkTrialStatus, inventoryRoutes);
+app.use("/expenses", authenticateToken, checkTrialStatus, expenseRoutes);
+app.use("/attendance", authenticateToken, checkTrialStatus, attendanceRoutes);
+app.use("/walkins", authenticateToken, checkTrialStatus, walkinRoutes);
+app.use("/reports", authenticateToken, checkTrialStatus, reportRoutes);
+app.use("/categories", authenticateToken, checkTrialStatus, categoryRoutes);
+
+// Availability routes (uses the nested routes correctly now)
+app.use("/availability", authenticateToken, checkTrialStatus, availabilityRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });

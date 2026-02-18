@@ -8,6 +8,294 @@ const normalizeDate = (date) => {
     return d;
 };
 
+// Helper to get week start and end dates
+const getWeekDates = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
+    const start = new Date(d.setDate(diff));
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setUTCHours(23, 59, 59, 999);
+    return { start, end };
+};
+
+// Get weekly attendance report
+export const getWeeklyAttendance = async (req, res) => {
+    try {
+        const { salonId, staffId, weekStart } = req.query;
+
+        if (!salonId) {
+            return res.status(400).json({ message: "Salon ID is required" });
+        }
+
+        const { start, end } = getWeekDates(weekStart ? new Date(weekStart) : new Date());
+
+        // Build filter
+        const filter = {
+            salonId,
+            date: { $gte: start, $lte: end }
+        };
+        if (staffId) filter.staffId = staffId;
+
+        // Get all attendance records for the week
+        const records = await Attendance.find(filter).populate('staffId', 'name role profession');
+
+        // Get all active staff for the salon
+        const staffFilter = { salonId, isActive: true };
+        if (staffId) staffFilter._id = staffId;
+        const staffMembers = await Staff.find(staffFilter).select('name role profession');
+
+        // Build result with all days of the week
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const weekData = [];
+
+        for (let i = 0; i < 7; i++) {
+            const currentDate = new Date(start);
+            currentDate.setDate(currentDate.getDate() + i);
+            const normalizedCurrentDate = normalizeDate(currentDate);
+
+            const dayRecords = records.filter(r => {
+                const recordDate = new Date(r.date);
+                return recordDate.toISOString().split('T')[0] === normalizedCurrentDate.toISOString().split('T')[0];
+            });
+
+            weekData.push({
+                day: days[i],
+                date: normalizedCurrentDate,
+                records: dayRecords
+            });
+        }
+
+        // Calculate summary
+        const summary = {
+            totalPresent: records.filter(r => r.status === 'Present').length,
+            totalAbsent: records.filter(r => r.status === 'Absent').length,
+            totalHalfDay: records.filter(r => r.status === 'Half Day').length,
+            totalLeave: records.filter(r => r.status === 'Leave').length
+        };
+
+        res.status(200).json({ weekData, summary, staffMembers });
+    } catch (error) {
+        console.error("Get Weekly Attendance Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get monthly attendance report
+export const getMonthlyAttendanceReport = async (req, res) => {
+    try {
+        const { salonId, staffId, month, year } = req.query;
+
+        if (!salonId || !month || !year) {
+            return res.status(400).json({ message: "Salon ID, Month, and Year are required" });
+        }
+
+        const startDate = new Date(Date.UTC(year, month - 1, 1));
+        const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+
+        // Build filter
+        const filter = {
+            salonId,
+            date: { $gte: startDate, $lte: endDate }
+        };
+        if (staffId) filter.staffId = staffId;
+
+        // Get all attendance records for the month
+        const records = await Attendance.find(filter).populate('staffId', 'name role profession');
+
+        // Get all active staff for the salon
+        const staffFilter = { salonId, isActive: true };
+        if (staffId) staffFilter._id = staffId;
+        const staffMembers = await Staff.find(staffFilter).select('name role profession');
+
+        // Group by staff
+        const staffAttendance = staffMembers.map(staff => {
+            const staffRecords = records.filter(r => r.staffId && r.staffId._id.toString() === staff._id.toString());
+            return {
+                staff: {
+                    _id: staff._id,
+                    name: staff.name,
+                    role: staff.role,
+                    profession: staff.profession
+                },
+                present: staffRecords.filter(r => r.status === 'Present').length,
+                absent: staffRecords.filter(r => r.status === 'Absent').length,
+                halfDay: staffRecords.filter(r => r.status === 'Half Day').length,
+                leave: staffRecords.filter(r => r.status === 'Leave').length,
+                total: staffRecords.length,
+                records: staffRecords
+            };
+        });
+
+        // Calculate overall summary
+        const summary = {
+            totalPresent: records.filter(r => r.status === 'Present').length,
+            totalAbsent: records.filter(r => r.status === 'Absent').length,
+            totalHalfDay: records.filter(r => r.status === 'Half Day').length,
+            totalLeave: records.filter(r => r.status === 'Leave').length,
+            totalRecords: records.length
+        };
+
+        // Get month name
+        const monthName = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        res.status(200).json({ 
+            month: monthName, 
+            staffAttendance, 
+            summary,
+            totalStaff: staffMembers.length
+        });
+    } catch (error) {
+        console.error("Get Monthly Attendance Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get yearly attendance report
+export const getYearlyAttendanceReport = async (req, res) => {
+    try {
+        const { salonId, staffId, year } = req.query;
+
+        if (!salonId || !year) {
+            return res.status(400).json({ message: "Salon ID and Year are required" });
+        }
+
+        const startDate = new Date(Date.UTC(year, 0, 1));
+        const endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59));
+
+        // Build filter
+        const filter = {
+            salonId,
+            date: { $gte: startDate, $lte: endDate }
+        };
+        if (staffId) filter.staffId = staffId;
+
+        // Get all attendance records for the year
+        const records = await Attendance.find(filter).populate('staffId', 'name role profession');
+
+        // Get all active staff for the salon
+        const staffFilter = { salonId, isActive: true };
+        if (staffId) staffFilter._id = staffId;
+        const staffMembers = await Staff.find(staffFilter).select('name role profession');
+
+        // Group by month
+        const monthlyData = [];
+        for (let month = 0; month < 12; month++) {
+            const monthStart = new Date(Date.UTC(year, month, 1));
+            const monthEnd = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
+            
+            const monthRecords = records.filter(r => {
+                const recordDate = new Date(r.date);
+                return recordDate >= monthStart && recordDate <= monthEnd;
+            });
+
+            const monthName = monthStart.toLocaleDateString('en-US', { month: 'short' });
+
+            monthlyData.push({
+                month: monthName,
+                monthNum: month + 1,
+                present: monthRecords.filter(r => r.status === 'Present').length,
+                absent: monthRecords.filter(r => r.status === 'Absent').length,
+                halfDay: monthRecords.filter(r => r.status === 'Half Day').length,
+                leave: monthRecords.filter(r => r.status === 'Leave').length,
+                total: monthRecords.length
+            });
+        }
+
+        // Calculate yearly summary
+        const summary = {
+            totalPresent: records.filter(r => r.status === 'Present').length,
+            totalAbsent: records.filter(r => r.status === 'Absent').length,
+            totalHalfDay: records.filter(r => r.status === 'Half Day').length,
+            totalLeave: records.filter(r => r.status === 'Leave').length,
+            totalRecords: records.length
+        };
+
+        res.status(200).json({ 
+            year: year, 
+            monthlyData, 
+            summary,
+            totalStaff: staffMembers.length
+        });
+    } catch (error) {
+        console.error("Get Yearly Attendance Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get attendance calendar view for a specific month
+export const getAttendanceCalendar = async (req, res) => {
+    try {
+        const { salonId, staffId, month, year } = req.query;
+
+        if (!salonId || !month || !year) {
+            return res.status(400).json({ message: "Salon ID, Month, and Year are required" });
+        }
+
+        const startDate = new Date(Date.UTC(year, month - 1, 1));
+        const endDate = new Date(Date.UTC(year, month, 0)); // Last day of month
+        const daysInMonth = endDate.getDate();
+
+        // Build filter
+        const filter = {
+            salonId,
+            date: { $gte: startDate, $lte: endDate }
+        };
+        if (staffId) filter.staffId = staffId;
+
+        // Get all attendance records for the month
+        const records = await Attendance.find(filter).populate('staffId', 'name role profession');
+
+        // Get all active staff for the salon
+        const staffFilter = { salonId, isActive: true };
+        if (staffId) staffFilter._id = staffId;
+        const staffMembers = await Staff.find(staffFilter).select('name role profession');
+
+        // Build calendar data
+        const calendarData = [];
+        for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(Date.UTC(year, month - 1, day));
+            const normalizedDate = normalizeDate(currentDate);
+
+            const dayRecords = records.filter(r => {
+                const recordDate = new Date(r.date);
+                return recordDate.toISOString().split('T')[0] === normalizedDate.toISOString().split('T')[0];
+            });
+
+            calendarData.push({
+                day: day,
+                date: normalizedDate,
+                records: dayRecords
+            });
+        }
+
+        // Calculate summary for the month
+        const summary = {
+            present: records.filter(r => r.status === 'Present').length,
+            absent: records.filter(r => r.status === 'Absent').length,
+            halfDay: records.filter(r => r.status === 'Half Day').length,
+            leave: records.filter(r => r.status === 'Leave').length,
+            total: records.length
+        };
+
+        const monthName = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        res.status(200).json({
+            month: monthName,
+            calendarData,
+            summary,
+            staffMembers,
+            totalStaff: staffMembers.length
+        });
+    } catch (error) {
+        console.error("Get Attendance Calendar Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Existing functions remain the same
 export const markAttendance = async (req, res) => {
     try {
         const { staffId, salonId, date, status, checkIn, checkOut, remarks, leaveType } = req.body;

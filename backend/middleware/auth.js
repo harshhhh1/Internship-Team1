@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import Owner from '../models/Owner.js';
+
 dotenv.config();
 
 export const authenticateToken = (req, res, next) => {
@@ -17,6 +19,44 @@ export const authenticateToken = (req, res, next) => {
     req.user = user;
     next();
   });
+};
+
+// Middleware to check if trial has expired and lock the application
+export const checkTrialStatus = async (req, res, next) => {
+  try {
+    // Only check for owners
+    if (req.user.role !== 'owner') {
+      return next();
+    }
+
+    const owner = await Owner.findById(req.user.id);
+    
+    if (!owner) {
+      return res.status(404).json({ error: 'Owner not found' });
+    }
+
+    // If trial is not active (user has a paid plan), allow access
+    if (!owner.isTrialActive) {
+      return next();
+    }
+
+    // Check if trial has expired
+    const now = new Date();
+    const trialEnd = new Date(owner.trialEndDate);
+
+    if (now > trialEnd) {
+      return res.status(403).json({ 
+        error: 'TRIAL_EXPIRED',
+        message: 'Your 14-day free trial has expired. Please subscribe to continue using the application.',
+        trialExpired: true
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Trial Status Check Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 // Middleware to require owner role
@@ -58,3 +98,4 @@ export const requireReceptionist = (req, res, next) => {
     return res.status(403).json({ error: 'Access denied. Only receptionist can manage inventory.' });
   }
 };
+

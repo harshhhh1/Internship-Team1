@@ -22,12 +22,18 @@ export const signup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Calculate trial dates (14 days from now)
+        const trialStartDate = new Date();
+        const trialEndDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
         const newOwner = new Owner({
             name,
             email,
             password: hashedPassword,
             phone,
-
+            isTrialActive: true,
+            trialStartDate: trialStartDate,
+            trialEndDate: trialEndDate
         })
         await newOwner.save();
 
@@ -115,6 +121,31 @@ export const signin = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // Check trial status for owners
+        let trialStatus = null;
+        if (isOwner) {
+            const now = new Date();
+            const trialEnd = new Date(user.trialEndDate);
+            
+            if (user.isTrialActive && now > trialEnd) {
+                // Trial has expired
+                trialStatus = {
+                    isTrialActive: false,
+                    trialExpired: true,
+                    message: "Your 14-day free trial has expired. Please subscribe to continue using the application."
+                };
+            } else if (user.isTrialActive) {
+                // Calculate days remaining
+                const daysRemaining = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+                trialStatus = {
+                    isTrialActive: true,
+                    trialExpired: false,
+                    daysRemaining: daysRemaining,
+                    trialEndDate: user.trialEndDate
+                };
+            }
+        }
+
         const token = jwt.sign(
             { id: user._id, role: isOwner ? 'owner' : user.role },
             JWT_SECRET,
@@ -130,6 +161,7 @@ export const signin = async (req, res) => {
             name: user.name,
             accessToTabs: isOwner ? null : (user.accessToTabs || []), // null = all access for owners
             salonId: isOwner ? null : user.salonId, // Include salonId for staff
+            trialStatus: trialStatus // Include trial status for owners
         });
     } catch (error) {
         console.error("Signin Error:", error);

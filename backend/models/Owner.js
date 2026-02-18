@@ -37,6 +37,23 @@ const ownerSchema = new mongoose.Schema({
         startDate: { type: Date, default: Date.now },
         isActive: { type: Boolean, default: true }
     },
+    // Trial-related fields for 14-day free trial
+    isTrialActive: {
+        type: Boolean,
+        default: true
+    },
+    trialStartDate: {
+        type: Date,
+        default: Date.now
+    },
+    trialEndDate: {
+        type: Date,
+        default: () => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days from now
+    },
+    trialExpiredMessageShown: {
+        type: Boolean,
+        default: false
+    },
     avatarUrl: {
         type: String,
         default: null,

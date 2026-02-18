@@ -1,125 +1,95 @@
-# Implementation Plan - Session 18 Tasks - COMPLETED ✅
+# Session 19 Implementation - COMPLETED
 
-## Task 1: Expenses Management ✅
+## Task 1: Demo Plan (14 Days Free Trial) - ✅ IMPLEMENTED
 
-### Completed:
-1. **Backend - Role-based Access Control** (`backend/routes/expense.js`):
-   - POST, PUT, DELETE routes: requireAdmin (owner, admin only)
-   - GET routes: requireStaff (all staff can view)
-   
-2. **Backend - Track who added expense** (`backend/controllers/expense.controller.js`):
-   - Added `addedBy` field to track the staff member who added each expense
+### Backend:
+- **auth.js middleware**: Added `checkTrialStatus` middleware that:
+  - Checks if owner's trial has expired
+  - Returns 403 error with `TRIAL_EXPIRED` code when trial is over
+  - Applied to all protected routes
+  
+- **server.js**: Updated to use `checkTrialStatus` middleware on all routes after authentication
 
-3. **Include Expenses in Reports** (`backend/controllers/report.controller.js`):
-   - Revenue report now includes: totalExpenses, previousExpenses, netProfit, profitMargin, expenseByCategory
+### Frontend:
+- **TrialExpiryModal.jsx**: New component showing:
+  - Warning message when trial expires
+  - Subscribe button to redirect to plans page
+  - useTrialStatus hook for checking trial status
+  
+- **ProtectedRoute.jsx**: Updated to show modal when trial expires but allow access to plans page
 
-4. **Frontend - Role-based UI** (`src/pages/admin/Expenses.jsx`):
-   - Added `canManageExpenses` check: only owner/admin can add/edit/delete
-   - Receptionist can only view expenses
-
-5. **Display Expenses in Reports** (`src/pages/admin/revenueandreport.jsx`):
-   - Expenses This Month
-   - Last Month Expenses  
-   - Net Profit (Estimated) = Revenue - Expenses
-   - Profit Margin %
-   - Expenses by Category breakdown
-
----
-
-## Task 2: Inventory Management ✅
-
-### Completed:
-1. **Backend - Role-based Access Control** (`backend/routes/inventory.js`):
-   - GET routes: requireStaff (both admin and receptionist can view)
-   - POST, PUT, DELETE, restock: requireReceptionist (ONLY receptionist can manage)
-   - Added new middleware `requireReceptionist` in `backend/middleware/auth.js`
-
-2. **Frontend - Role-based UI** (`src/pages/admin/Inventory.jsx`):
-   - Added `canManageInventory` check: only receptionist can manage
-   - When userRole is NOT receptionist, buttons are hidden and "View Only" is shown
-
-3. **Features**:
-   - Low stock tracking with automatic status (In Stock/Low Stock/Out of Stock)
-   - Restock functionality
-   - Category filtering
+### Owner Model (already exists):
+- `isTrialActive`: Boolean to track if trial is active
+- `trialStartDate`: Date when trial started
+- `trialEndDate`: Date when trial ends (14 days from registration)
+- `trialExpiredMessageShown`: Boolean to track if expiry message was shown
 
 ---
 
-## Task 3: Walk-in Slot Availability ✅
+## Task 2: Availability Management - ✅ ALREADY IMPLEMENTED
 
-### Completed:
-1. **Backend - Walk-in Slot System** (`backend/controllers/walkin.controller.js`):
-   - Time slots: 9 AM to 7 PM (hourly slots)
-   - Prevents overbooking - checks for existing bookings before creating new ones
-   - Maximum 5 walk-ins per time slot
-   - Added `getAvailableSlots` endpoint (public for customers)
-   - Added `getWalkinStats` endpoint for dashboard
+### Backend:
+- **availability.controller.js**: Functions for:
+  - `setAvailability`: Set staff working days and time slots
+  - `getStaffAvailability`: Get individual staff availability
+  - `getSalonStaffAvailability`: Get all staff availability for a salon
+  - `checkAvailability`: Check if specific slot is available
+  - `getAvailableSlots`: Get available slots for a date
+  
+- **appointment.controller.js**: Already checks staff availability before booking
 
-2. **Backend - Authentication** (`backend/routes/walkin.js`):
-   - Slot availability endpoint is public (no auth needed for customers)
-   - All CRUD operations require authentication
+### Frontend:
+- **AvailabilityManager.jsx**: Component for managing staff availability
+  - Select staff member
+  - Enable/disable days
+  - Select time slots for each day
+  - Fixed API endpoint calls
 
-3. **Database** (`backend/models/Walkin.js`):
-   - Added `timeSlot` field to store selected time slot
-
-4. **Frontend - Walk-in Slot UI** (`src/pages/admin/Walkin.jsx`):
-   - Date picker for selecting date
-   - Time slot selection grid showing available/booked slots
-   - Visual indication of available vs unavailable slots
-   - Prevents selecting already booked slots
-
-5. **Walk-in Stats in Dashboard** (`src/pages/admin/Dashboard.jsx`):
-   - Walk-in queue count (waiting)
-   - Completed walk-ins today
-   - Today's walk-in revenue
-   - This week's walk-in stats
+- **staff.jsx**: Already integrates AvailabilityManager in "Availability" tab
 
 ---
 
-## Summary of Role-based Access:
+## Task 3: Attendance Report - ✅ ALREADY IMPLEMENTED
 
-### Expenses:
-| Action | Owner | Admin | Receptionist |
-|--------|-------|-------|--------------|
-| View | ✅ | ✅ | ✅ |
-| Add | ✅ | ❌ | ❌ |
-| Edit | ✅ | ❌ | ❌ |
-| Delete | ✅ | ❌ | ❌ |
+### Backend:
+- **attendance.controller.js**: 
+  - `getWeeklyAttendance`: Weekly attendance report
+  - `getMonthlyAttendanceReport`: Monthly summary by staff
+  - `getYearlyAttendanceReport`: Yearly summary by month
+  - `getAttendanceCalendar`: Calendar view for month
 
-### Inventory:
-| Action | Owner | Admin | Receptionist |
-|--------|-------|-------|--------------|
-| View | ✅ | ✅ | ✅ |
-| Add | ❌ | ❌ | ✅ |
-| Edit | ❌ | ❌ | ✅ |
-| Delete | ❌ | ❌ | ✅ |
-| Restock | ❌ | ❌ | ✅ |
+### Frontend:
+- **AttendanceReport.jsx**:
+  - Weekly view: Shows attendance for each day of the week
+  - Monthly view: 
+    - Calendar view showing Present (green), Absent (red), Leave (blue) days
+    - Table view showing staff-wise attendance
+  - Yearly view: Monthly summary table
 
-### Walk-in:
-| Action | Owner | Admin | Receptionist | Customer |
-|--------|-------|-------|--------------|----------|
-| View | ✅ | ✅ | ✅ | ❌ |
-| Create | ✅ | ✅ | ✅ | ✅ (public) |
-| Manage | ✅ | ✅ | ✅ | ❌ |
+### Features:
+- Summary cards showing Present/Absent/Leave/Half Day counts
+- Navigation between weeks/months/years
+- Filter by staff member
+- Calendar with colored indicators for each day status
 
 ---
 
 ## Files Modified:
 
 ### Backend:
-1. `backend/middleware/auth.js` - Added requireReceptionist middleware
-2. `backend/routes/expense.js` - requireAdmin for write operations
-3. `backend/controllers/expense.controller.js` - Track addedBy
-4. `backend/controllers/report.controller.js` - Include expenses in reports
-5. `backend/routes/inventory.js` - requireReceptionist for write operations
-6. `backend/routes/walkin.js` - Authentication & public slot availability
-7. `backend/controllers/walkin.controller.js` - Slot booking, stats
-8. `backend/models/Walkin.js` - Add timeSlot field
+1. `backend/middleware/auth.js` - Added trial check middleware
+2. `backend/server.js` - Applied trial check to routes
+3. `backend/routes/availability.js` - Fixed route paths
 
 ### Frontend:
-1. `src/pages/admin/Expenses.jsx` - Role-based UI
-2. `src/pages/admin/Inventory.jsx` - Role-based UI
-3. `src/pages/admin/Walkin.jsx` - Slot selection UI
-4. `src/pages/admin/Dashboard.jsx` - Walk-in stats
-5. `src/pages/admin/revenueandreport.jsx` - Expense stats
+1. `src/components/TrialExpiryModal.jsx` - NEW
+2. `src/components/ProtectedRoute.jsx` - Added trial modal
+3. `src/components/AvailabilityManager.jsx` - Fixed API calls
+
+---
+
+## Note:
+- MongoDB connection requires proper ATLAS_URI in backend/.env file
+- The application will lock after 14-day trial expires
+- Users must subscribe to a plan to continue using the app
 

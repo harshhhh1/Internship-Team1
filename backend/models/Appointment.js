@@ -37,6 +37,19 @@ const appointmentSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    timeSlot: {
+        type: String,
+        required: false,
+        // Format: "10:00" for 10:00 AM
+    },
+    startTime: {
+        type: String,
+        required: false,
+    },
+    endTime: {
+        type: String,
+        required: false,
+    },
     status: {
         type: String,
         enum: ["pending", "confirmed", "completed", "cancelled"],
