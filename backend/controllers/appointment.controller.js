@@ -679,3 +679,74 @@ export const getEarningsPageData = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Check staff availability and time slot conflicts
+export const checkAvailability = async (req, res) => {
+    try {
+        const { salonId, staffId, date, excludeAppointmentId } = req.query;
+        
+        if (!salonId || !date) {
+            return res.status(400).json({ message: "Salon ID and date are required" });
+        }
+
+        const appointmentDate = new Date(date);
+        const startOfDay = new Date(appointmentDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(appointmentDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Build filter for appointments on the same day
+        let filter = {
+            salonId: new mongoose.Types.ObjectId(salonId),
+            date: { $gte: startOfDay, $lte: endOfDay },
+            status: { $in: ['pending', 'confirmed'] } // Only check active appointments
+        };
+
+        // If checking for specific staff, add to filter
+        if (staffId) {
+            filter.staffId = new mongoose.Types.ObjectId(staffId);
+        }
+
+        // Exclude current appointment when editing
+        if (excludeAppointmentId) {
+            filter._id = { $ne: new mongoose.Types.ObjectId(excludeAppointmentId) };
+        }
+
+        // Get all appointments for the day
+        const appointments = await Appointment.find(filter)
+            .populate('staffId', 'name')
+            .lean();
+
+        // Get all staff for the salon to check their availability status
+        const allStaff = await Staff.find({ 
+            salonId: new mongoose.Types.ObjectId(salonId),
+            isActive: true,
+            onLeave: false
+        }).select('_id name');
+
+        // Format booked time slots
+        const bookedSlots = appointments.map(app => ({
+            time: new Date(app.date).toISOString(),
+            staffId: app.staffId?._id?.toString(),
+            staffName: app.staffId?.name,
+            appointmentId: app._id
+        }));
+
+        res.status(200).json({
+            available: true,
+            bookedSlots,
+            availableStaff: allStaff.map(s => ({
+                _id: s._id,
+                name: s.name,
+                isAvailable: !appointments.some(app => 
+                    app.staffId?._id?.toString() === s._id.toString() &&
+                    new Date(app.date).getTime() === appointmentDate.getTime()
+                )
+            }))
+        });
+
+    } catch (error) {
+        console.error("Check Availability Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

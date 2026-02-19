@@ -9,8 +9,10 @@ import {
     getTodayStats,
     getRevenueStats,
     getDashboardStats,
-    getEarningsPageData
+    getEarningsPageData,
+    checkAvailability
 } from "../controllers/appointment.controller.js";
+
 import { authenticateToken, requireStaff } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -22,7 +24,9 @@ router.post("/", createAppointment);
 router.use(authenticateToken);
 
 // All appointment operations require staff role (owners and staff can manage appointments)
+router.get("/check-availability", requireStaff, checkAvailability);
 router.get("/today-stats", requireStaff, getTodayStats);
+
 router.get("/revenue-stats", requireStaff, getRevenueStats);
 router.get("/dashboard-stats", requireStaff, getDashboardStats);
 router.get("/earnings-data", requireStaff, getEarningsPageData);

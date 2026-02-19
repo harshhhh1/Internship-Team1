@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaSave, FaClock, FaList, FaChevronLeft, FaChevronRight, FaUserCircle } from 'react-icons/fa';
+import { FaCalendarAlt, FaSave, FaClock, FaList, FaChevronLeft, FaChevronRight, FaChartBar } from 'react-icons/fa';
 import { Calendar, CalendarDayButton } from './ui/calendar';
 import { cn } from '../lib/utils';
 import { useSalon } from '../context/SalonContext';
@@ -8,7 +8,7 @@ const Attendance = () => {
     const { selectedSalon } = useSalon();
     const userRole = localStorage.getItem('role');
 
-    const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
+    const [viewMode, setViewMode] = useState('table'); // 'table', 'calendar', or 'reports'
 
     // Table View State
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -16,9 +16,7 @@ const Attendance = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
-
-    const canEdit = userRole === 'receptionist' || userRole === 'owner' || userRole === 'admin'; // Keeping admin for now just in case, but prompt said remove admin role from DB.
-
+    const canEdit = userRole === 'receptionist' || userRole === 'owner' || userRole === 'admin';
 
     // Calendar View State
     const [staffList, setStaffList] = useState([]);
@@ -26,12 +24,37 @@ const Attendance = () => {
     const [monthlyAttendance, setMonthlyAttendance] = useState([]);
     const [calendarMonth, setCalendarMonth] = useState(new Date());
 
+    // Reports View State
+    const [reportType, setReportType] = useState('monthly'); // 'weekly', 'monthly', 'yearly'
+    const [reportData, setReportData] = useState(null);
+    const [reportLoading, setReportLoading] = useState(false);
+    const [selectedReportStaff, setSelectedReportStaff] = useState('');
+    
+    // Get current date info for defaults
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+    
+    // Calculate current week number
+    const startOfYear = new Date(currentYear, 0, 1);
+    const pastDays = (currentDate - startOfYear) / 86400000;
+    const currentWeek = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    
+    const [reportMonth, setReportMonth] = useState(currentMonth);
+    const [reportYear, setReportYear] = useState(currentYear);
+    const [reportWeek, setReportWeek] = useState(currentWeek);
+
+
+
+
     useEffect(() => {
         if (selectedSalon) {
             if (viewMode === 'table') {
                 fetchDailyAttendance();
-            } else {
+            } else if (viewMode === 'calendar') {
                 fetchStaffList();
+            } else if (viewMode === 'reports') {
+                fetchStaffListForReports();
             }
         }
     }, [selectedSalon, selectedDate, viewMode]);
@@ -42,6 +65,11 @@ const Attendance = () => {
         }
     }, [selectedStaff, calendarMonth, viewMode, selectedSalon]);
 
+    useEffect(() => {
+        if (viewMode === 'reports' && selectedReportStaff && selectedSalon) {
+            fetchAttendanceReport();
+        }
+    }, [reportType, selectedReportStaff, reportMonth, reportYear, reportWeek, viewMode, selectedSalon]);
 
 
     // --- API Calls ---
@@ -77,13 +105,30 @@ const Attendance = () => {
             if (response.ok) {
                 const data = await response.json();
                 setStaffList(data);
-                // Default select first staff if none selected
                 if (!selectedStaff && data.length > 0) {
                     setSelectedStaff(data[0]._id);
                 }
             }
         } catch (error) {
             console.error("Error fetching staff list:", error);
+        }
+    };
+
+    const fetchStaffListForReports = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5050/staff?salonId=${selectedSalon._id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setStaffList(data);
+                if (!selectedReportStaff && data.length > 0) {
+                    setSelectedReportStaff(data[0]._id);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching staff list for reports:", error);
         }
     };
 
@@ -105,6 +150,43 @@ const Attendance = () => {
             }
         } catch (error) {
             console.error("Error fetching monthly attendance:", error);
+        }
+    };
+
+    const fetchAttendanceReport = async () => {
+        try {
+            setReportLoading(true);
+            const token = localStorage.getItem('token');
+            
+            let url = `http://localhost:5050/attendance/report?staffId=${selectedReportStaff}&type=${reportType}`;
+            
+            if (reportType === 'weekly') {
+                // For weekly, we need the week start date
+                const startOfWeek = new Date(reportYear, 0, 1);
+                startOfWeek.setDate(startOfWeek.getDate() + (reportWeek - 1) * 7);
+                url += `&weekStart=${startOfWeek.toISOString().split('T')[0]}`;
+
+            } else if (reportType === 'monthly') {
+                url += `&month=${reportMonth}&year=${reportYear}`;
+            } else if (reportType === 'yearly') {
+                url += `&year=${reportYear}`;
+            }
+
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setReportData(data);
+            } else {
+                setReportData(null);
+            }
+        } catch (error) {
+            console.error("Error fetching attendance report:", error);
+            setReportData(null);
+        } finally {
+            setReportLoading(false);
         }
     };
 
@@ -154,7 +236,6 @@ const Attendance = () => {
     const handleStatusChange = (index, value) => {
         const updated = [...attendanceData];
         if (!updated[index].attendance) updated[index].attendance = {};
-
         updated[index].attendance.status = value;
 
         if ((value === 'Present' || value === 'Half Day') && !updated[index].attendance.checkIn) {
@@ -227,6 +308,263 @@ const Attendance = () => {
         });
     };
 
+    // Generate year options
+    const years = [];
+    for (let i = currentYear; i >= currentYear - 5; i--) {
+
+        years.push(i);
+    }
+
+    // Months array
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Render Reports View
+    const renderReportsView = () => {
+        return (
+            <div className="space-y-6">
+                {/* Report Controls */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Staff</label>
+                            <select
+                                value={selectedReportStaff}
+                                onChange={(e) => setSelectedReportStaff(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-gray-50"
+                            >
+                                <option value="">Select Staff</option>
+                                {staffList.map(staff => (
+                                    <option key={staff._id} value={staff._id}>{staff.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setReportType('weekly')}
+                                className={`px-4 py-2.5 rounded-xl font-medium transition-all ${
+                                    reportType === 'weekly' 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Weekly
+                            </button>
+                            <button
+                                onClick={() => setReportType('monthly')}
+                                className={`px-4 py-2.5 rounded-xl font-medium transition-all ${
+                                    reportType === 'monthly' 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                onClick={() => setReportType('yearly')}
+                                className={`px-4 py-2.5 rounded-xl font-medium transition-all ${
+                                    reportType === 'yearly' 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Yearly
+                            </button>
+                        </div>
+
+                        <div className="flex gap-2">
+                            {reportType === 'monthly' && (
+                                <>
+                                    <select
+                                        value={reportMonth}
+                                        onChange={(e) => setReportMonth(parseInt(e.target.value))}
+                                        className="px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-gray-50"
+                                    >
+                                        {months.map((month, idx) => (
+                                            <option key={idx} value={idx + 1}>{month}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={reportYear}
+                                        onChange={(e) => setReportYear(parseInt(e.target.value))}
+                                        className="px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-gray-50"
+                                    >
+                                        {years.map(year => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </>
+                            )}
+                            {reportType === 'yearly' && (
+                                <select
+                                    value={reportYear}
+                                    onChange={(e) => setReportYear(parseInt(e.target.value))}
+                                    className="px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-gray-50"
+                                >
+                                    {years.map(year => (
+                                        <option key={year} value={year}>{year}</option>
+                                    ))}
+                                </select>
+                            )}
+                            {reportType === 'weekly' && (
+                                <select
+                                    value={reportWeek}
+                                    onChange={(e) => setReportWeek(parseInt(e.target.value))}
+                                    className="px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-gray-50"
+                                >
+                                    {Array.from({ length: 52 }, (_, i) => i + 1).map(week => (
+                                        <option key={week} value={week}>Week {week}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+
+                {/* Report Results */}
+                {reportLoading ? (
+                    <div className="text-center py-12 text-gray-500 font-medium">Loading report data...</div>
+                ) : reportData ? (
+                    <div className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                                <p className="text-sm text-green-600 font-medium">Present</p>
+                                <p className="text-3xl font-bold text-green-700">{reportData.summary?.present || 0}</p>
+                            </div>
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                <p className="text-sm text-red-600 font-medium">Absent</p>
+                                <p className="text-3xl font-bold text-red-700">{reportData.summary?.absent || 0}</p>
+                            </div>
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                <p className="text-sm text-yellow-600 font-medium">Half Day</p>
+                                <p className="text-3xl font-bold text-yellow-700">{reportData.summary?.halfDay || 0}</p>
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                <p className="text-sm text-blue-600 font-medium">Leave</p>
+                                <p className="text-3xl font-bold text-blue-700">{reportData.summary?.leave || 0}</p>
+                            </div>
+                        </div>
+
+                        {/* Monthly Calendar View */}
+                        {reportType === 'monthly' && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                                    {months[reportMonth - 1]} {reportYear} - Calendar View
+                                </h3>
+                                <div className="grid grid-cols-7 gap-2">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="text-center font-semibold text-gray-500 py-2">{day}</div>
+                                    ))}
+                                    {reportData.calendar?.map((day, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`p-2 min-h-[60px] rounded-lg border ${
+                                                day.status === 'Present' ? 'bg-green-100 border-green-300' :
+                                                day.status === 'Absent' ? 'bg-red-100 border-red-300' :
+                                                day.status === 'Half Day' ? 'bg-yellow-100 border-yellow-300' :
+                                                day.status === 'Leave' ? 'bg-blue-100 border-blue-300' :
+                                                'bg-gray-50 border-gray-200'
+                                            }`}
+                                        >
+                                            <div className="text-sm font-bold text-gray-700">{day.date}</div>
+                                            {day.status && (
+                                                <div className={`text-xs font-medium mt-1 ${
+                                                    day.status === 'Present' ? 'text-green-700' :
+                                                    day.status === 'Absent' ? 'text-red-700' :
+                                                    day.status === 'Half Day' ? 'text-yellow-700' :
+                                                    'text-blue-700'
+                                                }`}>
+                                                    {day.status}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Yearly View */}
+                        {reportType === 'yearly' && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">{reportYear} - Yearly View</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Object.entries(reportData.monthlyBreakdown || {}).map(([month, stats]) => (
+                                        <div key={month} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                            <h4 className="font-bold text-gray-800 mb-3">{month}</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-green-600">Present:</span>
+                                                    <span className="font-semibold">{stats.present} days</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-red-600">Absent:</span>
+                                                    <span className="font-semibold">{stats.absent} days</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-yellow-600">Half Day:</span>
+                                                    <span className="font-semibold">{stats.halfDay} days</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-blue-600">Leave:</span>
+                                                    <span className="font-semibold">{stats.leave} days</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Weekly View */}
+                        {reportType === 'weekly' && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                                    Week {reportWeek} - {reportYear}
+                                </h3>
+
+                                <div className="grid grid-cols-7 gap-2">
+                                    {reportData.dailyBreakdown?.map((day, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`p-3 rounded-lg border text-center ${
+                                                day.status === 'Present' ? 'bg-green-100 border-green-300' :
+                                                day.status === 'Absent' ? 'bg-red-100 border-red-300' :
+                                                day.status === 'Half Day' ? 'bg-yellow-100 border-yellow-300' :
+                                                day.status === 'Leave' ? 'bg-blue-100 border-blue-300' :
+                                                'bg-gray-50 border-gray-200'
+                                            }`}
+                                        >
+                                            <div className="text-xs text-gray-500">{day.dayName}</div>
+                                            <div className="text-sm font-bold text-gray-700">{day.date}</div>
+                                            {day.status && (
+                                                <div className={`text-xs font-medium mt-1 ${
+                                                    day.status === 'Present' ? 'text-green-700' :
+                                                    day.status === 'Absent' ? 'text-red-700' :
+                                                    day.status === 'Half Day' ? 'text-yellow-700' :
+                                                    'text-blue-700'
+                                                }`}>
+                                                    {day.status}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-gray-500 font-medium">
+                        Select a staff member to view their attendance report
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="p-2 md:p-4">
@@ -246,6 +584,13 @@ const Attendance = () => {
                                 }`}
                         >
                             <FaCalendarAlt className="inline mr-2" /> Monthly View
+                        </button>
+                        <button
+                            onClick={() => setViewMode('reports')}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'reports' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            <FaChartBar className="inline mr-2" /> Reports
                         </button>
                     </div>
 
@@ -400,9 +745,9 @@ const Attendance = () => {
                     )}
                 </div>
 
-            ) : (
+            ) : viewMode === 'calendar' ? (
                 <div className="space-y-8 animate-in fade-in duration-500">
-                    {/* Step 2: Choose Stylist (copied style from BookAppointment) */}
+                    {/* Choose Stylist */}
                     <div className="p-4 sm:p-6 mt-4">
                         <label className="block text-lg font-bold text-gray-900 mb-6">
                             Step 1: Choose Stylist
@@ -441,7 +786,6 @@ const Attendance = () => {
                             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-900">Monthly Attendance Calendar</h3>
-                                    {/* <p className="text-gray-500">Select month to view full history</p> */}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="grid grid-cols-2 gap-2">
@@ -511,6 +855,8 @@ const Attendance = () => {
                         </div>
                     )}
                 </div>
+            ) : (
+                renderReportsView()
             )}
         </div>
     );

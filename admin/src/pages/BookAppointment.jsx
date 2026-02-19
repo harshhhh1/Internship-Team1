@@ -24,8 +24,17 @@ export default function BookAppointment() {
         const fetchSalons = async () => {
             try {
                 const res = await fetch("http://localhost:5050/salons");
+                if (!res.ok) {
+                    console.error("Error fetching salons:", res.status, res.statusText);
+                    return;
+                }
                 const data = await res.json();
-                setSalons(data);
+                // Ensure data is an array before setting
+                if (Array.isArray(data)) {
+                    setSalons(data);
+                } else {
+                    console.error("Invalid response format:", data);
+                }
             } catch (err) {
                 console.error("Error fetching salons:", err);
             }

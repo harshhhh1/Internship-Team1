@@ -44,10 +44,9 @@ export const getSalons = async (req, res) => {
     } else if (req.user && req.user.role === 'owner') {
       filter.ownerId = req.user.id;
     } else {
-      // Public request without ownerId - return empty or error
-      // Actually, if it's public, maybe we want to list all salons?
-      // But for security isolation, let's require ownerId for now if not logged in
-      return res.status(400).json({ message: "Owner ID is required" });
+      // Public request - return all active salons for booking flow
+      const salons = await Salon.find(filter).populate('ownerId', 'name email');
+      return res.status(200).json(salons);
     }
 
     const salons = await Salon.find(filter).populate('ownerId', 'name email');

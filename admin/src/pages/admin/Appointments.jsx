@@ -23,9 +23,13 @@ function Appointments() {
   const [salons, setSalons] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Availability state
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   // Form State
-
   const [formData, setFormData] = useState({
     clientName: '',
     clientMobile: '',
@@ -168,7 +172,9 @@ function Appointments() {
       });
       if (response.ok) {
         const data = await response.json();
-        setStaff(data);
+        // Filter active staff who are not on leave
+        const availableStaff = data.filter(s => s.isActive && !s.onLeave);
+        setStaff(availableStaff);
       }
     } catch (error) {
       console.error("Error fetching staff:", error);
@@ -192,6 +198,63 @@ function Appointments() {
     }
   };
 
+  // Check availability when date, time, or staff changes
+  const checkAvailability = async () => {
+    if (!formData.date || !formData.time || !selectedSalon) return;
+    
+    setCheckingAvailability(true);
+    setAvailabilityError('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const appointmentDate = new Date(`${formData.date}T${formData.time}`);
+      
+      let url = `http://localhost:5050/appointments/check-availability?salonId=${selectedSalon._id}&date=${appointmentDate.toISOString()}`;
+      
+      // If editing, exclude current appointment
+      if (formData._id) {
+        url += `&excludeAppointmentId=${formData._id}`;
+      }
+      
+      // If staff is selected, check specifically for that staff
+      if (formData.staffId) {
+        url += `&staffId=${formData.staffId}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBookedSlots(data.bookedSlots || []);
+        
+        // Check if selected time slot is already booked
+        const isTimeSlotBooked = data.bookedSlots.some(slot => {
+          const slotTime = new Date(slot.time).getTime();
+          const selectedTime = appointmentDate.getTime();
+          return slotTime === selectedTime;
+        });
+        
+        if (isTimeSlotBooked) {
+          setAvailabilityError('This time slot is already booked. Please select a different time.');
+        } else if (formData.staffId) {
+          // Check if selected staff is available at this time
+          const selectedStaff = data.availableStaff?.find(s => s._id === formData.staffId);
+          if (selectedStaff && !selectedStaff.isAvailable) {
+            setAvailabilityError('Selected staff is not available at this time. Please choose another staff or time slot.');
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking availability:", error);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedSalon) {
       fetchServices();
@@ -203,9 +266,21 @@ function Appointments() {
     fetchSalons();
   }, []);
 
+  // Check availability when date, time, or staff changes
+  useEffect(() => {
+    if (formData.date && formData.time) {
+      checkAvailability();
+    }
+  }, [formData.date, formData.time, formData.staffId]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear availability error when user changes inputs
+    if (name === 'date' || name === 'time' || name === 'staffId') {
+      setAvailabilityError('');
+    }
   };
 
   const handleEdit = (appointment) => {
@@ -229,6 +304,8 @@ function Appointments() {
           price: data.price || '',
         });
         setShowModal(true);
+        // Check availability for the appointment being edited
+        setTimeout(() => checkAvailability(), 100);
       })
       .catch(err => {
         console.error("Error fetching appointment for edit:", err);
@@ -256,6 +333,12 @@ function Appointments() {
     try {
       if (!formData.date || !formData.time) {
         alert('Please select both date and time.');
+        return;
+      }
+
+      // Check for availability errors before submitting
+      if (availabilityError) {
+        alert(availabilityError);
         return;
       }
 
@@ -296,11 +379,15 @@ function Appointments() {
           staffId: '',
           salonId: selectedSalon?._id || ''
         });
+        setAvailabilityError('');
+        setBookedSlots([]);
       } else {
-        alert('Failed to save appointment');
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to save appointment');
       }
     } catch (error) {
       console.error("Error creating appointment:", error);
+      alert('An error occurred while saving the appointment.');
     }
   };
 
@@ -329,6 +416,35 @@ function Appointments() {
     }
   };
 
+  // Helper to check if a staff member is available
+  const isStaffAvailable = (staffId) => {
+    if (!bookedSlots.length || !formData.date || !formData.time) return true;
+    
+    const appointmentDate = new Date(`${formData.date}T${formData.time}`);
+    
+    // Check if this staff has a booking at the same time
+    const hasConflict = bookedSlots.some(slot => {
+      const slotTime = new Date(slot.time).getTime();
+      const selectedTime = appointmentDate.getTime();
+      return slot.staffId === staffId && slotTime === selectedTime;
+    });
+    
+    return !hasConflict;
+  };
+
+  // Helper to check if a time slot is booked
+  const isTimeSlotBooked = (time) => {
+    if (!bookedSlots.length || !formData.date) return false;
+    
+    const appointmentDate = new Date(`${formData.date}T${time}`);
+    
+    return bookedSlots.some(slot => {
+      const slotTime = new Date(slot.time).getTime();
+      const selectedTime = appointmentDate.getTime();
+      return slotTime === selectedTime;
+    });
+  };
+
   return (
     <div className="min-h-screen">
       <div>
@@ -350,6 +466,8 @@ function Appointments() {
                   staffId: '',
                   salonId: selectedSalon?._id || ''
                 });
+                setAvailabilityError('');
+                setBookedSlots([]);
                 setShowModal(true);
               }}
             >
@@ -500,15 +618,30 @@ function Appointments() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Time</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Time
+                      {checkingAvailability && (
+                        <span className="ml-2 text-xs text-primary animate-pulse">Checking...</span>
+                      )}
+                    </label>
                     <input
                       name="time"
                       value={formData.time}
                       onChange={handleInputChange}
                       type="time"
                       required
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 cursor-pointer"
+                      className={`w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 cursor-pointer ${
+                        availabilityError ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                      }`}
                     />
+                    {availabilityError && (
+                      <p className="mt-1 text-xs text-red-600 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {availabilityError}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -545,7 +678,12 @@ function Appointments() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Staff</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Staff
+                      {formData.date && formData.time && (
+                        <span className="ml-1 text-xs text-gray-500">(shows availability)</span>
+                      )}
+                    </label>
                     <select
                       name="staffId"
                       value={formData.staffId}
@@ -554,10 +692,25 @@ function Appointments() {
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50 appearance-none cursor-pointer"
                     >
                       <option value="">Select staff</option>
-                      {staff.map(s => (
-                        <option key={s._id} value={s._id}>{s.name}</option>
-                      ))}
+                      {staff.map(s => {
+                        const available = isStaffAvailable(s._id);
+                        return (
+                          <option 
+                            key={s._id} 
+                            value={s._id}
+                            disabled={!available}
+                            className={!available ? 'text-gray-400' : ''}
+                          >
+                            {s.name}{!available ? ' (Booked)' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
+                    {formData.staffId && !isStaffAvailable(formData.staffId) && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        This staff is already booked at the selected time.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -580,6 +733,21 @@ function Appointments() {
                     )}
                   </div>
                 </div>
+                
+                {/* Availability Summary */}
+                {formData.date && formData.time && bookedSlots.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-2">Booked Slots for {new Date(formData.date).toLocaleDateString()}</h4>
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {bookedSlots.map((slot, idx) => (
+                        <div key={idx} className="text-xs text-blue-700 flex justify-between">
+                          <span>{new Date(slot.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>{slot.staffName || 'Unknown Staff'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </form>
             </div>
 
@@ -595,9 +763,14 @@ function Appointments() {
               <button
                 form="appointment-form"
                 type="submit"
-                className="flex-1 px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-md shadow-primary/20 active:scale-95"
+                disabled={!!availabilityError || checkingAvailability}
+                className={`flex-1 px-6 py-2.5 font-bold rounded-xl transition-all shadow-md ${
+                  availabilityError || checkingAvailability
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-primary text-white hover:bg-secondary shadow-primary/20 active:scale-95'
+                }`}
               >
-                {formData._id ? 'Update Appointment' : 'Schedule Appointment'}
+                {checkingAvailability ? 'Checking...' : formData._id ? 'Update Appointment' : 'Schedule Appointment'}
               </button>
             </div>
           </div>

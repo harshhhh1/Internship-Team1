@@ -17,7 +17,9 @@ export default function Walkin() {
         time: ''
     });
     const [timeError, setTimeError] = useState('');
-
+    const [staffError, setStaffError] = useState('');
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState([]);
 
     // Set default time when modal opens
     useEffect(() => {
@@ -28,10 +30,6 @@ export default function Walkin() {
             setFormData(prev => ({ ...prev, time: `${hours}:${minutes}` }));
         }
     }, [showModal]);
-
-
-
-
 
     const fetchWalkins = useCallback(async () => {
         try {
@@ -63,7 +61,7 @@ export default function Walkin() {
             });
             if (response.ok) {
                 const data = await response.json();
-                // Filter: Active, Not on leave, and role is NOT receptionist (since receptionists don't usually serve walk-ins)
+                // Filter: Active, Not on leave, and role is NOT receptionist
                 const stylists = data.filter(s => s.isActive && !s.onLeave && s.role !== 'receptionist');
                 setStaff(stylists);
             }
@@ -88,6 +86,8 @@ export default function Walkin() {
             console.error("Error fetching services:", error);
         }
     }, [selectedSalon]);
+
+    // Check availability with appointments API
 
     useEffect(() => {
         fetchWalkins();
