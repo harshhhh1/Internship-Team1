@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
@@ -22,11 +22,11 @@ function Plans_and_pricing() {
       if (userId && role === 'owner') {
         try {
           // Fetch current plan
-          const response = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.subscription?.branchLimit) {
-              setBranches(data.subscription.branchLimit);
+          const planResponse = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`);
+          if (planResponse.ok) {
+            const planData = await planResponse.json();
+            if (planData.subscription?.branchLimit) {
+              setBranches(planData.subscription.branchLimit);
             }
           }
           
@@ -156,22 +156,7 @@ function Plans_and_pricing() {
     try {
       const computedPrice = calculatePrice(plan);
 
-      // First, update the plan using owner/update-plan
-      const response = await fetch('http://localhost:5050/owner/update-plan', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          planName: plan.name,
-          price: Number(computedPrice) || 0,
-          branchLimit: Number(plan.maxBranches),
-          billingCycle: isAnnual ? 'yearly' : 'monthly'
-        })
-      });
-
-      // Then, activate the plan to end the trial
+      // Activate the plan to end the trial
       const activateResponse = await fetch('http://localhost:5050/auth/activate-plan', {
         method: 'POST',
         headers: {
@@ -192,7 +177,7 @@ function Plans_and_pricing() {
         alert(`Successfully subscribed to ${plan.name}!`);
         // Update localStorage trial status
         localStorage.setItem('trialStatus', JSON.stringify({ isTrialActive: false, trialExpired: false }));
-        navigate('/dashboard/settings'); // Redirect to settings to see updated plan
+        navigate('/dashboard'); // Redirect to dashboard after subscription
       } else {
         alert(data.message || "Failed to update plan");
       }
