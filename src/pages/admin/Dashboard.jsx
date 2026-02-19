@@ -10,7 +10,9 @@ import { useSalon } from '../../context/SalonContext';
 function Dashboard() {
   const { selectedSalon } = useSalon();
   const [appointments, setAppointments] = useState([]);
+  const [walkins, setWalkins] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
   const [dashboardStats, setDashboardStats] = useState({
     totalEarnings: 0,
@@ -121,8 +123,47 @@ function Dashboard() {
     new Date(app.date).toDateString() === new Date().toDateString()
   );
 
+  // Fetch Walkins
+  useEffect(() => {
+    const fetchWalkins = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        let url = 'http://localhost:5050/walkins';
+        if (selectedSalon) {
+          url += `?salonId=${selectedSalon._id}`;
+        }
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWalkins(data);
+        }
+      } catch (error) {
+        console.error("Error fetching walkins:", error);
+      }
+    };
+    fetchWalkins();
+  }, [selectedSalon]);
+
+  // Get today's walkins
+  const todaysWalkins = walkins.filter(walkin =>
+    new Date(walkin.date).toDateString() === new Date().toDateString()
+  );
+
+  // Combine today's appointments and walkins for upcoming section
+  const todaysCombined = [
+    ...todaysAppointments.map(app => ({ ...app, itemType: 'appointment' })),
+    ...todaysWalkins.map(walkin => ({ ...walkin, itemType: 'walkin' }))
+  ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
   return (
-    // 'flex-col' for Mobile (stacks vertically), 'lg:flex-row' for Desktop (side-by-side)
+<>
+
+    {/*'flex-col' for Mobile (stacks vertically), 'lg:flex-row' for Desktop (side-by-side) */}
     <div className="flex flex-col lg:flex-row gap-8 overflow-y-auto">
       {/* Left Column - Main Content */}
       <div className="flex-2 flex flex-col gap-6 w-full">
@@ -184,11 +225,11 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Upcoming Appointments */}
+        {/* Upcoming Appointments - Today's Appointments & Walkins */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 overflow-x-auto">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-lg font-semibold text-gray-900">
-              {selectedDate ? `Appointments for ${selectedDate.toLocaleDateString()}` : 'Upcoming Appointments'}
+              {selectedDate ? `Appointments for ${selectedDate.toLocaleDateString()}` : "Today's Appointments & Walkins"}
             </h3>
             {selectedDate ? (
               <button
@@ -202,26 +243,42 @@ function Dashboard() {
             )}
           </div>
           <div className="flex flex-col gap-4 min-w-75">
-            {appointments
-              .filter(app => {
-                if (!selectedDate) return true;
-                return new Date(app.date).toDateString() === selectedDate.toDateString();
-              })
-              .slice(0, selectedDate ? 50 : 5)
-              .map(app => (
+            {selectedDate ? (
+              // Show appointments for selected date
+              appointments
+              .filter(app => new Date(app.date).toDateString() === selectedDate.toDateString())
+                .slice(0, 50)
+                .map(app => (
+                  <AppointmentRow
+                    key={app._id}
+                    name={app.clientName}
+                    time={app.time ? new Date(`1970-01-01T${app.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                    date={new Date(app.date).toLocaleDateString()}
+                    type={app.serviceId?.name || 'Service'}
+                    />
+                ))
+                ) : (
+              // Show today's combined appointments and walkins
+              todaysCombined.slice(0, 5).map(item => (
                 <AppointmentRow
-                  key={app._id}
-                  name={app.clientName}
-                  time={app.time ? new Date(`1970-01-01T${app.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
-                  date={new Date(app.date).toLocaleDateString()}
-                  type={app.serviceId?.name || 'Service'}
+                  key={item._id}
+                  name={item.clientName}
+                  time={item.time ? new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  date={new Date(item.date).toLocaleDateString()}
+                  type={item.serviceId?.name || item.serviceId || 'Service'}
+                  isWalkin={item.itemType === 'walkin'}
                 />
-              ))}
-            {appointments.length === 0 && (
-              <p className="text-gray-500 text-sm text-center py-4">No appointments found.</p>
+              ))
+            )}
+            {todaysCombined.length === 0 && !selectedDate && (
+              <p className="text-gray-500 text-sm text-center py-4">No appointments or walkins for today.</p>
+            )}
+            {selectedDate && appointments.filter(app => new Date(app.date).toDateString() === selectedDate.toDateString()).length === 0 && (
+              <p className="text-gray-500 text-sm text-center py-4">No appointments for this date.</p>
             )}
           </div>
         </div>
+
 
       </div>
 
@@ -264,6 +321,7 @@ function Dashboard() {
       </div>
 
     </div>
+                </>
   );
 }
 

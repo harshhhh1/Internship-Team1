@@ -3,12 +3,17 @@ import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { plans } from '../config/plans';
 
 function Plans_and_pricing() {
 
   const [isAnnual, setIsAnnual] = useState(false);
   const [branches, setBranches] = useState(1);
+  const [currentPlan, setCurrentPlan] = useState(null);
+  const [hasUsedDemo, setHasUsedDemo] = useState(false);
   const navigate = useNavigate();
+
+
 
   React.useEffect(() => {
     const fetchCurrentPlan = async () => {
@@ -22,7 +27,15 @@ function Plans_and_pricing() {
             if (data.subscription?.branchLimit) {
               setBranches(data.subscription.branchLimit);
             }
+            if (data.subscription?.planName) {
+              setCurrentPlan(data.subscription.planName);
+            }
+            if (data.subscription?.hasUsedDemo) {
+              setHasUsedDemo(data.subscription.hasUsedDemo);
+            }
+
           }
+
         } catch (error) {
           console.error("Error fetching current plan:", error);
         }
@@ -37,68 +50,6 @@ function Plans_and_pricing() {
   // Basic: Free (1 branch only)
   // Premium: $29 + $15 per extra branch
   // Corporate: $99 + $49 per extra branch
-
-  const plans = [
-    {
-      name: "Basic Style",
-      description: "Essential tools for independent stylists.",
-      basePrice: 0,
-      extraBranchPrice: 0,
-      maxBranches: 1, // Restricted
-      features: [
-        "Online Appointment Booking",
-        "Digital Client Cards",
-        "Basic Service History",
-        "Email Support",
-        "Trend Updates Newsletter"
-      ],
-      notIncluded: [
-        "Client Consultation Tools",
-        "Priority Support",
-        "Inventory Management",
-        "Multiple Branches"
-      ],
-      cta: "Get Started",
-      highlight: false
-    },
-    {
-      name: "Premium Salon",
-      description: "Complete management for growing salons.",
-      basePrice: 299,
-      extraBranchPrice: 150,
-      maxBranches: 10,
-      features: [
-        "Everything in Basic",
-        "Client Consultation Tools",
-        "Priority Support",
-        "Inventory Management",
-        "Product Sales Tracking",
-        "Marketing & Promotions",
-        "Multi-Branch Support"
-      ],
-      notIncluded: [],
-      cta: "Upgrade Now",
-      highlight: true
-    },
-    {
-      name: "Enterprise",
-      description: "Tailored solutions for salon chains.",
-      basePrice: 499,
-      extraBranchPrice: 490,
-      maxBranches: 100,
-      features: [
-        "Everything in Premium",
-        "Dedicated Account Manager",
-        "Staff Performance Analytics",
-        "Multi-Location Management",
-        "API Access for HR Systems",
-        "Unlimited Branches"
-      ],
-      notIncluded: [],
-      cta: "Contact Sales",
-      highlight: false
-    }
-  ];
 
   const calculatePrice = (plan) => {
     let price = plan.basePrice;
@@ -245,8 +196,11 @@ function Plans_and_pricing() {
 
           {/* Pricing Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            {plans.map((plan, index) => {
-              const isDisabled = branches > plan.maxBranches;
+          {plans.map((plan, index) => {
+              const isDisabled = branches > plan.maxBranches || (plan.isDemo && hasUsedDemo);
+              const isCurrentPlan = currentPlan === plan.name;
+              const isDemoUsed = plan.isDemo && hasUsedDemo;
+
 
               return (
                 <div
@@ -254,13 +208,25 @@ function Plans_and_pricing() {
                   className={`relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-2 ${plan.highlight
                     ? 'bg-white shadow-[0_20px_40px_rgba(147,129,255,0.25)] border-2 border-primary z-10 scale-105 md:scale-110'
                     : 'bg-white/80 backdrop-blur-sm shadow-xl border border-gray-100 hover:shadow-2xl'
-                    } ${isDisabled ? 'opacity-60 grayscale' : 'ring-2 ring-primary/20 bg-linear-to-b from-white to-primary/5'}`}
+                    } ${isDisabled ? 'opacity-60 grayscale' : 'ring-2 ring-primary/20 bg-linear-to-b from-white to-primary/5'} ${isCurrentPlan ? 'ring-4 ring-green-400 bg-green-50/30' : ''}`}
                 >
-                  {!isDisabled && (
+                  {isCurrentPlan && (
+                    <div className="absolute top-4 right-4 bg-green-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      Current Plan
+                    </div>
+                  )}
+                  {isDemoUsed && (
+                    <div className="absolute top-4 right-4 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      Already Used
+                    </div>
+                  )}
+                  {!isDisabled && !isCurrentPlan && !isDemoUsed && (
+
                     <div className="absolute top-4 right-4 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                       Available
                     </div>
                   )}
+
                   {plan.highlight && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-linear-to-r from-primary to-secondary text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
                       Most Popular
@@ -279,9 +245,10 @@ function Plans_and_pricing() {
 
                   {isDisabled && (
                     <p className="text-red-500 text-xs font-bold mb-2">
-                      * Supports max {plan.maxBranches} branches
+                      {isDemoUsed ? '* You have already used the Demo Plan' : `* Supports max ${plan.maxBranches} branches`}
                     </p>
                   )}
+
 
                   <ul className="space-y-4 mb-8">
                     {plan.features.map((feature, idx) => (
@@ -300,14 +267,19 @@ function Plans_and_pricing() {
 
                   <button
                     onClick={() => handleSelectPlan(plan)}
-                    disabled={isDisabled}
-                    className={`w-full py-3 px-6 rounded-xl font-bold transition-all duration-300 shadow-md hover:shadow-lg ${plan.highlight
-                      ? 'bg-primary text-white hover:bg-[#7a67e0]'
-                      : 'bg-white text-primary border-2 border-primary hover:bg-bg-light'
-                      } ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                    disabled={isDisabled || isCurrentPlan}
+                    className={`w-full py-3 px-6 rounded-xl font-bold transition-all duration-300 shadow-md hover:shadow-lg ${isCurrentPlan 
+                      ? 'bg-green-500 text-white border-2 border-green-500 cursor-not-allowed' 
+                      : plan.highlight
+                        ? 'bg-primary text-white hover:bg-[#7a67e0] cursor-pointer'
+                        : 'bg-white text-primary border-2 border-primary hover:bg-bg-light cursor-pointer'
+                      } ${isDisabled && !isCurrentPlan ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
-                    {isDisabled ? 'Plan Limit Exceeded' : plan.cta}
+                    {isCurrentPlan ? 'Currently using this plan' : isDemoUsed ? 'Demo Already Used' : isDisabled ? 'Plan Limit Exceeded' : plan.cta}
                   </button>
+
+
+
                 </div>
               )
             })}
@@ -331,5 +303,3 @@ function Plans_and_pricing() {
 }
 
 export default Plans_and_pricing
-
-

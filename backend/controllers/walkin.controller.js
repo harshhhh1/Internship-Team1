@@ -1,6 +1,7 @@
 import Walkin from "../models/Walkin.js";
 import Salon from "../models/Salon.js";
 import mongoose from "mongoose";
+import Staff from "../models/Staff.js";
 
 import Client from "../models/Client.js";
 
@@ -76,7 +77,28 @@ export const createWalkin = async (req, res) => {
 export const getWalkinsBySalon = async (req, res) => {
     try {
         const { salonId } = req.query;
-        const query = salonId ? { salonId } : {};
+        let query = {};
+
+        if (req.user && req.user.role === 'owner') {
+            if (salonId) {
+                const salon = await Salon.findOne({ _id: salonId, ownerId: req.user.id });
+                if (!salon) return res.status(403).json({ message: "Access denied" });
+                query.salonId = salonId;
+            } else {
+                // For walkins, maybe enforce salonId required? 
+                // Or return all walkins for all salons?
+                // Let's return all.
+                const salons = await Salon.find({ ownerId: req.user.id });
+                query.salonId = { $in: salons.map(s => s._id) };
+            }
+        } else if (req.user) {
+            const staff = await Staff.findById(req.user.id);
+            if (!staff || !staff.salonId) return res.status(200).json([]);
+            if (salonId && salonId !== staff.salonId.toString()) {
+                return res.status(403).json({ message: "Access denied" });
+            }
+            query.salonId = staff.salonId;
+        }
 
         const walkins = await Walkin.find(query)
             .sort({ date: -1 })

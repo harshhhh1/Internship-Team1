@@ -16,10 +16,14 @@ const ProtectedRoute = ({ children, tabId }) => {
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
-    // If owner, allow all access
+    // If owner, check if they have a subscription plan
     if (role === 'owner') {
+        // Check subscription from localStorage or context
+        // For now, we'll let the DashboardLayout handle the modal display
+        // This check can be enhanced to redirect to plans page if needed
         return children;
     }
+
 
     // Get accessToTabs from localStorage
     let accessToTabs = null;

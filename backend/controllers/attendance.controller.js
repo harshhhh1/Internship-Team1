@@ -1,5 +1,6 @@
 import Attendance from "../models/Attendance.js";
 import Staff from "../models/Staff.js";
+import Salon from "../models/Salon.js";
 
 // Helper to normalize date to midnight UTC to avoid timezone issues
 const normalizeDate = (date) => {
@@ -47,18 +48,40 @@ export const getDailyAttendance = async (req, res) => {
     try {
         const { salonId, date } = req.query;
 
-        if (!salonId || !date) {
-            return res.status(400).json({ message: "Salon ID and Date are required" });
+        if (!date) {
+            return res.status(400).json({ message: "Date is required" });
+        }
+
+        let filterSalonId = salonId;
+
+        if (req.user && req.user.role === 'owner') {
+            if (salonId) {
+                const salon = await Salon.findOne({ _id: salonId, ownerId: req.user.id });
+                if (!salon) return res.status(403).json({ message: "Access denied" });
+            } else {
+                // If no salonId, we might want to return nothing or all?
+                // For attendance, usually it's per salon.
+                return res.status(400).json({ message: "Salon ID is required" });
+            }
+        } else if (req.user) {
+            const staff = await Staff.findById(req.user.id);
+            if (!staff || !staff.salonId) return res.status(200).json([]);
+            if (salonId && salonId !== staff.salonId.toString()) {
+                return res.status(403).json({ message: "Access denied" });
+            }
+            filterSalonId = staff.salonId;
+        } else {
+            return res.status(401).json({ message: "Unauthorized" });
         }
 
         const normalizedDate = normalizeDate(date);
 
         // Fetch all active staff for this salon
-        const staffMembers = await Staff.find({ salonId, isActive: true }).select('name role profession avatarUrl mobile');
+        const staffMembers = await Staff.find({ salonId: filterSalonId, isActive: true }).select('name role profession avatarUrl mobile');
 
         // Fetch existing attendance records for this date
         const attendanceRecords = await Attendance.find({
-            salonId,
+            salonId: filterSalonId,
             date: normalizedDate
         });
 

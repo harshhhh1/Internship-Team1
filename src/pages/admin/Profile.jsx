@@ -22,7 +22,7 @@ function DashboardProfile() {
         }
       }
 
-      // Map backend data to frontend model
+        // Map backend data to frontend model
       const mappedData = {
         id: userData._id || '1',
         firstName: userData.name ? userData.name.split(' ')[0] : 'User',
@@ -32,7 +32,8 @@ function DashboardProfile() {
         age: userData.age || '--',
         phone: userData.phone || userData.mobile || '',
         email: userData.email || '',
-        avatar: 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
+        // Use avatar from backend, fallback to default only if not available
+        avatar: userData.avatarUrl || userData.avatar || 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
         // Random/Default data for visual completeness until backend supports it
         preferences: 'Dry Scalp, Wavy Hair',
         notes: 'Prefer sulfate-free shampoo. Sensitive scalp.',
@@ -43,8 +44,10 @@ function DashboardProfile() {
         zipCode: userData.zipCode || '--',
         avatarUrl: userData.avatarUrl || userData.avatar || 'https://res.cloudinary.com/dgh9uunif/image/upload/v1768719858/Wavy_Buddies_-_Avatar_5_gdbuhf.webp',
         memberStatus: userData.isActive ? 'Active' : 'Active Member',
-        registeredDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
+        registeredDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
+        subscription: userData.subscription || {}
       };
+
 
       setProfile(mappedData);
       setEditFormData({
@@ -298,6 +301,30 @@ function DashboardProfile() {
                   <InfoField label="Zip Code" value={profile.zipCode} />
                   <InfoField label="Member Status" value={profile.memberStatus} />
                   <InfoField label="Registered Date" value={profile.registeredDate} />
+
+                  <div className="md:col-span-2 mt-6 pt-6 border-t border-gray-100">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Subscription Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <InfoField label="Current Plan" value={profile.subscription?.planName || 'None'} />
+                      <InfoField label="Billing Cycle" value={profile.subscription?.billingCycle || '--'} />
+                      {profile.subscription?.planName === 'Demo Plan' && (
+                        <InfoField
+                          label="Trial Expiration"
+                          value={profile.subscription?.trialEndDate ? new Date(profile.subscription.trialEndDate).toLocaleDateString() : 'N/A'}
+                        />
+                      )}
+                      {profile.subscription?.planName === 'Demo Plan' && (
+                        <InfoField
+                          label="Days Remaining"
+                          value={
+                            profile.subscription?.trialEndDate
+                              ? Math.max(0, Math.ceil((new Date(profile.subscription.trialEndDate) - new Date()) / (1000 * 60 * 60 * 24))) + ' Days'
+                              : '--'
+                          }
+                        />
+                      )}
+                    </div>
+                  </div>
                 </>
               )}
             </div>

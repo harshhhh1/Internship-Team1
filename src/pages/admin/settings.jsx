@@ -311,7 +311,7 @@ function Settings() {
           <div className="space-y-6">
 
             {/* Plan Details Card */}
-            {user.subscription && (
+            {user.subscription && user.subscription.planName ? (
               <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-primary">Current Plan</h2>
@@ -351,7 +351,45 @@ function Settings() {
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-primary">Current Plan</h2>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+                    No Plan
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Plan Name</p>
+                    <p className="text-lg font-bold text-gray-800">None</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Branch Limit</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {salons.length} / 0 Branches Used
+                    </p>
+                    <div className="w-full bg-gray-200 h-2 rounded-full mt-2 overflow-hidden">
+                      <div className="h-full bg-gray-400" style={{ width: '0%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Billing</p>
+                    <p className="text-lg font-bold text-gray-800">--</p>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => window.location.href = '/plans-and-pricing'}
+                      className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-[#7a67e0] transition-colors shadow-sm w-full md:w-auto"
+                    >
+                      Subscribe Now
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
+
 
             {/* Account Details Card */}
             <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1">
@@ -410,9 +448,19 @@ function Settings() {
                 <span className="text-primary font-bold">Active</span>
               </div>
 
-              <button className="px-6 py-3 bg-accent-peach text-gray-800 rounded-xl hover:bg-[#ffcca8] transition-colors font-medium">
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('userId');
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('role');
+                  localStorage.removeItem('accessToTabs');
+                  window.location.href = '/login';
+                }}
+                className="px-6 py-3 bg-accent-peach text-gray-800 rounded-xl hover:bg-[#ffcca8] transition-colors font-medium"
+              >
                 Logout from all devices
               </button>
+
             </div>
 
             {/* Login History Table */}
@@ -463,12 +511,23 @@ function Settings() {
                       setIsSalonModalOpen(true);
                     }
                   }}
-                  className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-[#7a67e0] transition-colors font-medium"
+                  disabled={!user.subscription || !user.subscription.planName}
+                  className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+                    !user.subscription || !user.subscription.planName
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-primary text-white hover:bg-[#7a67e0]'
+                  }`}
                 >
                   Add Salon
                 </button>
+                {(!user.subscription || !user.subscription.planName) && (
+                  <p className="text-sm text-red-500 mt-2">
+                    Please subscribe to a plan to add salons.
+                  </p>
+                )}
               </div>
             )}
+
 
             {/* My Branch Section */}
             <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-[0_20px_40px_rgba(147,129,255,0.15)] transition-transform duration-300 hover:-translate-y-1 overflow-hidden">

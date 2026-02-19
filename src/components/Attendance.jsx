@@ -42,9 +42,7 @@ const Attendance = () => {
         }
     }, [selectedStaff, calendarMonth, viewMode, selectedSalon]);
 
-    if (!selectedSalon) {
-        return <div className="text-center py-12 text-gray-500">Loading salon data...</div>;
-    }
+
 
     // --- API Calls ---
 
@@ -390,18 +388,18 @@ const Attendance = () => {
                     <br />
                     <hr />
                     <br />
-                {viewMode === 'table' && canEdit && (
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="ml-auto flex items-center justify-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                    >
-                        <FaSave />
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                )}    
+                    {viewMode === 'table' && canEdit && (
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="ml-auto flex items-center justify-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                            <FaSave />
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    )}
                 </div>
-                
+
             ) : (
                 <div className="space-y-8 animate-in fade-in duration-500">
                     {/* Step 2: Choose Stylist (copied style from BookAppointment) */}

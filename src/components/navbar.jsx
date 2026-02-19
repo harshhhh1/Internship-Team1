@@ -19,8 +19,10 @@ function Navbar() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('userId'));
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [userSubscription, setUserSubscription] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+
 
   const toggleDropdown = () => {
     setDropdownOpen(!isDropdownOpen);
@@ -48,12 +50,14 @@ function Navbar() {
         if (response.ok) {
           const userData = await response.json();
           setAvatarUrl(userData.avatarUrl || '');
+          setUserSubscription(userData.subscription || null);
         }
       } catch (err) {
         console.error("Error fetching avatar:", err);
       }
     }
   };
+
 
   const handleLogout = () => {
     localStorage.removeItem('userId');
@@ -182,8 +186,15 @@ function Navbar() {
                         ))}
                         {role === 'owner' && (
                           <li
-                            className="block px-4 py-2 text-sm text-primary font-bold hover:bg-gray-50 cursor-pointer border-t border-gray-100 mt-1"
+                            className={`block px-4 py-2 text-sm font-bold border-t border-gray-100 mt-1 ${
+                              !userSubscription || !userSubscription.planName
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-primary hover:bg-gray-50 cursor-pointer'
+                            }`}
                             onClick={() => {
+                              if (!userSubscription || !userSubscription.planName) {
+                                return; // Do nothing if no subscription
+                              }
                               if (salons.length >= branchLimit) {
                                 setLimitModalOpen(true);
                               } else {
@@ -193,8 +204,12 @@ function Navbar() {
                             }}
                           >
                             + Add New Branch
+                            {(!userSubscription || !userSubscription.planName) && (
+                              <span className="block text-xs text-red-500 font-normal mt-1">Subscribe to add branches</span>
+                            )}
                           </li>
                         )}
+
                       </ul>
                     )}
                   </div>

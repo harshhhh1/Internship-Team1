@@ -16,9 +16,11 @@ function Receptionist() {
 
   const [appointments, setAppointments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [timeFilter, setTimeFilter] = useState('today'); // 'today', 'week', 'month', 'all'
   const [staff, setStaff] = useState([]);
   const [todayStats, setTodayStats] = useState({ customerCount: 0, revenue: 0 });
   const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, leave: 0 });
+
 
   // Function to fetch today's stats
   const fetchTodayStats = useCallback(async () => {
@@ -91,6 +93,7 @@ function Receptionist() {
           mappedAppointments = filteredData.map(app => ({
             id: app._id,
             time: new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            date: new Date(app.date), // Preserve original date for filtering
             name: app.clientName,
             gender: "N/A",
             age: "--",
@@ -100,6 +103,7 @@ function Receptionist() {
             status: app.status || "waiting",
             type: 'appointment'
           }));
+
         }
 
         if (walkinResponse.ok) {
@@ -107,6 +111,7 @@ function Receptionist() {
           mappedWalkins = data.map(w => ({
             id: w._id,
             time: new Date(w.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            date: new Date(w.date), // Preserve original date for filtering
             name: w.clientName,
             gender: "N/A",
             age: "--",
@@ -116,6 +121,7 @@ function Receptionist() {
             status: w.status || "waiting",
             type: 'walkin'
           }));
+
         }
 
         // Combine and sort by date/time (most recent first for receptionist or as per requirement)
@@ -379,8 +385,45 @@ function Receptionist() {
     }
   };
 
-  // Filter appointments based on search term
+  // Helper function to check if date is within filter range
+  const isWithinTimeFilter = (date) => {
+    const now = new Date();
+    const appDate = new Date(date);
+    
+    if (timeFilter === 'today') {
+      return appDate.toDateString() === now.toDateString();
+    }
+    
+    if (timeFilter === 'week') {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+      startOfWeek.setHours(0, 0, 0, 0);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      return appDate >= startOfWeek && appDate <= endOfWeek;
+    }
+    
+    if (timeFilter === 'month') {
+      return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
+    }
+    
+    if (timeFilter === 'all') {
+      return true;
+    }
+    
+    return true;
+  };
+
+
+  // Filter appointments based on time filter and search term
   const filteredAppointments = appointments.filter(app => {
+    // First apply time filter
+    if (!isWithinTimeFilter(app.date)) {
+      return false;
+    }
+    
+    // Then apply search filter
     const searchLower = searchTerm.toLowerCase();
     return (
       app.name?.toLowerCase().includes(searchLower) ||
@@ -390,15 +433,79 @@ function Receptionist() {
     );
   });
 
+  // Get header title based on filter
+  const getHeaderTitle = () => {
+    switch (timeFilter) {
+      case 'today': return "Today's Appointments";
+      case 'week': return "This Week's Appointments";
+      case 'month': return "This Month's Appointments";
+      case 'all': return "All Appointments";
+      default: return "Appointments";
+    }
+  };
+
+  // Get date range text based on filter
+  const getDateRangeText = () => {
+    const now = new Date();
+    const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+    
+    if (timeFilter === 'today') {
+      return now.toLocaleDateString('en-US', options);
+    }
+    
+    if (timeFilter === 'week') {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    
+    if (timeFilter === 'month') {
+      return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    
+    if (timeFilter === 'all') {
+      return 'All time';
+    }
+    
+    return '';
+  };
+
+
+
   return (
     <div className="min-h-screen">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Today's Appointments</h1>
-        <p className="text-gray-500">Wed, Jan 29, 2026</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{getHeaderTitle()}</h1>
+        <p className="text-gray-500">{getDateRangeText()}</p>
+      </div>
+
+      {/* Time Filter Buttons */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          { key: 'today', label: 'Today' },
+          { key: 'week', label: 'This Week' },
+          { key: 'month', label: 'This Month' },
+          { key: 'all', label: 'All Time' }
+        ].map((filter) => (
+          <button
+            key={filter.key}
+            onClick={() => setTimeFilter(filter.key)}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              timeFilter === filter.key
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       {/* Search Bar */}
+
       <div className="mb-6">
         <div className="relative max-w-md">
           <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />

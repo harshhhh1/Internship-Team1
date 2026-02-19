@@ -13,6 +13,8 @@ export const SalonProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [branchLimit, setBranchLimit] = useState(1);
 
+    const [user, setUser] = useState(null);
+
     const fetchSalons = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -31,9 +33,20 @@ export const SalonProvider = ({ children }) => {
                 });
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
+                    setUser(profileData); // Store full user data
                     if (profileData.subscription?.branchLimit) {
                         setBranchLimit(profileData.subscription.branchLimit);
                     }
+                }
+            } else {
+                // For staff, maybe fetch their profile too if needed, but primarily for owner subscription check
+                // We can fetch staff profile here if we want consistent 'user' object
+                const profileRes = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    setUser(profileData);
                 }
             }
 
@@ -64,6 +77,32 @@ export const SalonProvider = ({ children }) => {
         }
     };
 
+    // Dedicated function to refresh user data (for plan selection modal)
+    const refreshUser = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            const role = localStorage.getItem('role');
+
+            if (!userId || !token) return;
+
+            const profileRes = await fetch(`http://localhost:5050/auth/me?userId=${userId}&role=${role}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                setUser(profileData);
+                if (profileData.subscription?.branchLimit) {
+                    setBranchLimit(profileData.subscription.branchLimit);
+                }
+            }
+        } catch (error) {
+            console.error("Error refreshing user:", error);
+        }
+    };
+
+
     const location = useLocation();
 
     // Re-fetch when location changes (ensures data is fresh after login/redirects)
@@ -88,8 +127,11 @@ export const SalonProvider = ({ children }) => {
         setSelectedSalon,
         fetchSalons,
         loading,
-        branchLimit
+        branchLimit,
+        user, // Expose user
+        refreshUser // Expose refreshUser for plan selection modal
     };
+
 
     return (
         <SalonContext.Provider value={value}>

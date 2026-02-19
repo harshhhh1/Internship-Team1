@@ -177,10 +177,10 @@ export const completeAppointment = async (req, res) => {
 
         // Update client total spent, visits, and last visit
         let targetClientId = appointment.clientId;
-        
+
         console.log('Appointment clientId:', targetClientId);
         console.log('Appointment clientMobile:', appointment.clientMobile);
-        
+
         // Fallback: if clientId is missing, find by mobile
         if (!targetClientId && appointment.clientMobile) {
             const client = await Client.findOne({
@@ -190,7 +190,7 @@ export const completeAppointment = async (req, res) => {
             if (client) {
                 targetClientId = client._id;
                 console.log('Found client by mobile:', targetClientId);
-                
+
                 // Update the appointment with the found clientId for future reference
                 appointment.clientId = client._id;
                 await appointment.save();
@@ -202,12 +202,12 @@ export const completeAppointment = async (req, res) => {
         if (targetClientId) {
             const finalPrice = Number(appointment.price) || 0;
             console.log(`Updating client ${targetClientId}: adding ${finalPrice} to totalSpent`);
-            
+
             // Use atomic $inc operation for safety
             const updatedClient = await Client.findByIdAndUpdate(
                 targetClientId,
                 {
-                    $inc: { 
+                    $inc: {
                         totalSpent: finalPrice,  // Add price to total
                         visits: 1                // Increment visits
                     },
@@ -215,7 +215,7 @@ export const completeAppointment = async (req, res) => {
                 },
                 { new: true }  // Return the updated document
             );
-            
+
             if (updatedClient) {
                 console.log('✅ Client updated successfully!');
                 console.log('New totalSpent:', updatedClient.totalSpent);
@@ -227,10 +227,10 @@ export const completeAppointment = async (req, res) => {
             console.log('⚠️ No targetClientId found - client will not be updated');
         }
 
-        res.status(200).json({ 
-            message: "Appointment completed successfully", 
-            appointment, 
-            payment 
+        res.status(200).json({
+            message: "Appointment completed successfully",
+            appointment,
+            payment
         });
     } catch (error) {
         console.error("Complete Appointment Error:", error);
@@ -255,16 +255,17 @@ export const getTodayStats = async (req, res) => {
             if (salonId) filter.salonId = salonId;
         } else if (req.user) {
             // For staff (including receptionist), filter by their salon
-            if (salonId) {
-                filter.salonId = salonId;
-            } else {
-                const userStaff = await Staff.findById(req.user.id);
-                if (userStaff && userStaff.salonId) {
-                    filter.salonId = userStaff.salonId;
-                } else {
+            const userStaff = await Staff.findById(req.user.id);
+            if (userStaff && userStaff.salonId) {
+                if (salonId && salonId !== userStaff.salonId.toString()) {
                     return res.status(200).json({ customerCount: 0, revenue: 0 });
                 }
+                filter.salonId = userStaff.salonId;
+            } else {
+                return res.status(200).json({ customerCount: 0, revenue: 0 });
             }
+        } else {
+            return res.status(403).json({ message: "Access denied" });
         }
 
         // Get all appointments for today
@@ -304,8 +305,18 @@ export const getRevenueStats = async (req, res) => {
         if (req.user && req.user.role === 'owner') {
             matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
             if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
-        } else if (salonId) {
-            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
+        } else if (req.user) {
+            const userStaff = await Staff.findById(req.user.id);
+            if (userStaff && userStaff.salonId) {
+                if (salonId && salonId !== userStaff.salonId.toString()) {
+                    return res.status(403).json({ message: "Access denied" });
+                }
+                matchFilter.salonId = userStaff.salonId;
+            } else {
+                return res.status(200).json({ revenueThisMonth: null, totalIncome: null, clients: null });
+            }
+        } else {
+            return res.status(403).json({ message: "Access denied" });
         }
 
         // Get data for the last 7 months
@@ -448,13 +459,18 @@ export const getDashboardStats = async (req, res) => {
         if (req.user && req.user.role === 'owner') {
             matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
             if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
-        } else if (salonId) {
-            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
-        } else if (req.user) { // Staff fallback
+        } else if (req.user) { // Staff
             const userStaff = await Staff.findById(req.user.id);
             if (userStaff && userStaff.salonId) {
+                if (salonId && salonId !== userStaff.salonId.toString()) {
+                    return res.status(403).json({ message: "Access denied" });
+                }
                 matchFilter.salonId = userStaff.salonId;
+            } else {
+                return res.status(200).json({ totalEarnings: 0, lastWeekEarnings: 0, weeklyTrend: '0%', topServices: [] });
             }
+        } else {
+            return res.status(403).json({ message: "Access denied" });
         }
 
         // Total Earnings (All Time from payments)
@@ -572,13 +588,18 @@ export const getEarningsPageData = async (req, res) => {
         if (req.user && req.user.role === 'owner') {
             matchFilter.ownerId = new mongoose.Types.ObjectId(req.user.id);
             if (salonId) matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
-        } else if (salonId) {
-            matchFilter.salonId = new mongoose.Types.ObjectId(salonId);
         } else if (req.user) {
             const userStaff = await Staff.findById(req.user.id);
             if (userStaff && userStaff.salonId) {
+                if (salonId && salonId !== userStaff.salonId.toString()) {
+                    return res.status(403).json({ message: "Access denied" });
+                }
                 matchFilter.salonId = userStaff.salonId;
+            } else {
+                return res.status(200).json({ thisMonth: 0, lastMonth: 0, totalYear: 0, pending: 0, recentEarnings: [] });
             }
+        } else {
+            return res.status(403).json({ message: "Access denied" });
         }
 
         const now = new Date();
