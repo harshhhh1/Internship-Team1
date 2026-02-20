@@ -34,14 +34,15 @@ export const getServices = async (req, res) => {
             if (!staff || !staff.salonId) return res.status(200).json([]);
             filter.salonId = staff.salonId;
         } else {
-            // Public request - salonId is mandatory
-            if (!salonId) return res.status(400).json({ message: "Salon ID is required" });
-            filter.salonId = salonId;
+            // Public request - Allow fetching all services if no salonId provided
+            if (salonId) {
+                filter.salonId = salonId;
+            }
         }
 
         if (categoryId) filter.categoryId = categoryId;
 
-        const services = await Service.find(filter).populate('categoryId', 'name');
+        const services = await Service.find(filter).populate('categoryId', 'name').populate('salonId', 'name');
         res.status(200).json(services);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -50,7 +51,7 @@ export const getServices = async (req, res) => {
 
 export const getServiceById = async (req, res) => {
     try {
-        const service = await Service.findById(req.params.id).populate('categoryId', 'name');
+        const service = await Service.findById(req.params.id).populate('categoryId', 'name').populate('salonId', 'name');
         if (!service) return res.status(404).json({ message: "Service not found" });
         res.status(200).json(service);
     } catch (error) {

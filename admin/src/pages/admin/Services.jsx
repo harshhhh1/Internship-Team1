@@ -35,7 +35,12 @@ function Services() {
 
   const fetchServices = async () => {
     try {
-      const res = await fetch(`http://localhost:5050/services?salonId=${selectedSalon._id}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5050/services?salonId=${selectedSalon._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setServices(data);
@@ -47,7 +52,12 @@ function Services() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`http://localhost:5050/categories?salonId=${selectedSalon._id}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5050/categories?salonId=${selectedSalon._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setCategories([{ _id: 'all', name: 'All Categories' }, ...data]);

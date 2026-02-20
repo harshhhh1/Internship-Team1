@@ -5,6 +5,7 @@ import { useSalon } from '../../context/SalonContext';
 export default function Offers() {
     const { selectedSalon } = useSalon();
     const [offers, setOffers] = useState([]);
+    const [services, setServices] = useState([]);
     const [filter, setFilter] = useState('all'); // all, active, inactive
     const [showModal, setShowModal] = useState(false);
     const [editingOffer, setEditingOffer] = useState(null);
@@ -16,9 +17,10 @@ export default function Offers() {
         discount: 0,
         validFrom: new Date().toISOString().split('T')[0],
         validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        services: '',
+        services: [],
         minPurchase: 0,
-        isActive: true
+        isActive: true,
+        imageUrl: ''
     });
 
     const fetchOffers = async () => {
@@ -42,9 +44,28 @@ export default function Offers() {
         }
     };
 
+    const fetchServices = async () => {
+        try {
+            if (!selectedSalon?._id) return;
+            const res = await fetch(`http://localhost:5050/services?salonId=${selectedSalon._id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setServices(data);
+            }
+        } catch (err) {
+            console.error("Error fetching services:", err);
+        }
+    };
+
     useEffect(() => {
         fetchOffers();
     }, [selectedSalon]);
+
+    useEffect(() => {
+        if (showModal) {
+            fetchServices();
+        }
+    }, [showModal, selectedSalon]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -54,6 +75,23 @@ export default function Offers() {
         }));
     };
 
+    const handleServiceToggle = (serviceId) => {
+        setFormData(prev => {
+            const currentServices = prev.services || [];
+            if (currentServices.includes(serviceId)) {
+                return {
+                    ...prev,
+                    services: currentServices.filter(id => id !== serviceId)
+                };
+            } else {
+                return {
+                    ...prev,
+                    services: [...currentServices, serviceId]
+                };
+            }
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -61,7 +99,7 @@ export default function Offers() {
             const payload = {
                 ...formData,
                 salonId: selectedSalon?._id,
-                services: formData.services.split(',').map(s => s.trim()).filter(s => s)
+                services: formData.services
             };
 
             const method = editingOffer ? 'PUT' : 'POST';
@@ -100,9 +138,10 @@ export default function Offers() {
             discount: offer.discount || 0,
             validFrom: offer.validFrom ? new Date(offer.validFrom).toISOString().split('T')[0] : '',
             validTo: offer.validTo ? new Date(offer.validTo).toISOString().split('T')[0] : '',
-            services: Array.isArray(offer.services) ? offer.services.join(', ') : '',
+            services: Array.isArray(offer.services) ? offer.services : [],
             minPurchase: offer.minPurchase || 0,
-            isActive: offer.isActive ?? true
+            isActive: offer.isActive ?? true,
+            imageUrl: offer.imageUrl || ''
         });
         setShowModal(true);
     };
@@ -152,9 +191,10 @@ export default function Offers() {
             discount: 0,
             validFrom: new Date().toISOString().split('T')[0],
             validTo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            services: '',
+            services: [],
             minPurchase: 0,
-            isActive: true
+            isActive: true,
+            imageUrl: ''
         });
     };
 
@@ -285,10 +325,15 @@ export default function Offers() {
                                                 {new Date(offer.validFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(offer.validTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                                             </span>
                                         </div>
-                                        <div className="flex flex-wrap gap-1">
-                                            {(offer.services || []).slice(0, 3).map(s => (
-                                                <span key={s} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">{s}</span>
-                                            ))}
+                                <div className="flex flex-wrap gap-1">
+                                            {(offer.services || []).slice(0, 3).map((serviceId, idx) => {
+                                                const service = services.find(s => s._id === serviceId);
+                                                return (
+                                                    <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                                        {service?.name || serviceId}
+                                                    </span>
+                                                );
+                                            })}
                                             {(offer.services || []).length > 3 && (
                                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">+{offer.services.length - 3} more</span>
                                             )}
@@ -417,14 +462,27 @@ export default function Offers() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Applicable Services</label>
-                                    <input
-                                        type="text"
-                                        name="services"
-                                        value={formData.services}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
-                                        placeholder="Hair Cut, Spa, Facial (comma separated)"
-                                    />
+                                    <div className="border border-gray-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2">
+                                        {services.length > 0 ? (
+                                            services.map(service => (
+                                                <label key={service._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.services?.includes(service._id)}
+                                                        onChange={() => handleServiceToggle(service._id)}
+                                                        className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                                                    />
+                                                    <span className="text-sm text-gray-700">{service.name}</span>
+                                                    <span className="text-xs text-gray-400">₹{service.price || service.priceUnisex || service.priceMale || service.priceFemale}</span>
+                                                </label>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-gray-400 italic">No services available for this salon</p>
+                                        )}
+                                    </div>
+                                    {formData.services && formData.services.length > 0 && (
+                                        <p className="text-xs text-gray-500 mt-1">{formData.services.length} service(s) selected</p>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div>
@@ -439,6 +497,17 @@ export default function Offers() {
                                             placeholder="0 for no minimum"
                                         />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Image URL <span className="text-gray-400 font-normal">(Optional)</span></label>
+                                    <input
+                                        type="text"
+                                        name="imageUrl"
+                                        value={formData.imageUrl}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400"
+                                        placeholder="https://example.com/offer-image.jpg"
+                                    />
                                 </div>
                                 <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
                                     <input

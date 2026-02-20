@@ -10,7 +10,8 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
         branchArea: '',
         pincode: '',
         phoneNumber: '',
-        description: ''
+        description: '',
+        imageUrl: ''
     });
 
     const handleSalonChange = (e) => {
@@ -21,7 +22,6 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         onSubmit(salonData);
-        // Reset form after submission
         setSalonData({
             name: '',
             address: '',
@@ -30,10 +30,10 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
             branchArea: '',
             pincode: '',
             phoneNumber: '',
-            description: ''
+            description: '',
+            imageUrl: ''
         });
     };
-
 
     if (!isOpen) return null;
 
@@ -187,6 +187,19 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
                                 rows="3"
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400 resize-none"
                                 placeholder="Tell us more about this branch..."
+                            />
+                        </div>
+
+                        {/* Image URL */}
+                        <div className="col-span-1 md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL <span className="text-gray-400 font-normal">(Optional)</span></label>
+                            <input
+                                type="text"
+                                name="imageUrl"
+                                value={salonData.imageUrl}
+                                onChange={handleSalonChange}
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
                             />
                         </div>
                     </form>

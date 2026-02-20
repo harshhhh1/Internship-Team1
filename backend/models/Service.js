@@ -25,19 +25,22 @@ const serviceSchema = new mongoose.Schema({
     },
     priceUnisex: {
         type: Number,
-        required: function() { return this.gender === 'unisex'; },
+        required: function () { return this.gender === 'unisex'; },
     },
     priceMale: {
         type: Number,
-        required: function() { return this.gender === 'male' || this.gender === 'both'; },
+        required: function () { return this.gender === 'male' || this.gender === 'both'; },
     },
     priceFemale: {
         type: Number,
-        required: function() { return this.gender === 'female' || this.gender === 'both'; },
+        required: function () { return this.gender === 'female' || this.gender === 'both'; },
     },
     duration: {
         type: Number, // in minutes
         required: true,
+    },
+    imageUrl: {
+        type: String,
     },
     status: {
         type: Boolean,

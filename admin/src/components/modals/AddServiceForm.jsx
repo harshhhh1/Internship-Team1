@@ -21,11 +21,22 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`http://localhost:5050/categories?salonId=${salonId}`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5050/categories?salonId=${salonId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await res.json();
-      setCategories(data);
+      if (Array.isArray(data)) {
+        setCategories(data);
+      } else {
+        console.error("Categories data is not an array:", data);
+        setCategories([]);
+      }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      setCategories([]);
     }
   };
 
@@ -69,9 +80,13 @@ export default function AddServiceForm({ isOpen, onClose, onSave, salonId }) {
   const handleAddCategory = async () => {
     if (newCategory.trim()) {
       try {
+        const token = localStorage.getItem('token');
         const res = await fetch("http://localhost:5050/categories", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ name: newCategory, salonId }),
         });
         if (res.ok) {

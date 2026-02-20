@@ -41,6 +41,9 @@ const salonSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Staff",
   }],
+  imageUrl: {
+    type: String,
+  },
   isActive: {
     type: Boolean,
     default: true,
