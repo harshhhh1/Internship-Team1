@@ -13,17 +13,17 @@ const router = express.Router();
 // Set staff availability (requires authentication)
 router.post('/', authenticateToken, setAvailability);
 
-// Get staff availability
+// Get staff availability (requires authentication)
 router.get('/:staffId', authenticateToken, getStaffAvailability);
 
-// Get all staff availability for a salon
+// Get all staff availability for a salon (requires authentication)
 router.get('/salon/:salonId', authenticateToken, getSalonStaffAvailability);
 
-// Check if a slot is available
-router.get('/check', authenticateToken, checkAvailability);
+// Check if a slot is available - public for customers
+router.get('/check', checkAvailability);
 
-// Get available slots for a staff member on a specific date
-router.get('/slots', authenticateToken, getAvailableSlots);
+// Get available slots for a staff member on a specific date - public for customers
+router.get('/slots', getAvailableSlots);
 
 export default router;
 

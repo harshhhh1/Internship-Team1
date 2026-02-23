@@ -4,12 +4,17 @@ const appointmentSchema = new mongoose.Schema({
     ownerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Owner",
-        required: true,
+        default: null,
     },
     salonId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Salon",
-        required: true,
+        default: null,
+    },
+    customerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+        default: null,
     },
     clientId: {
         type: mongoose.Schema.Types.ObjectId,

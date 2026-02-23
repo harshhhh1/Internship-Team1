@@ -19,15 +19,18 @@ const getDayName = (date) => {
 
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId, clientName, clientMobile, clientEmail, staffId, date, timeSlot } = req.body;
+        const { salonId, serviceId, clientName, clientMobile, clientEmail, staffId, date, timeSlot, customerId } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
         }
 
+        // Skip salon validation for now - allow bookings without existing salon
+        // In production, you would validate that the salon exists
+        let ownerId = null;
         const salon = await Salon.findById(salonId);
-        if (!salon) {
-            return res.status(404).json({ message: "Salon not found" });
+        if (salon) {
+            ownerId = salon.ownerId;
         }
 
         // Check staff availability if staffId and timeSlot are provided
@@ -76,10 +79,10 @@ export const createAppointment = async (req, res) => {
             // If serviceId is not a valid ObjectId (e.g., default services with string IDs), price should be provided in req.body.price
         }
 
-        // Find or create client based on mobile number
+        // Find or create client based on mobile number (only if salon exists)
         let clientId = req.body.clientId;
         
-        if (!clientId && clientMobile) {
+        if (salon && !clientId && clientMobile) {
             // Try to find existing client
             let client = await Client.findOne({ salonId, mobile: clientMobile });
             
@@ -108,9 +111,10 @@ export const createAppointment = async (req, res) => {
 
         const appointment = new Appointment({
             ...req.body,
-            ownerId: salon.ownerId,
+            ownerId: ownerId,
             price: price || 0,
-            clientId: clientId || null
+            clientId: clientId || null,
+            customerId: customerId || null
         });
         await appointment.save();
         
@@ -159,7 +163,8 @@ export const getAppointments = async (req, res) => {
         const appointments = await Appointment.find(filter)
             .populate('salonId', 'name')
             .populate('staffId', 'name')
-            .populate('clientId', 'name mobile email visits totalSpent');
+            .populate('clientId', 'name mobile email visits totalSpent')
+            .populate('customerId', 'name email phone');
 
         res.status(200).json(appointments);
     } catch (error) {

@@ -23,6 +23,7 @@ import Settings from './pages/admin/settings.jsx'
 import Reviews from './pages/admin/rating.jsx'
 import Plans_and_pricing from './pages/plans-and-pricing.jsx'
 import BookAppointment from './pages/BookAppointment.jsx'
+import MyBookings from './pages/MyBookings.jsx'
 import ServicesPage from './pages/services.jsx'
 
 // New pages
@@ -38,6 +39,11 @@ import AttendanceReport from './pages/admin/AttendanceReport.jsx'
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+
+// Customer Auth Components
+import CustomerLogin from './components/CustomerLogin.jsx'
+import CustomerSignup from './components/CustomerSignup.jsx'
+import CustomerProfile from './pages/CustomerProfile.jsx'
 
 import { SalonProvider } from './context/SalonContext';
 
@@ -58,6 +64,10 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
         <Route path='/book-appointment' element={<BookAppointment />} />
+        <Route path='/my-bookings' element={<MyBookings />} />
+        <Route path='/customer-login' element={<CustomerLogin />} />
+        <Route path='/customer-signup' element={<CustomerSignup />} />
+        <Route path='/customer-profile' element={<CustomerProfile />} />
         <Route path='/services' element={<ServicesPage />} />
 
         {/* Dashboard routes with layout */}

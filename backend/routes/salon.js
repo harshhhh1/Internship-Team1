@@ -11,18 +11,13 @@ import { authenticateToken, requireOwner, requireStaff } from "../middleware/aut
 
 const router = express.Router();
 
-// Apply authentication to all salon routes
 // Get salons - public for booking flow
-router.get("/", (req, res, next) => {
-    // Optional authentication to handle filtering by ownerId if logged in as owner
-    // But for now, let's just make it public and handle filtering in controller
-    next();
-}, getSalons);
+router.get("/", getSalons);
 
 // Get salon by ID - public
 router.get("/:id", getSalonById);
 
-// Protected routes below
+// All routes below require authentication
 router.use(authenticateToken);
 
 // Create salon - only owners can create salons

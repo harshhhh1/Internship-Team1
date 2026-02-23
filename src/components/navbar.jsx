@@ -66,10 +66,11 @@ function Navbar() {
     navigate('/');
   };
 
-  // Update auth state on location change
+// Update auth state on location change
   useEffect(() => {
     const loggedIn = !!localStorage.getItem('userId');
-    setIsLoggedIn(loggedIn);
+    const customerLoggedIn = !!localStorage.getItem('customerToken');
+    setIsLoggedIn(loggedIn || customerLoggedIn);
     setRole(localStorage.getItem('role'));
     setMobileMenuOpen(false);
     setDropdownOpen(false);
@@ -78,6 +79,20 @@ function Navbar() {
       fetchUserProfile();
     }
   }, [location]);
+
+  // Check if customer is logged in
+  const isCustomerLoggedIn = !!localStorage.getItem('customerToken');
+  const customerName = localStorage.getItem('customerName');
+
+  const handleCustomerLogout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('customerId');
+    localStorage.removeItem('customerName');
+    localStorage.removeItem('userRole');
+    setIsLoggedIn(false);
+    setDropdownOpen(false);
+    navigate('/');
+  };
 
   const handleAddSalon = async (salonData) => {
     try {

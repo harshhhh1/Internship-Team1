@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./db/connection.js";
 import authRoutes from "./routes/auth.js";
+import customerRoutes from "./routes/customer.js";
 import salonRoutes from "./routes/salon.js";
 import staffRoutes from "./routes/staff.js";
 import serviceRoutes from "./routes/service.js";
@@ -35,14 +36,24 @@ app.use(express.json());
 // Routes - Public (no authentication required)
 app.use("/auth", authRoutes);
 
+// Customer routes (public for signup/signin)
+app.use("/customer", customerRoutes);
+
 // Trial routes (public but will check on login response)
 app.use("/auth", trialRoutes);
 
-// Routes that require authentication AND trial check
-app.use("/salons", authenticateToken, checkTrialStatus, salonRoutes);
-app.use("/staff", authenticateToken, checkTrialStatus, staffRoutes);
-app.use("/services", authenticateToken, checkTrialStatus, serviceRoutes);
-app.use("/appointments", authenticateToken, checkTrialStatus, appointmentRoutes);
+// Public routes for customer booking flow - no authentication required
+app.use("/salons", salonRoutes);
+app.use("/staff", staffRoutes);
+app.use("/services", serviceRoutes);
+
+// Appointments - POST is public (for customer booking), other routes require auth
+app.use("/appointments", appointmentRoutes);
+
+// Availability routes - some public, some protected
+app.use("/availability", availabilityRoutes);
+
+// Routes that require authentication AND trial check (for admin/owner operations)
 app.use("/payments", authenticateToken, checkTrialStatus, paymentRoutes);
 app.use("/clients", authenticateToken, checkTrialStatus, clientRoutes);
 app.use("/offers", authenticateToken, checkTrialStatus, offerRoutes);
@@ -53,9 +64,6 @@ app.use("/attendance", authenticateToken, checkTrialStatus, attendanceRoutes);
 app.use("/walkins", authenticateToken, checkTrialStatus, walkinRoutes);
 app.use("/reports", authenticateToken, checkTrialStatus, reportRoutes);
 app.use("/categories", authenticateToken, checkTrialStatus, categoryRoutes);
-
-// Availability routes (uses the nested routes correctly now)
-app.use("/availability", authenticateToken, checkTrialStatus, availabilityRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });

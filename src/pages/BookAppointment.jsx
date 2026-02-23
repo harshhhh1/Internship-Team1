@@ -16,8 +16,23 @@ export default function BookAppointment() {
     const [time, setTime] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const navigate = useNavigate();
+
+    // Check if customer is logged in
+    useEffect(() => {
+        const token = localStorage.getItem('customerToken');
+        const customerId = localStorage.getItem('customerId');
+        if (token && customerId) {
+            setIsLoggedIn(true);
+            // Pre-fill customer info
+            const name = localStorage.getItem('customerName');
+            if (name) setClientName(name);
+        } else {
+            setIsLoggedIn(false);
+        }
+    }, []);
 
     // Fetch salons on mount
     useEffect(() => {
@@ -78,6 +93,9 @@ export default function BookAppointment() {
         }
     }, [selectedSalon]);
 
+    // Show services when salon is selected (not requiring staff selection)
+    const showServices = selectedSalon && services.length > 0;
+
     const openBooking = (service) => {
         setSelectedService(service);
         setShowModal(true);
@@ -91,6 +109,9 @@ export default function BookAppointment() {
 
         setLoading(true);
         try {
+            const customerId = localStorage.getItem('customerId');
+            const customerToken = localStorage.getItem('customerToken');
+            
             const appointmentData = {
                 salonId: selectedSalon,
                 staffId: selectedStaff || null,
@@ -98,21 +119,35 @@ export default function BookAppointment() {
                 clientName: clientName,
                 clientMobile: clientMobile,
                 date: new Date(`${date}T${time}`),
+                timeSlot: time, // Send timeSlot to backend
                 note: note,
                 price: selectedService.price,
-                status: "pending"
+                status: "pending",
+                customerId: customerId
             };
+
+            const headers = { "Content-Type": "application/json" };
+            // Add auth header if customer is logged in
+            if (customerToken) {
+                headers["Authorization"] = `Bearer ${customerToken}`;
+            }
 
             const res = await fetch("http://localhost:5050/appointments", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: headers,
                 body: JSON.stringify(appointmentData)
             });
 
             if (res.ok) {
                 alert("Appointment scheduled successfully!");
                 setShowModal(false);
-                navigate("/");
+                // Reset form
+                setClientName(localStorage.getItem('customerName') || '');
+                setClientMobile('');
+                setDate('');
+                setTime('');
+                setNote('');
+                navigate("/my-bookings");
             } else {
                 const err = await res.json();
                 alert(err.message || "Failed to schedule appointment");
@@ -139,6 +174,29 @@ export default function BookAppointment() {
                         Choose your preferred salon, stylist & service
                     </p>
                 </div>
+
+                {/* Login Required Message */}
+                {!isLoggedIn && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8 text-center">
+                        <p className="text-yellow-800 mb-4">
+                            Please login to book appointments and track your booking history.
+                        </p>
+                        <div className="flex justify-center gap-4">
+                            <a 
+                                href="/customer-login" 
+                                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors"
+                            >
+                                Login
+                            </a>
+                            <a 
+                                href="/customer-signup" 
+                                className="px-6 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                            >
+                                Sign Up
+                            </a>
+                        </div>
+                    </div>
+                )}
 
                 <div className="space-y-12">
                     {/* Step 1: Salon */}
@@ -207,8 +265,8 @@ export default function BookAppointment() {
                     )}
                 </div>
 
-                {/* Step 3: Services */}
-                {selectedStaff && (
+                {/* Step 3: Services - Show when salon is selected */}
+                {showServices && (
                     <div className="bg-white rounded-2xl shadow-lg p-8">
                         <h2 className="text-2xl font-semibold mb-6">
                             Step 3: Choose Service

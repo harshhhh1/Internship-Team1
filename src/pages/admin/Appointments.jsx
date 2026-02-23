@@ -154,6 +154,11 @@ function Appointments() {
             ? app.clientId 
             : null;
 
+          // Get customer details if populated
+          const customerInfo = app.customerId && typeof app.customerId === 'object'
+            ? app.customerId
+            : null;
+
           return {
             id: app._id,
             name: app.clientName,
@@ -170,7 +175,14 @@ function Appointments() {
               totalSpent: clientInfo.totalSpent || 0,
               isVip: clientInfo.isVip || false,
               email: clientInfo.email || ''
-            } : null
+            } : null,
+            // Customer details for registered customers
+            customerDetails: customerInfo ? {
+              name: customerInfo.name,
+              email: customerInfo.email,
+              phone: customerInfo.phone
+            } : null,
+            isRegisteredCustomer: !!app.customerId
           };
         });
         setAppointments(mappedData);

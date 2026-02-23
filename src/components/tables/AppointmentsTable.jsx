@@ -1,5 +1,5 @@
 import ResizableTh from '../ResizableTh';
-import { FaEdit, FaTrash, FaCheck, FaUser, FaStar } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheck, FaUser, FaStar, FaUserCheck } from 'react-icons/fa';
 
 const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) => {
     return (
@@ -10,6 +10,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                         <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
                             <ResizableTh className="p-4">Client</ResizableTh>
                             <ResizableTh className="p-4">Contact</ResizableTh>
+                            <ResizableTh className="p-4">Customer Type</ResizableTh>
                             <ResizableTh className="p-4">Staff</ResizableTh>
                             <ResizableTh className="p-4">Service</ResizableTh>
                             <ResizableTh className="p-4">Date</ResizableTh>
@@ -21,7 +22,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                     <tbody className="divide-y divide-gray-100">
                         {appointments.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="p-8 text-center text-gray-500">
+                                <td colSpan="9" className="p-8 text-center text-gray-500">
                                     No appointments found
                                 </td>
                             </tr>
@@ -49,6 +50,29 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                                         <div className="text-gray-900">{appointment.mobile}</div>
                                         {appointment.clientDetails?.email && (
                                             <div className="text-xs text-gray-500">{appointment.clientDetails.email}</div>
+                                        )}
+                                        {appointment.customerDetails?.email && (
+                                            <div className="text-xs text-primary">{appointment.customerDetails.email}</div>
+                                        )}
+                                    </td>
+                                    <td className="p-4">
+                                        {appointment.isRegisteredCustomer ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                                                    <FaUserCheck className="text-xs" />
+                                                    Registered
+                                                </span>
+                                                {appointment.customerDetails && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {appointment.customerDetails.name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                                                <FaUser className="text-xs" />
+                                                Walk-in
+                                            </span>
                                         )}
                                     </td>
                                     <td className="p-4 text-gray-600">{appointment.staff}</td>

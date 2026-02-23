@@ -1,47 +1,35 @@
-# Customer Application Setup - Implementation Complete
+# Customer Authentication & Booking Flow - Enhancement Plan
 
-## ✅ Completed Tasks
+## Phase 1: Additional Validations
+- [ ] Add email format validation in CustomerSignup
+- [ ] Add stronger password requirements (uppercase, lowercase, number, special char)
+- [ ] Add name validation (no numbers/special characters)
+- [ ] Add real-time validation feedback
+- [ ] Add backend validation for email uniqueness check
+- [ ] Add password strength indicator
 
-### Step 1: Update Navbar
-- [x] Added "Services" navigation link in desktop menu
-- [x] Added "Services" navigation link in mobile menu
-- [x] All navigation links working correctly
+## Phase 2: Security Enhancements
+- [ ] Add rate limiting for auth endpoints (prevent brute force)
+- [ ] Add account lockout after failed login attempts
+- [ ] Add JWT token expiration handling on frontend
+- [ ] Add secure logout functionality
+- [ ] Add session timeout warning
 
-### Step 2: Create Enhanced Footer
-- [x] Quick Links section (Home, Services, About, Contact, Book Appointment, Plans)
-- [x] Our Services section (Hair Styling, Coloring, Skin Care, Nails, Makeup, Spa)
-- [x] Contact Information section (Address, Phone, Email with icons)
-- [x] Social Media Icons (Facebook, Instagram, Twitter, YouTube)
-- [x] Newsletter subscription section
-- [x] Copyright and Privacy Policy links
+## Phase 3: Customer Features
+- [ ] Add customer profile page with edit functionality
+- [ ] Add password change functionality
+- [ ] Add booking cancellation by customer
+- [ ] Add booking rescheduling functionality
+- [ ] Add booking history with filters
 
-### Step 3: Enhance Home Page
-- [x] Enhanced Hero section with modern design, stats, and image grid
-- [x] Services preview section with 6 service cards
-- [x] Why Choose Us section with features and stats
-- [x] Testimonials section with client reviews
-- [x] Call-to-Action section for booking
+## Phase 4: Admin Enhancements
+- [ ] Show customer name in admin appointments list
+- [ ] Add customer details view in admin panel
+- [ ] Add customer booking statistics
 
-### Step 4: Create Services Page
-- [x] Full services listing page with category filters
-- [x] Service cards with images, prices, durations
-- [x] Category filtering (All, Hair, Skin, Nails, Spa, Makeup)
-- [x] Professional layout and design
-
-### Step 5: Test and Verify
-- [x] Build completed successfully (no errors)
-- [x] Development server running on http://localhost:5173
-- [x] All routes working correctly
-
-## Files Created/Modified
-- `src/components/navbar.jsx` - Added Services link
-- `src/components/footer.jsx` - Created enhanced footer
-- `src/components/hero.jsx` - Enhanced home page
-- `src/pages/services.jsx` - New services page
-- `src/App.jsx` - Added ServicesPage route
-
-## Test Results
-- Build Status: ✅ SUCCESS
-- Server Status: ✅ RUNNING (HTTP 200)
-- Navigation: ✅ All links working
-
+## Phase 5: Testing & Verification
+- [ ] Test signup flow end-to-end
+- [ ] Test login flow end-to-end
+- [ ] Test booking flow with authentication
+- [ ] Test admin view of customer bookings
+- [ ] Verify all validations work correctly
