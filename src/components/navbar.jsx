@@ -142,6 +142,8 @@ function Navbar() {
             {/* Desktop Menu */}
             <ul className="hidden md:flex space-x-8 items-center">
               <Link to="/" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Home</li></Link>
+              <Link to="/salon" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Salons</li></Link>
+              <Link to="/spa" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Spa</li></Link>
               <Link to="/services" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Services</li></Link>
               <Link to="/status" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>Status</li></Link>
               <Link to="/about" className="text-gray-600 hover:text-primary font-medium transition-colors"><li>About</li></Link>
@@ -244,6 +246,8 @@ function Navbar() {
           <div className="md:hidden bg-white border-t border-gray-100">
             <ul className="px-4 pt-2 pb-4 space-y-1">
               <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Home</li></Link>
+              <Link to="/salon" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Salons</li></Link>
+              <Link to="/spa" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Spa</li></Link>
               <Link to="/services" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Services</li></Link>
               <Link to="/status" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>Status</li></Link>
               <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"><li>About</li></Link>

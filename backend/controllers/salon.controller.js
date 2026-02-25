@@ -36,7 +36,7 @@ export const createSalon = async (req, res) => {
 // Get Salons (Optional: Filter by ownerId)
 export const getSalons = async (req, res) => {
   try {
-    const { ownerId } = req.query;
+    const { ownerId, type } = req.query;
     let filter = { isActive: true };
 
     if (ownerId) {
@@ -45,6 +45,11 @@ export const getSalons = async (req, res) => {
       filter.ownerId = req.user.id;
     }
     // If no ownerId in query and no req.user (public), return all active salons
+
+    // Filter by type (salon or spa)
+    if (type) {
+      filter.type = type;
+    }
 
     const salons = await Salon.find(filter).populate('ownerId', 'name email');
     res.status(200).json(salons);

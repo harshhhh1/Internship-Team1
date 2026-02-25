@@ -1,35 +1,23 @@
-# Customer Authentication & Booking Flow - Enhancement Plan
+# TODO - Salon & Spa Sections Implementation
 
-## Phase 1: Additional Validations
-- [ ] Add email format validation in CustomerSignup
-- [ ] Add stronger password requirements (uppercase, lowercase, number, special char)
-- [ ] Add name validation (no numbers/special characters)
-- [ ] Add real-time validation feedback
-- [ ] Add backend validation for email uniqueness check
-- [ ] Add password strength indicator
+## Session 23: Salon & Spa Sections Implementation
+- [x] 1. Create Salon page (src/pages/Salon.jsx) to display all Salon-type records
+- [x] 2. Create Spa page (src/pages/Spa.jsx) to display all Spa-type records
+- [x] 3. Add Salon and Spa routes to App.jsx
+- [x] 4. Update navbar to include links to Salon and Spa pages
+- [x] 5. Test Salon and Spa pages display data correctly
 
-## Phase 2: Security Enhancements
-- [ ] Add rate limiting for auth endpoints (prevent brute force)
-- [ ] Add account lockout after failed login attempts
-- [ ] Add JWT token expiration handling on frontend
-- [ ] Add secure logout functionality
-- [ ] Add session timeout warning
+## Session 24: Salon/Spa Details & Appointment Booking
+- [x] 1. Create SalonDetails/SpaDetails page (src/pages/SalonDetails.jsx)
+- [x] 2. Add "Explore" button to Salon/Spa cards
+- [x] 3. Display Salon/Spa details: Name, Address, Contact, Staff, Services
+- [x] 4. Implement staff selection
+- [x] 5. Implement service selection
+- [x] 6. Enable appointment booking from details page
+- [x] 7. Store appointment data in database
+- [x] 8. Add proper validations and error handling
 
-## Phase 3: Customer Features
-- [ ] Add customer profile page with edit functionality
-- [ ] Add password change functionality
-- [ ] Add booking cancellation by customer
-- [ ] Add booking rescheduling functionality
-- [ ] Add booking history with filters
+## Backend Updates Required
+- [x] 1. Update getSalons controller to filter by type (Salon/Spa)
+- [x] 2. Ensure services endpoint returns services for a specific salon
 
-## Phase 4: Admin Enhancements
-- [ ] Show customer name in admin appointments list
-- [ ] Add customer details view in admin panel
-- [ ] Add customer booking statistics
-
-## Phase 5: Testing & Verification
-- [ ] Test signup flow end-to-end
-- [ ] Test login flow end-to-end
-- [ ] Test booking flow with authentication
-- [ ] Test admin view of customer bookings
-- [ ] Verify all validations work correctly

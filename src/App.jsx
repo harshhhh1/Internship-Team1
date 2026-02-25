@@ -37,6 +37,11 @@ import Attendance from './components/Attendance.jsx'
 import Reports from './pages/admin/Reports.jsx'
 import AttendanceReport from './pages/admin/AttendanceReport.jsx'
 
+// Salon & Spa Pages
+import Salon from './pages/Salon.jsx'
+import Spa from './pages/Spa.jsx'
+import SalonDetails from './pages/SalonDetails.jsx'
+
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
@@ -69,6 +74,12 @@ function App() {
         <Route path='/customer-signup' element={<CustomerSignup />} />
         <Route path='/customer-profile' element={<CustomerProfile />} />
         <Route path='/services' element={<ServicesPage />} />
+        
+        {/* Salon & Spa Routes */}
+        <Route path='/salon' element={<Salon />} />
+        <Route path='/spa' element={<Spa />} />
+        <Route path='/salon/:id' element={<SalonDetails />} />
+        <Route path='/spa/:id' element={<SalonDetails />} />
 
         {/* Dashboard routes with layout */}
         <Route path="/dashboard" element={<DashboardLayout />}>
