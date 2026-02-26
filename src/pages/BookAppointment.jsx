@@ -123,7 +123,8 @@ export default function BookAppointment() {
                 note: note,
                 price: selectedService.price,
                 status: "pending",
-                customerId: customerId
+                customerId: customerId,
+                category: "online"
             };
 
             const headers = { "Content-Type": "application/json" };

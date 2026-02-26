@@ -51,16 +51,20 @@ export default function Walkin() {
         try {
             const token = localStorage.getItem('token');
             const salonId = selectedSalon?._id;
+            
+            // Fetch appointments with category "walk in" instead of walkins
             const url = salonId
-                ? `http://localhost:5050/walkins?salonId=${salonId}`
-                : 'http://localhost:5050/walkins';
+                ? `http://localhost:5050/appointments?salonId=${salonId}&category=walk%20in`
+                : 'http://localhost:5050/appointments?category=walk%20in';
 
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                setWalkins(data);
+                // Filter for walk in category on client side if needed
+                const walkinAppointments = data.filter(app => app.category === "walk in" || !app.category);
+                setWalkins(walkinAppointments);
             }
         } catch (error) {
             console.error("Error fetching walk-ins:", error);
@@ -102,7 +106,7 @@ useEffect(() => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (!selectedSalon) {
@@ -110,7 +114,9 @@ const handleSubmit = async (e) => {
                 return;
             }
             const token = localStorage.getItem('token');
-            const walkinData = {
+            
+            // Create appointment instead of walkin with category "walk in"
+            const appointmentData = {
                 salonId: selectedSalon._id,
                 clientName: formData.name,
                 clientMobile: formData.phone,
@@ -119,15 +125,17 @@ const handleSubmit = async (e) => {
                 price: Number(formData.price) || 0,
                 date: formData.date,
                 timeSlot: formData.timeSlot || null,
+                status: "pending",
+                category: "walk in"
             };
 
-            const response = await fetch('http://localhost:5050/walkins', {
+            const response = await fetch('http://localhost:5050/appointments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(walkinData)
+                body: JSON.stringify(appointmentData)
             });
 
             if (response.ok) {
@@ -151,7 +159,7 @@ const handleSubmit = async (e) => {
     const handleStatusUpdate = async (id, status) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5050/walkins/${id}`, {
+            const response = await fetch(`http://localhost:5050/appointments/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -171,7 +179,7 @@ const handleSubmit = async (e) => {
         if (!window.confirm("Delete this walk-in?")) return;
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5050/walkins/${id}`, {
+            const response = await fetch(`http://localhost:5050/appointments/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

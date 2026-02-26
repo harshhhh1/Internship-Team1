@@ -68,6 +68,11 @@ const appointmentSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    category: {
+        type: String,
+        enum: ["online", "walk in"],
+        default: "online",
+    },
 }, { timestamps: true });
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);

@@ -69,7 +69,8 @@ function Appointments() {
     serviceId: '',
     staffId: '',
     salonId: '',
-    price: ''
+    price: '',
+    category: 'online'
   });
 
   // Fetch staff's assigned salon for receptionist/staff roles
@@ -169,6 +170,7 @@ function Appointments() {
             price: app.price || 0,
             note: app.note || '',
             status: app.status || 'waiting',
+            category: app.category || 'online',
             // Client details for client management
             clientDetails: clientInfo ? {
               visits: clientInfo.visits || 0,
@@ -290,6 +292,7 @@ function Appointments() {
           staffId: data.staffId?._id || data.staffId,
           salonId: data.salonId?._id || data.salonId,
           price: data.price || '',
+          category: data.category || 'online'
         });
         setShowModal(true);
       })
@@ -356,7 +359,8 @@ function Appointments() {
           time: '',
           serviceId: '',
           staffId: '',
-          salonId: selectedSalon?._id || ''
+          salonId: selectedSalon?._id || '',
+          category: 'online'
         });
       } else {
         alert('Failed to save appointment');
@@ -410,7 +414,8 @@ function Appointments() {
                   time: '',
                   serviceId: '',
                   staffId: '',
-                  salonId: selectedSalon?._id || ''
+                  salonId: selectedSalon?._id || '',
+                  category: 'online'
                 });
                 setShowModal(true);
               }}
@@ -593,6 +598,19 @@ function Appointments() {
                   {localStorage.getItem('role') !== 'owner' && (
                     <p className="text-xs text-gray-500 mt-1">Your assigned branch is pre-selected</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white"
+                  >
+                    <option value="online">Online</option>
+                    <option value="walk in">Walk-in</option>
+                  </select>
                 </div>
 
                 {/* Modal Footer */}

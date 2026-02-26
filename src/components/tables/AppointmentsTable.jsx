@@ -10,6 +10,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                         <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600 uppercase tracking-wider">
                             <ResizableTh className="p-4">Client</ResizableTh>
                             <ResizableTh className="p-4">Contact</ResizableTh>
+                            <ResizableTh className="p-4">Category</ResizableTh>
                             <ResizableTh className="p-4">Customer Type</ResizableTh>
                             <ResizableTh className="p-4">Staff</ResizableTh>
                             <ResizableTh className="p-4">Service</ResizableTh>
@@ -22,7 +23,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                     <tbody className="divide-y divide-gray-100">
                         {appointments.length === 0 ? (
                             <tr>
-                                <td colSpan="9" className="p-8 text-center text-gray-500">
+                                <td colSpan="10" className="p-8 text-center text-gray-500">
                                     No appointments found
                                 </td>
                             </tr>
@@ -54,6 +55,9 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                                         {appointment.customerDetails?.email && (
                                             <div className="text-xs text-primary">{appointment.customerDetails.email}</div>
                                         )}
+                                    </td>
+                                    <td className="p-4">
+                                        <CategoryBadge category={appointment.category} />
                                     </td>
                                     <td className="p-4">
                                         {appointment.isRegisteredCustomer ? (
@@ -142,6 +146,23 @@ const StatusBadge = ({ status }) => {
     return (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
             {labels[status] || status}
+        </span>
+    );
+};
+
+// Category Badge Component
+const CategoryBadge = ({ category }) => {
+    const styles = {
+        'online': 'bg-blue-100 text-blue-700',
+        'walk in': 'bg-purple-100 text-purple-700'
+    };
+    const labels = {
+        'online': 'Online',
+        'walk in': 'Walk-in'
+    };
+    return (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[category] || 'bg-gray-100 text-gray-700'}`}>
+            {labels[category] || category || 'Online'}
         </span>
     );
 };

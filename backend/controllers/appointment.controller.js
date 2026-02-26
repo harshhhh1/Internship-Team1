@@ -114,7 +114,8 @@ export const createAppointment = async (req, res) => {
             ownerId: ownerId,
             price: price || 0,
             clientId: clientId || null,
-            customerId: customerId || null
+            customerId: customerId || null,
+            category: req.body.category || "online"
         });
         await appointment.save();
         
@@ -128,7 +129,7 @@ export const createAppointment = async (req, res) => {
 
 export const getAppointments = async (req, res) => {
     try {
-        const { salonId, staffId, date } = req.query;
+        const { salonId, staffId, date, category } = req.query;
         let filter = {};
 
         if (req.user && req.user.role === 'owner') {
@@ -151,6 +152,7 @@ export const getAppointments = async (req, res) => {
         }
 
         if (staffId) filter.staffId = staffId;
+        if (category) filter.category = category;
         if (date) {
             // Simple date matching (start of day to end of day)
             const start = new Date(date);
