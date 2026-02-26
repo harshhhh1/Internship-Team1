@@ -17,6 +17,7 @@ import attendanceRoutes from "./routes/attendance.js"; // [NEW]
 import walkinRoutes from "./routes/walkin.js";
 import categoryRoutes from "./routes/category.js";
 import reportRoutes from "./routes/report.js"; // [NEW]
+import customerAuthRoutes from "./routes/customerAuth.js"; // [NEW]
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use("/attendance", attendanceRoutes); // [NEW]
 app.use("/walkins", walkinRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/reports", reportRoutes); // [NEW]
+app.use("/customer-auth", customerAuthRoutes); // [NEW]
 
 
 app.get("/api/health", (req, res) => {

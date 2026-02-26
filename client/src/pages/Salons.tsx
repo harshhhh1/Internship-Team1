@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Landmark, Search, MapPin, Phone, Star, ArrowRight } from "lucide-react";
 
 interface Salon {
@@ -8,12 +9,15 @@ interface Salon {
     address: string;
     contactNumber: string;
     imageUrl?: string;
+    type?: string;
 }
 
-const Salons: React.FC<{ onOpenBooking: (salonId: string) => void }> = ({ onOpenBooking }) => {
+const Salons: React.FC<{ onOpenBooking: (salonId: string) => void; type?: string }> = ({ onOpenBooking, type }) => {
+
     const [salons, setSalons] = useState<Salon[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSalons = async () => {
@@ -30,10 +34,13 @@ const Salons: React.FC<{ onOpenBooking: (salonId: string) => void }> = ({ onOpen
         fetchSalons();
     }, []);
 
-    const filteredSalons = salons.filter(s =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.branchArea.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredSalons = salons
+        .filter(s => !type || s.type?.toLowerCase() === type.toLowerCase())
+        .filter(s =>
+            s.name.toLowerCase().includes(search.toLowerCase()) ||
+            s.branchArea.toLowerCase().includes(search.toLowerCase())
+        );
+
 
     return (
         <div className="pt-32 pb-20 bg-bg-light min-h-screen">
@@ -41,7 +48,8 @@ const Salons: React.FC<{ onOpenBooking: (salonId: string) => void }> = ({ onOpen
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
                     <div className="space-y-4">
                         <span className="text-primary font-bold tracking-widest uppercase text-sm">Experience Everywhere</span>
-                        <h1 className="text-5xl font-bold text-gray-900 leading-tight">Our <span className="text-primary italic">Luxury</span> Destinations.</h1>
+                        <h1 className="text-5xl font-bold text-gray-900 leading-tight">Our <span className="text-primary italic">Luxury</span> {type ? type + 's' : 'Destinations'}.</h1>
+
                     </div>
                     <div className="relative w-full lg:w-96 group">
                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
@@ -86,13 +94,22 @@ const Salons: React.FC<{ onOpenBooking: (salonId: string) => void }> = ({ onOpen
                                         </div>
                                     </div>
 
-                                    <button
-                                        onClick={() => onOpenBooking(salon._id)}
-                                        className="w-full py-4 bg-gray-950 text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-primary transition-all flex items-center justify-center gap-2 group-hover:gap-4"
-                                    >
-                                        Select Branch
-                                        <ArrowRight size={18} />
-                                    </button>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => navigate(`/salons/${salon._id}`)}
+                                            className="flex-1 py-4 bg-gray-950 text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-primary transition-all flex items-center justify-center gap-2 group-hover:gap-4"
+                                        >
+                                            Explore
+                                            <ArrowRight size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => onOpenBooking(salon._id)}
+                                            className="px-4 py-4 bg-primary text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-primary/90 transition-all flex items-center justify-center"
+                                        >
+                                            Book
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
                         ))}

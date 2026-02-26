@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FaTimes, FaSearch } from 'react-icons/fa';
+import { FaTimes, FaSearch, FaClock, FaCalendarAlt } from 'react-icons/fa';
 import StaffTable from '../../components/tables/StaffTable';
 import Attendance from '../../components/Attendance'; // Import the new component
 import { useSalon } from '../../context/SalonContext';
 import { getAllTabOptions, DEFAULT_TABS } from '../../config/roleConfig';
+
+const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 function Staff() {
   const [staffList, setStaffList] = useState([]);
@@ -25,7 +27,13 @@ function Staff() {
     avatarUrl: '',
     accessToTabs: [],
     services: [],
-    salary: ''
+    salary: '',
+    workingHours: allDays.map(day => ({
+      day,
+      startTime: '09:00',
+      endTime: '18:00',
+      isWorking: true
+    }))
   });
 
   const [salonServices, setSalonServices] = useState([]);
@@ -97,6 +105,15 @@ function Staff() {
     }
   };
 
+  const handleWorkingHoursChange = (day, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      workingHours: prev.workingHours.map(wh => 
+        wh.day === day ? { ...wh, [field]: value } : wh
+      )
+    }));
+  };
+
   const handleTabAccessChange = (tabId, isChecked) => {
     setFormData(prev => {
       const currentTabs = prev.accessToTabs || [];
@@ -127,7 +144,13 @@ function Staff() {
       avatarUrl: staff.avatarUrl || '',
       accessToTabs: staff.accessToTabs || DEFAULT_TABS[staff.role] || [],
       services: staff.services?.map(s => s._id || s) || [],
-      salary: staff.salary || ''
+      salary: staff.salary || '',
+      workingHours: staff.workingHours || allDays.map(day => ({
+        day,
+        startTime: '09:00',
+        endTime: '18:00',
+        isWorking: true
+      }))
     });
     setIsModalOpen(true);
   };
@@ -200,7 +223,13 @@ function Staff() {
       avatarUrl: '',
       accessToTabs: DEFAULT_TABS.staff,
       services: [],
-      salary: ''
+      salary: '',
+      workingHours: allDays.map(day => ({
+        day,
+        startTime: '09:00',
+        endTime: '18:00',
+        isWorking: true
+      }))
     });
   };
 
@@ -441,6 +470,50 @@ function Staff() {
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all outline-none"
                     />
+                  </div>
+                </div>
+
+                {/* Working Hours Section */}
+                <div className="border-t border-gray-100 pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FaClock className="text-primary" />
+                    <h3 className="text-lg font-bold text-gray-900">Working Hours</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {formData.workingHours?.map((wh) => (
+                      <div key={wh.day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                        <label className="flex items-center gap-2 min-w-[100px]">
+                          <input
+                            type="checkbox"
+                            checked={wh.isWorking}
+                            onChange={(e) => handleWorkingHoursChange(wh.day, 'isWorking', e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <span className={`text-sm font-medium ${wh.isWorking ? 'text-gray-900' : 'text-gray-400'}`}>
+                            {wh.day}
+                          </span>
+                        </label>
+                        
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="time"
+                            value={wh.startTime}
+                            onChange={(e) => handleWorkingHoursChange(wh.day, 'startTime', e.target.value)}
+                            disabled={!wh.isWorking}
+                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                          />
+                          <span className="text-gray-400">to</span>
+                          <input
+                            type="time"
+                            value={wh.endTime}
+                            onChange={(e) => handleWorkingHoursChange(wh.day, 'endTime', e.target.value)}
+                            disabled={!wh.isWorking}
+                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

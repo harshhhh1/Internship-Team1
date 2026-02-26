@@ -10,7 +10,8 @@ import {
     getRevenueStats,
     getDashboardStats,
     getEarningsPageData,
-    checkAvailability
+    checkAvailability,
+    checkStaffAvailability
 } from "../controllers/appointment.controller.js";
 
 import { authenticateToken, requireStaff } from "../middleware/auth.js";
@@ -19,6 +20,9 @@ const router = express.Router();
 
 // Create appointment - public for clients
 router.post("/", createAppointment);
+
+// Public endpoint for clients to check staff availability (no auth required)
+router.get("/check-staff-availability", checkStaffAvailability);
 
 // Protected routes below
 router.use(authenticateToken);

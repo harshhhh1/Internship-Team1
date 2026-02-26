@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, Clock, User, Scissors, Landmark, ChevronRight, CheckCircle2 } from "lucide-react";
+import { X, Calendar, Clock, User, Scissors, Landmark, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface Service {
     _id: string;
@@ -51,6 +51,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    
+    // Staff availability states
+    const [availabilityChecking, setAvailabilityChecking] = useState(false);
+    const [availabilityError, setAvailabilityError] = useState("");
+    const [isSlotAvailable, setIsSlotAvailable] = useState<boolean | null>(null);
 
     // Initialize with props
     useEffect(() => {
@@ -60,9 +65,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
                 setSelectedSalon(initialSalonId);
                 setStep(2);
             } else if (initialService && initialService.salonId) {
-                // If coming from a service/offer, we might know the salon
-                // Assuming service.salonId is populated or we have the ID.
-                // If it's an object with _id:
                 if (typeof initialService.salonId === 'object' && initialService.salonId._id) {
                     setSelectedSalon(initialService.salonId._id);
                 } else if (typeof initialService.salonId === 'string') {
@@ -82,6 +84,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
             setTime("");
             setNote("");
             setSuccess(false);
+            setAvailabilityError("");
+            setIsSlotAvailable(null);
         }
     }, [isOpen, initialSalonId, initialService]);
 
@@ -115,15 +119,52 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
         }
     }, [selectedSalon]);
 
-    // If we pre-selected a service, we might need to skip to step 4 only if staff is selected?
-    // Or maybe we still need to pick a staff.
-    // Let's refine the flow:
-    // If initialService is set, we are at step 2 (pick staff).
-    // After picking staff, normally we go to step 3 (pick service).
-    // But if selectedService is ALREADY set, we should skip step 3 and go to step 4.
+    // Check staff availability when date or time changes
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (selectedStaff && date && time) {
+                setAvailabilityChecking(true);
+                setAvailabilityError("");
+                setIsSlotAvailable(null);
+
+                try {
+                    const appointmentDate = new Date(`${date}T${time}`);
+                    const res = await fetch(
+                        `http://localhost:5050/appointments/check-staff-availability?staffId=${selectedStaff}&date=${appointmentDate.toISOString()}`
+                    );
+                    const data = await res.json();
+
+                    if (data.available) {
+                        setIsSlotAvailable(true);
+                        setAvailabilityError("");
+                    } else {
+                        setIsSlotAvailable(false);
+                        setAvailabilityError(data.message || "This time slot is not available");
+                    }
+                } catch (err) {
+                    console.error("Error checking availability:", err);
+                } finally {
+                    setAvailabilityChecking(false);
+                }
+            } else {
+                setIsSlotAvailable(null);
+                setAvailabilityError("");
+            }
+        };
+
+        // Debounce the availability check
+        const timer = setTimeout(() => {
+            checkAvailability();
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [selectedStaff, date, time]);
 
     const handleStaffSelection = (staffId: string) => {
         setSelectedStaff(staffId);
+        // Reset availability when staff changes
+        setIsSlotAvailable(null);
+        setAvailabilityError("");
         if (selectedService) {
             setStep(4);
         } else {
@@ -131,10 +172,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
         }
     };
 
-
     const handleBooking = async () => {
         if (!clientName || !clientMobile || !date || !time) {
             alert("Please fill in all required fields.");
+            return;
+        }
+
+        // Check if slot is available before booking
+        if (selectedStaff && isSlotAvailable === false) {
+            alert("This time slot is not available. Please choose another time or specialist.");
             return;
         }
 
@@ -149,7 +195,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
                 date: new Date(`${date}T${time}`),
                 note,
                 price: selectedService?.price || selectedService?.priceUnisex || selectedService?.priceMale || selectedService?.priceFemale || 0,
-                status: "pending"
+                status: "pending",
+                category: "online" // Mark as online booking
             };
 
             const res = await fetch("http://localhost:5050/appointments", {
@@ -332,15 +379,63 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
                                         </div>
                                     </div>
 
+                                    {/* Availability Status */}
+                                    {selectedStaff && date && time && (
+                                        <div className={`p-4 rounded-xl border-2 ${
+                                            availabilityChecking 
+                                                ? 'bg-blue-50 border-blue-200'
+                                                : isSlotAvailable === true 
+                                                    ? 'bg-green-50 border-green-200'
+                                                    : isSlotAvailable === false 
+                                                        ? 'bg-red-50 border-red-200'
+                                                        : 'bg-gray-50 border-gray-200'
+                                        }`}>
+                                            <div className="flex items-center gap-2">
+                                                {availabilityChecking ? (
+                                                    <>
+                                                        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                                        <span className="text-sm text-blue-600">Checking availability...</span>
+                                                    </>
+                                                ) : isSlotAvailable === true ? (
+                                                    <>
+                                                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                                        <span className="text-sm text-green-600">This time slot is available!</span>
+                                                    </>
+                                                ) : isSlotAvailable === false ? (
+                                                    <>
+                                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                                                        <span className="text-sm text-red-600">{availabilityError || "This time slot is not available"}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Clock className="w-5 h-5 text-gray-400" />
+                                                        <span className="text-sm text-gray-500">Select a date and time to check availability</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="grid gap-5">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Date</label>
-                                                <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full mt-1.5 p-3 rounded-xl border border-gray-200 focus:border-primary outline-none" />
+                                                <input 
+                                                    type="date" 
+                                                    value={date} 
+                                                    onChange={e => setDate(e.target.value)} 
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    className="w-full mt-1.5 p-3 rounded-xl border border-gray-200 focus:border-primary outline-none" 
+                                                />
                                             </div>
                                             <div>
                                                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Time</label>
-                                                <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-full mt-1.5 p-3 rounded-xl border border-gray-200 focus:border-primary outline-none" />
+                                                <input 
+                                                    type="time" 
+                                                    value={time} 
+                                                    onChange={e => setTime(e.target.value)} 
+                                                    className="w-full mt-1.5 p-3 rounded-xl border border-gray-200 focus:border-primary outline-none" 
+                                                />
                                             </div>
                                         </div>
                                         <div>
@@ -352,8 +447,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialSal
                                             <input type="tel" value={clientMobile} onChange={e => setClientMobile(e.target.value)} placeholder="e.g. +91 9876543210" className="w-full mt-1.5 p-3 rounded-xl border border-gray-200 focus:border-primary outline-none" />
                                         </div>
                                     </div>
-                                    <button onClick={handleBooking} disabled={loading} className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/30 hover:bg-secondary transition-all active:scale-95 disabled:bg-gray-300">
-                                        {loading ? "Scheduling..." : "Confirm Booking"}
+                                    <button 
+                                        onClick={handleBooking} 
+                                        disabled={loading || (selectedStaff && isSlotAvailable === false) || availabilityChecking} 
+                                        className={`w-full py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95 ${
+                                            selectedStaff && isSlotAvailable === false
+                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                : 'bg-primary text-white shadow-primary/30 hover:bg-secondary'
+                                        }`}
+                                    >
+                                        {loading ? "Scheduling..." : availabilityChecking ? "Checking availability..." : isSlotAvailable === false ? "Slot Unavailable" : "Confirm Booking"}
                                     </button>
                                     <button onClick={() => setStep(selectedService ? 2 : 3)} className="w-full text-primary font-semibold text-sm hover:underline">← Back</button>
                                 </div>

@@ -25,6 +25,14 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
         setSortOrder(prev => prev === 'latest' ? 'oldest' : 'latest');
     };
 
+    // Helper to get badge color for category
+    const getCategoryBadge = (category) => {
+        if (category === 'walk-in') {
+            return 'bg-orange-100 text-orange-700';
+        }
+        return 'bg-blue-100 text-blue-700'; // online
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
@@ -43,6 +51,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                                 </div>
                             </ResizableTh>
                             <ResizableTh className="p-4">Service Type</ResizableTh>
+                            <ResizableTh className="p-4">Category</ResizableTh>
                             <ResizableTh className="p-4">Price</ResizableTh>
                             <ResizableTh className="p-4">Note</ResizableTh>
                             <ResizableTh className="p-4 text-center">Actions</ResizableTh>
@@ -51,7 +60,7 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                     <tbody className="divide-y divide-gray-100">
                         {sortedAppointments.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="p-8 text-center text-gray-500">
+                                <td colSpan="9" className="p-8 text-center text-gray-500">
                                     Nothing to see here
                                 </td>
                             </tr>
@@ -66,6 +75,11 @@ const AppointmentsTable = ({ appointments, onEdit, onDelete, onMarkComplete }) =
                                     <td className="p-4 text-gray-600">
                                         <span className="inline-block px-3 py-1 text-xs font-semibold text-primary bg-primary/10 rounded-full">
                                             {appointment.serviceType}
+                                        </span>
+                                    </td>
+                                    <td className="p-4">
+                                        <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(appointment.category)}`}>
+                                            {appointment.category === 'walk-in' ? 'Walk-in' : 'Online'}
                                         </span>
                                     </td>
                                     <td className="p-4 text-gray-600 font-semibold">₹{appointment.price}</td>

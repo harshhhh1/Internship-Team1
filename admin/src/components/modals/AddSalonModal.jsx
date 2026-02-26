@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaStore } from 'react-icons/fa';
+import { FaTimes, FaStore, FaClock, FaCalendarAlt } from 'react-icons/fa';
 
 const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
     const [salonData, setSalonData] = useState({
@@ -11,12 +11,28 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
         pincode: '',
         phoneNumber: '',
         description: '',
-        imageUrl: ''
+        imageUrl: '',
+        openTime: '09:00',
+        closeTime: '20:00',
+        workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     });
+
+    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const handleSalonChange = (e) => {
         const { name, value } = e.target;
         setSalonData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDayToggle = (day) => {
+        setSalonData(prev => {
+            const currentDays = prev.workingDays || [];
+            if (currentDays.includes(day)) {
+                return { ...prev, workingDays: currentDays.filter(d => d !== day) };
+            } else {
+                return { ...prev, workingDays: [...currentDays, day] };
+            }
+        });
     };
 
     const handleSubmit = (e) => {
@@ -31,7 +47,10 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
             pincode: '',
             phoneNumber: '',
             description: '',
-            imageUrl: ''
+            imageUrl: '',
+            openTime: '09:00',
+            closeTime: '20:00',
+            workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
         });
     };
 
@@ -95,11 +114,8 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="">Select Type</option>
-                                    <option value="Hair Salon">Hair Salon</option>
-                                    <option value="Beauty Salon">Beauty Salon</option>
+                                    <option value="Salon">Salon</option>
                                     <option value="Spa">Spa</option>
-                                    <option value="Barber Shop">Barber Shop</option>
-                                    <option value="Nail Salon">Nail Salon</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
                                     <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
@@ -175,6 +191,60 @@ const AddSalonModal = ({ isOpen, onClose, onSubmit }) => {
                                 placeholder="Backup number"
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
                             />
+                        </div>
+
+                        {/* Working Hours Section */}
+                        <div className="col-span-1 md:col-span-2 border-t border-gray-100 pt-6 mt-2">
+                            <div className="flex items-center gap-2 mb-4">
+                                <FaClock className="text-primary" />
+                                <h3 className="text-lg font-bold text-gray-900">Working Hours</h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Opening Time</label>
+                                    <input
+                                        type="time"
+                                        name="openTime"
+                                        value={salonData.openTime}
+                                        onChange={handleSalonChange}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Closing Time</label>
+                                    <input
+                                        type="time"
+                                        name="closeTime"
+                                        value={salonData.closeTime}
+                                        onChange={handleSalonChange}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <FaCalendarAlt className="text-primary" />
+                                    <label className="text-sm font-semibold text-gray-700">Working Days</label>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {allDays.map(day => (
+                                        <button
+                                            key={day}
+                                            type="button"
+                                            onClick={() => handleDayToggle(day)}
+                                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                                salonData.workingDays?.includes(day)
+                                                    ? 'bg-primary text-white shadow-md'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {day.slice(0, 3)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Description */}

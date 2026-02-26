@@ -39,7 +39,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "confirmed", "completed", "cancelled"],
+        enum: ["pending", "confirmed", "completed", "cancelled", "waiting", "in-service"],
         default: "pending",
     },
     note: {
@@ -49,6 +49,11 @@ const appointmentSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: true,
+    },
+    category: {
+        type: String,
+        enum: ["online", "walk-in"],
+        default: "online",
     },
 }, { timestamps: true });
 

@@ -7,7 +7,7 @@ import Payment from "../models/Payment.js";
 
 export const createAppointment = async (req, res) => {
     try {
-        const { salonId, serviceId, clientName, clientMobile, price } = req.body;
+        const { salonId, serviceId, clientName, clientMobile, price, staffId, date, category } = req.body;
 
         if (!salonId) {
             return res.status(400).json({ message: "Salon ID is required" });
@@ -16,6 +16,41 @@ export const createAppointment = async (req, res) => {
         const salon = await Salon.findById(salonId);
         if (!salon) {
             return res.status(404).json({ message: "Salon not found" });
+        }
+
+        // Check staff availability if staff is selected
+        if (staffId && date) {
+            const appointmentDate = new Date(date);
+            
+            // Check if the date is in the past
+            if (appointmentDate < new Date()) {
+                return res.status(400).json({ message: "Cannot book appointments in the past" });
+            }
+
+            // Get the start and end of the selected hour (allow 1-hour slots)
+            const slotStart = new Date(appointmentDate);
+            slotStart.setMinutes(0, 0, 0);
+            const slotEnd = new Date(appointmentDate);
+            slotEnd.setMinutes(59, 59, 999);
+
+            // Check if staff has any active appointment at this time
+            const conflictingAppointment = await Appointment.findOne({
+                staffId: new mongoose.Types.ObjectId(staffId),
+                date: { $gte: slotStart, $lte: slotEnd },
+                status: { $in: ['pending', 'confirmed'] }
+            });
+
+            if (conflictingAppointment) {
+                return res.status(400).json({ 
+                    message: `This specialist is already booked at ${new Date(conflictingAppointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Please choose another time or specialist.`
+                });
+            }
+
+            // Also check if staff is on leave
+            const staff = await Staff.findById(staffId);
+            if (staff && staff.onLeave) {
+                return res.status(400).json({ message: "This specialist is currently on leave" });
+            }
         }
 
         // Find or create client
@@ -36,7 +71,8 @@ export const createAppointment = async (req, res) => {
             ...req.body,
             ownerId: salon.ownerId,
             clientId: client._id,  // Save the clientId reference
-            price: price || 0
+            price: price || 0,
+            category: category || 'online'  // Default to 'online' if not provided
         });
         await appointment.save();
 
@@ -748,5 +784,68 @@ export const checkAvailability = async (req, res) => {
     } catch (error) {
         console.error("Check Availability Error:", error);
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Public endpoint for clients to check staff availability (no auth required)
+export const checkStaffAvailability = async (req, res) => {
+    try {
+        const { staffId, date } = req.query;
+        
+        if (!staffId || !date) {
+            return res.status(400).json({ available: false, message: "Staff ID and date are required" });
+        }
+
+        const appointmentDate = new Date(date);
+        
+        // Check if the date is in the past
+        if (appointmentDate < new Date()) {
+            return res.status(200).json({ 
+                available: false, 
+                message: "Cannot book appointments in the past" 
+            });
+        }
+
+        // Get the start and end of the selected hour (allow 1-hour slots)
+        const slotStart = new Date(appointmentDate);
+        slotStart.setMinutes(0, 0, 0);
+        const slotEnd = new Date(appointmentDate);
+        slotEnd.setMinutes(59, 59, 999);
+
+        // Check if staff has any active appointment at this time
+        const conflictingAppointment = await Appointment.findOne({
+            staffId: new mongoose.Types.ObjectId(staffId),
+            date: { $gte: slotStart, $lte: slotEnd },
+            status: { $in: ['pending', 'confirmed'] }
+        }).populate('staffId', 'name');
+
+        if (conflictingAppointment) {
+            return res.status(200).json({ 
+                available: false, 
+                message: `This specialist is already booked at ${new Date(conflictingAppointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Please choose another time or specialist.`,
+                conflictingAppointment: {
+                    date: conflictingAppointment.date,
+                    clientName: conflictingAppointment.clientName
+                }
+            });
+        }
+
+        // Also check if staff is on leave
+        const staff = await Staff.findById(staffId);
+        if (staff && staff.onLeave) {
+            return res.status(200).json({ 
+                available: false, 
+                message: "This specialist is currently on leave" 
+            });
+        }
+
+        res.status(200).json({ 
+            available: true, 
+            message: "Staff is available at this time" 
+        });
+
+    } catch (error) {
+        console.error("Check Staff Availability Error:", error);
+        res.status(500).json({ available: false, message: error.message });
     }
 };

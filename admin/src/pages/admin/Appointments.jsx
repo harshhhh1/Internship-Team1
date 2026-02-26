@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import AppointmentsTable from '../../components/tables/AppointmentsTable';
-import CalendarWidget from '../../components/Calendar';
 import { useSalon } from '../../context/SalonContext';
 
 const predefinedServices = [
@@ -21,7 +20,6 @@ function Appointments() {
   const [services, setServices] = useState(predefinedServices.map(s => ({ ...s, _id: s.id, name: s.title })));
   const [staff, setStaff] = useState([]);
   const [salons, setSalons] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Availability state
@@ -120,7 +118,8 @@ function Appointments() {
             serviceType: serviceName,
             price: app.price || 0,
             note: app.note || '',
-            status: app.status || 'waiting'
+            status: app.status || 'waiting',
+            category: app.category || 'online' // Include category in data
           };
         });
         setAppointments(mappedData);
@@ -242,8 +241,8 @@ function Appointments() {
           setAvailabilityError('This time slot is already booked. Please select a different time.');
         } else if (formData.staffId) {
           // Check if selected staff is available at this time
-          const selectedStaff = data.availableStaff?.find(s => s._id === formData.staffId);
-          if (selectedStaff && !selectedStaff.isAvailable) {
+          const selectedStaffMember = data.availableStaff?.find(s => s._id === formData.staffId);
+          if (selectedStaffMember && !selectedStaffMember.isAvailable) {
             setAvailabilityError('Selected staff is not available at this time. Please choose another staff or time slot.');
           }
         }
@@ -348,7 +347,8 @@ function Appointments() {
       const payload = {
         ...formData,
         date: appointmentDate,
-        status: 'pending' // Default status, or keep existing if editing
+        status: 'pending', // Default status, or keep existing if editing
+        category: 'online' // Mark as online appointment (created from admin panel)
       };
 
       const method = formData._id ? 'PUT' : 'POST';
@@ -357,7 +357,6 @@ function Appointments() {
         : 'http://localhost:5050/appointments';
 
       const token = localStorage.getItem('token');
-      const salonIdToSubmit = formData.salonId || selectedSalon?._id;
       const response = await fetch(url, {
         method: method,
         headers: {
@@ -432,19 +431,6 @@ function Appointments() {
     return !hasConflict;
   };
 
-  // Helper to check if a time slot is booked
-  const isTimeSlotBooked = (time) => {
-    if (!bookedSlots.length || !formData.date) return false;
-    
-    const appointmentDate = new Date(`${formData.date}T${time}`);
-    
-    return bookedSlots.some(slot => {
-      const slotTime = new Date(slot.time).getTime();
-      const selectedTime = appointmentDate.getTime();
-      return slotTime === selectedTime;
-    });
-  };
-
   return (
     <div className="min-h-screen">
       <div>
@@ -475,75 +461,41 @@ function Appointments() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              {/* Search Bar */}
-              <div className="mb-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by client name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50"
-                  />
-                  <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              {selectedDate && (
-
-                <div className="mb-4 flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
-                  <span className="text-blue-700 font-medium">
-                    Showing appointments for {selectedDate.toLocaleDateString()}
-                  </span>
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="text-sm text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Clear Filter
-                  </button>
-                </div>
-              )}
-              <AppointmentsTable
-                appointments={selectedDate
-                  ? appointments.filter(app => {
-                      const matchesDate = app.date === selectedDate.toLocaleDateString();
-                      const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase());
-                      return matchesDate && matchesSearch;
-                    })
-                  : appointments.filter(app => 
-                      app.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                }
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onMarkComplete={handleMarkComplete}
-              />
-
-            </div>
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Calendar</h3>
-                <CalendarWidget
-                  appointments={appointments}
-                  onDateClick={setSelectedDate}
-                  selectedDate={selectedDate}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by client name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2.5 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50"
                 />
+                <svg
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
               </div>
             </div>
+
+            <AppointmentsTable
+              appointments={appointments.filter(app => 
+                app.name.toLowerCase().includes(searchTerm.toLowerCase())
+              )}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onMarkComplete={handleMarkComplete}
+            />
           </div>
         </div>
       </div>
@@ -770,7 +722,7 @@ function Appointments() {
                     : 'bg-primary text-white hover:bg-secondary shadow-primary/20 active:scale-95'
                 }`}
               >
-                {checkingAvailability ? 'Checking...' : formData._id ? 'Update Appointment' : 'Schedule Appointment'}
+                {checkingAvailability ? 'Checking...' : formData._id ? ' Update Appointment' : 'Schedule Appointment'}
               </button>
             </div>
           </div>

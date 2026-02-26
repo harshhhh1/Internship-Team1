@@ -9,6 +9,7 @@ import Salons from './pages/Salons';
 import Offers from './pages/Offers';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import SalonDetail from './pages/SalonDetail';
 
 interface Offer {
   _id: string;
@@ -54,6 +55,9 @@ function App() {
           <Route path="/" element={<Home onOpenBooking={() => openBooking()} />} />
           <Route path="/services" element={<Services onOpenBooking={(service) => openBooking(undefined, service)} />} />
           <Route path="/salons" element={<Salons onOpenBooking={(salonId) => openBooking(salonId)} />} />
+          <Route path="/salon" element={<Salons onOpenBooking={(salonId) => openBooking(salonId)} type="salon" />} />
+          <Route path="/spa" element={<Salons onOpenBooking={(salonId) => openBooking(salonId)} type="spa" />} />
+          <Route path="/salons/:id" element={<SalonDetail onOpenBooking={(salonId) => openBooking(salonId)} />} />
           <Route path="/offers" element={<Offers onOpenBooking={(salonId, offer) => openBooking(salonId, undefined, offer)} />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

@@ -48,7 +48,20 @@ const salonSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  openTime: {
+    type: String,
+    default: "09:00",
+  },
+  closeTime: {
+    type: String,
+    default: "20:00",
+  },
+  workingDays: {
+    type: [String],
+    default: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  },
 }, { timestamps: true });
+
 
 const Salon = mongoose.model("Salon", salonSchema);
 

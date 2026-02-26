@@ -1,3 +1,4 @@
+import Appointment from "../models/Appointment.js";
 import Walkin from "../models/Walkin.js";
 import Salon from "../models/Salon.js";
 import mongoose from "mongoose";
@@ -5,6 +6,7 @@ import Staff from "../models/Staff.js";
 
 import Client from "../models/Client.js";
 
+// New function: Create walk-in as an appointment with category "walk-in"
 export const createWalkin = async (req, res) => {
     try {
         const { salonId, clientName, clientMobile, serviceId, staffId, price, date } = req.body;
@@ -21,63 +23,43 @@ export const createWalkin = async (req, res) => {
                     salonId,
                     name: clientName,
                     mobile: clientMobile,
+                    totalSpent: 0,
+                    visits: 0
                 });
                 await client.save();
             }
-        } else {
-            // If no mobile, try to find by name within salon (less reliable but acceptable for walk-ins without mobile)
-            // OR generate a dummy client? For now, let's just create a client if name provided?
-            // Actually, if mobile is 0000000000, we probably shouldn't link to a real client or should create a temp one.
-            // Let's create a Client entry even for walk-ins to track history if they come back with same details.
-            // If mobile is default, we might multiple clients with same mobile? Client model validation might fail if unique.
-            // Client model doesn't enforce unique mobile globally, but usually it should be unique per salon ideally.
-            // Let's assume for now if mobile is provided we link, otherwise we leave clientId null or create a "Walk-in" client?
-            // Requirement says "Client details must be visible".
-            // Let's create a client.
-            if (clientMobile) {
-                client = await Client.findOne({ mobile: clientMobile, salonId });
-                if (!client) {
-                    client = new Client({
-                        salonId,
-                        name: clientName,
-                        mobile: clientMobile,
-                    });
-                    await client.save();
-                }
-            }
         }
 
-        const newWalkin = new Walkin({
+        // Create appointment with category "walk-in" instead of Walkin
+        const appointmentDate = date ? new Date(date) : new Date();
+        
+        const newAppointment = new Appointment({
             ownerId: salon.ownerId,
             salonId,
             clientName,
             clientMobile,
             serviceId,
-            staffId,
+            staffId: staffId || null,
             clientId: client ? client._id : null,
             price: price || 0,
-            status: "waiting",
-            date: date ? new Date(date) : new Date() // Use provided date or default to now
+            status: "waiting", // Walk-ins start as "waiting" to match Walkin page expectations
+            category: "walk-in", // Set category to walk-in
+            date: appointmentDate
         });
 
-        await newWalkin.save();
+        await newAppointment.save();
 
-        if (client) {
-            client.visits += 1;
-            client.lastVisit = new Date();
-            await client.save();
-        }
-
-        res.status(201).json(newWalkin);
+        res.status(201).json(newAppointment);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
+// Get walk-ins (now fetches appointments with category "walk-in")
 export const getWalkinsBySalon = async (req, res) => {
     try {
         const { salonId } = req.query;
-        let query = {};
+        let query = { category: "walk-in" }; // Filter by walk-in category
 
         if (req.user && req.user.role === 'owner') {
             if (salonId) {
@@ -85,9 +67,6 @@ export const getWalkinsBySalon = async (req, res) => {
                 if (!salon) return res.status(403).json({ message: "Access denied" });
                 query.salonId = salonId;
             } else {
-                // For walkins, maybe enforce salonId required? 
-                // Or return all walkins for all salons?
-                // Let's return all.
                 const salons = await Salon.find({ ownerId: req.user.id });
                 query.salonId = { $in: salons.map(s => s._id) };
             }
@@ -100,7 +79,8 @@ export const getWalkinsBySalon = async (req, res) => {
             query.salonId = staff.salonId;
         }
 
-        const walkins = await Walkin.find(query)
+        // Fetch appointments with category "walk-in" instead of Walkin collection
+        const walkins = await Appointment.find(query)
             .sort({ date: -1 })
             .populate("staffId", "name");
 
@@ -110,63 +90,72 @@ export const getWalkinsBySalon = async (req, res) => {
     }
 };
 
+// Update walk-in status (now updates appointment)
 export const updateWalkinStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
 
-        const walkin = await Walkin.findById(id);
-        if (!walkin) return res.status(404).json({ message: "Walk-in not found" });
+        // Find appointment instead of Walkin
+        const appointment = await Appointment.findById(id);
+        if (!appointment) return res.status(404).json({ message: "Walk-in not found" });
 
         // If status is changing to completed, create a payment record
-        if (status === 'completed' && walkin.status !== 'completed') {
+        if (status === 'completed' && appointment.status !== 'completed') {
             const Payment = mongoose.model('Payment');
             const payment = new Payment({
-                ownerId: walkin.ownerId,
-                salonId: walkin.salonId,
-                walkinId: walkin._id, // We should probably add this to Payment schema for clarity
-                appointmentId: null, // It's a walk-in, not an appointment, but we need a reference
-                amount: walkin.price,
+                ownerId: appointment.ownerId,
+                salonId: appointment.salonId,
+                appointmentId: appointment._id,
+                amount: appointment.price,
                 method: 'cash'
             });
             await payment.save();
 
             // Increment staff count
-            if (walkin.staffId) {
-                await mongoose.model('Staff').findByIdAndUpdate(walkin.staffId, { $inc: { appointmentCount: 1 } });
+            if (appointment.staffId) {
+                await mongoose.model('Staff').findByIdAndUpdate(appointment.staffId, { $inc: { appointmentCount: 1 } });
             }
 
-            // Update client total spent
-            if (walkin.clientId || walkin.clientMobile) {
-                const clientId = walkin.clientId || (await mongoose.model('Client').findOne({
-                    mobile: walkin.clientMobile,
-                    salonId: walkin.salonId
+            // Update client total spent and visits
+            if (appointment.clientId || appointment.clientMobile) {
+                const clientId = appointment.clientId || (await mongoose.model('Client').findOne({
+                    mobile: appointment.clientMobile,
+                    salonId: appointment.salonId
                 }))?._id;
 
                 if (clientId) {
-                    const finalPrice = Number(walkin.price) || 0;
-                    console.log(`Updating totalSpent for walk-in client ${clientId} with amount ${finalPrice}`);
+                    const finalPrice = Number(appointment.price) || 0;
+                    console.log(`Updating client ${clientId} with amount ${finalPrice}`);
                     await mongoose.model('Client').findByIdAndUpdate(
                         clientId,
-                        { $inc: { totalSpent: finalPrice } }
+                        { 
+                            $inc: { 
+                                totalSpent: finalPrice,
+                                visits: 1 
+                            },
+                            lastVisit: new Date()
+                        }
                     );
                 }
             }
         }
 
-        walkin.status = status;
-        await walkin.save();
+        appointment.status = status;
+        await appointment.save();
 
-        res.status(200).json(walkin);
+        res.status(200).json(appointment);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
+// Delete walk-in (now deletes appointment)
 export const deleteWalkin = async (req, res) => {
     try {
         const { id } = req.params;
-        await Walkin.findByIdAndDelete(id);
+        // Delete appointment instead of Walkin
+        await Appointment.findByIdAndDelete(id);
         res.status(200).json({ message: "Walk-in deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
